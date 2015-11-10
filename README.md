@@ -28,3 +28,9 @@ $ mvn compile
 $ mvn test
 $ mvn package # creates the jar file
 ```
+
+
+# References
+
+* [support-metrics-server](https://github.com/confluentinc/support-metrics-server)
+  -- the corresponding server application for this client application
