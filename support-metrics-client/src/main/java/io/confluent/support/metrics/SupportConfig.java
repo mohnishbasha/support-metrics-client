@@ -42,9 +42,9 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DEFAULT = "24";
 
   /**
-   * <code>confluent.support.internal.kafka.topic</code>
+   * <code>confluent.support.metrics.topic</code>
    */
-  public static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_CONFIG = "confluent.support.internal.kafka.topic";
+  public static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_CONFIG = "confluent.support.metrics.topic";
   private static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_DOC = "Internal topic used for metric collection. If missing, metrics will not be collected in a Kafka topic ";
 
   /**
