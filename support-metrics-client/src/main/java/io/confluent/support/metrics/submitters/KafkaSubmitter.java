@@ -65,8 +65,12 @@ public class KafkaSubmitter {
    *              message.
    */
   public void submit(byte[] bytes) {
+    submit(bytes, createProducer());
+  }
+
+  // This method is `protected` instead of `private` to be visible for testing.
+  protected void submit(byte[] bytes, Producer<byte[], byte[]> producer) {
     if (bytes != null) {
-      Producer<byte[], byte[]> producer = createProducer();
       Future<RecordMetadata> response =
           producer.send(new ProducerRecord<byte[], byte[]>(topic, bytes));
       producer.close();

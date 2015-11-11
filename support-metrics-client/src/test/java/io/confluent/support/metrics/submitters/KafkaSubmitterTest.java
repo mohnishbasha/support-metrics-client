@@ -13,10 +13,14 @@
  */
 package io.confluent.support.metrics.submitters;
 
+import junit.framework.AssertionFailedError;
+
+import org.apache.kafka.clients.producer.Producer;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.easymock.EasyMock.*;
 
 public class KafkaSubmitterTest {
 
@@ -80,4 +84,22 @@ public class KafkaSubmitterTest {
     }
   }
 
+  @Test
+  public void testSubmitIgnoresNullInput() {
+    // Given
+    String anyBootstrapServers = "localhost:1234";
+    String anyTopic = "valueNotRelevant";
+    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    Producer<byte[], byte[]> producer = mock(Producer.class);
+    // This `expect` asserts zero interactions with the `producer.send()` method.
+    expect(producer.send(null, null)).andThrow(new AssertionFailedError()).anyTimes();
+    replay(producer);
+    byte[] nullData = null;
+
+    // When
+    k.submit(nullData, producer);
+
+    // Then
+    verify(producer);
+  }
 }
