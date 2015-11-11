@@ -20,7 +20,7 @@
 
 
 if [ "x$KAFKA_HEAP_OPTS" = "x" ]; then
-    export KAFKA_HEAP_OPTS="-Xmx512M"
+  export KAFKA_HEAP_OPTS="-Xmx512M"
 fi
 
 echo "Make sure that zookeeper and brokers are running while executing this command"
