@@ -195,20 +195,10 @@ public class MetricsReporter implements Runnable {
 
     try {
       if (sendToConfluentEnabled()) {
-        String requestKey = generateHttpRequestKey(customerId);
-        confluentSubmitter.submit(requestKey, encodedMetricsRecord);
+        confluentSubmitter.submit(encodedMetricsRecord);
       }
     } catch (RuntimeException e) {
       log.error("Could not submit metrics to Confluent: {}", e.toString());
     }
   }
-
-  /**
-   * Generates a globally unique key for this batch of usage metrics
-   */
-  // TODO: This key is not globally unique, in fact.  Also, we should move this functionality to the server.
-  private String generateHttpRequestKey(String customerId) {
-    return customerId + "." + time.nowInUnixTime();
-  }
-
 }
