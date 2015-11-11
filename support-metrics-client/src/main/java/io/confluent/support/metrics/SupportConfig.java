@@ -48,14 +48,14 @@ public class SupportConfig {
   private static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_DOC = "Internal topic used for metric collection. If missing, metrics will not be collected in a Kafka topic ";
 
   /**
-   * <code>confluent.support.confluent.http</code>
+   * <code>confluent.support.metrics.endpoint.insecure</code>
    */
-  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTP_CONFIG = "confluent.support.confluent.http";
+  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTP_CONFIG = "confluent.support.metrics.endpoint.insecure";
   private static final String CONFLUENT_SUPPORT_CONFLUENT_HTTP_DOC = "Confluent endpoint that receives metrics over HTTP";
 
   /**
-   * <code>confluent.support.confluent.https</code>
+   * <code>confluent.support.metrics.endpoint.secure</code>
    */
-  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTPS_CONFIG = "confluent.support.confluent.https";
+  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTPS_CONFIG = "confluent.support.metrics.endpoint.secure";
   private static final String CONFLUENT_SUPPORT_CONFLUENT_HTTPS_DOC = "Confluent endpoint that receives metrics over HTTPS";
 }
