@@ -30,10 +30,10 @@ FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.bin"
 
 print_help() {
   local script_name="$1"
+  echo "Usage: $script_name --zookeeper <server:port> [--topic <Kafka support topic>] [--output <output file>]"
+  echo
   echo "Creates a so-called 'support metrics bundle' file in the current directory."
   echo "This support metrics bundle contains metrics retrieved from the target Kafka cluster."
-  echo
-  echo "Usage: $script_name --zookeeper <server:port> [--topic <Kafka support topic>] [--output <output file>]"
   echo
   echo "Parameters:"
   echo "-zookeeper   The ZooKeeper connection string to access the Kafka cluster from"
