@@ -18,6 +18,10 @@ $ git clone git@github.com:confluentinc/kafka.git && cd kafka
 $ ./gradlew -PscalaVersion=2.11.7 clean install
 ```
 
+Also, this project requires [support-metrics-common](https://github.com/confluentinc/support-metrics-common)
+and [support-metrics-fullcollector](https://github.com/confluentinc/support-metrics-fullcollector), which
+you may need to build and install locally prior to running the build for this project.
+
 
 ## Building
 
