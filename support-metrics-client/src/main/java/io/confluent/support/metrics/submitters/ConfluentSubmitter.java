@@ -44,8 +44,12 @@ public class ConfluentSubmitter {
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
   public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
-    this.endpointHTTP = endpointHTTP;
-    this.endpointHTTPS = endpointHTTPS;
+    if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
+      throw new IllegalArgumentException("must specify Confluent Service endpoint");
+    } else {
+      this.endpointHTTP = endpointHTTP;
+      this.endpointHTTPS = endpointHTTPS;
+    }
   }
 
   /**
