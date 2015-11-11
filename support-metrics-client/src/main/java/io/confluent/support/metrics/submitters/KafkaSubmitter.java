@@ -18,12 +18,6 @@ public class KafkaSubmitter {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaSubmitter.class);
 
-  private static final String BOOTSTRAP_SERVERS_CONFIG = ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
-  private static final String KEY_SERIALIZER_CLASS_CONFIG = ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-  private static final String ACKS_CONFIG = ProducerConfig.ACKS_CONFIG;
-  private static final String RETRIES_CONFIG = ProducerConfig.RETRIES_CONFIG;
-  private static final String RETRY_BACKOFF_MS_CONFIG = ProducerConfig.RETRY_BACKOFF_MS_CONFIG;
-  private static final String VALUE_SERIALIZER_CLASS_CONFIG = ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
   private static final Integer requiredNumAcks = 0;
   private static final int retries = 0;
   private static final int retryBackoffMs = 10 * 1000;
@@ -74,12 +68,14 @@ public class KafkaSubmitter {
 
   private Producer<byte[], byte[]> createProducer() {
     Properties props = new Properties();
-    props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
-    props.put(RETRIES_CONFIG, retries);
-    props.put(ACKS_CONFIG, Integer.toString(requiredNumAcks));
-    props.put(RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
-    props.put(KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
-    props.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
+    props.put(ProducerConfig.RETRIES_CONFIG, retries);
+    props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
+    props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.ByteArraySerializer");
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        "org.apache.kafka.common.serialization.ByteArraySerializer");
     return new KafkaProducer<>(props);
   }
 
