@@ -1,19 +1,5 @@
-/**
- * Copyright 2015 Confluent Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.confluent.support.metrics.tools;
+
 
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
@@ -21,11 +7,13 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Random;
 import java.util.Properties;
 
 public class KafkaMetricsToFile {
@@ -33,14 +21,14 @@ public class KafkaMetricsToFile {
     private static String topic;
     private static String zookeeper;
     private static String outputPath;
-    private final Integer timeoutMs = new Integer(10000);
-    private static File outputFile;
+    private final Integer timeoutMs = new Integer(15000);
+
 
     public KafkaMetricsToFile(String groupId) {
         Properties props = new Properties();
         props.put("zookeeper.connect", zookeeper);
         props.put("group.id", groupId);
-        props.put("zookeeper.session.timeout.ms", "500");
+        props.put("zookeeper.session.timeout.ms", "1000");
         props.put("zookeeper.sync.time.ms", "250");
         props.put("auto.commit.interval.ms", "1000");
         props.put("consumer.timeout.ms", timeoutMs.toString());
@@ -50,7 +38,16 @@ public class KafkaMetricsToFile {
     }
 
     public void collectMetrics() {
+        int numMessages = 0;
         Map<String, Integer> topicCount = new HashMap<>();
+        FileOutputStream out;
+        try {
+            out = new FileOutputStream(outputPath, true);
+        } catch (java.io.FileNotFoundException e) {
+            System.err.println(e.toString());
+            return;
+        }
+
         topicCount.put(topic, 1);
 
         Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
@@ -59,14 +56,18 @@ public class KafkaMetricsToFile {
             try {
                 ConsumerIterator<byte[], byte[]> it = stream.iterator();
                 while (it.hasNext()) {
-                    Files.write(outputFile.toPath(), it.next().message());
-                    System.out.println("Receiving messages");
+                    out.write(it.next().message());
+                    out.write("\n".getBytes());
+                    System.out.println("Collecting metric batch #" + numMessages);
+                    numMessages++;
                 }
+                out.close();
             } catch (Exception e) {
                 break;
             }
 
         }
+
         if (consumer != null) {
             consumer.shutdown();
         }
@@ -80,9 +81,9 @@ public class KafkaMetricsToFile {
         zookeeper = args[0];
         topic = args[1];
         outputPath = args[2];
-        outputFile = new File(outputPath);
 
-        KafkaMetricsToFile consumer = new KafkaMetricsToFile("KafkaSupportGroup");
+
+        KafkaMetricsToFile consumer = new KafkaMetricsToFile("KafkaSupportGroup" + new Random().nextInt(100000));
         consumer.collectMetrics();
     }
 }
