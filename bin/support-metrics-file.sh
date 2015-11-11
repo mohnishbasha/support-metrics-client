@@ -49,6 +49,8 @@ print_help() {
   echo
   echo "Important notes:"
   echo "* Make sure that Zookeeper and Kafka are running while executing this tool."
+  echo
+  echo "Copyright 2015 Confluent Inc. <http://confluent.io/>"
 }
 
 if [ $# -eq 0 ]; then
