@@ -19,7 +19,7 @@ MYSELF=`basename $0`
 ###
 ### Configuration
 ###
-TOPIC="__ConfluentSupportTopic"
+TOPIC="__confluent.support.metrics"
 TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
 FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.bin"
 
