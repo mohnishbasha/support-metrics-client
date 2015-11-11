@@ -84,6 +84,11 @@ CLASSPATH=$CLASSPATH:$base_dir/libs/*
 # classpath addition for releases with LSB-style layout
 CLASSPATH=$CLASSPATH:$base_dir/share/java/kafka/*
 
+# classpath additions for Confluent Platform
+CLASSPATH=$CLASSPATH:$base_dir/share/java/confluent-support-metrics-common/*
+CLASSPATH=$CLASSPATH:$base_dir/share/java/confluent-support-metrics-client/*
+CLASSPATH=$CLASSPATH:$base_dir/share/java/confluent-support-metrics-fullcollector/*
+
 for file in $base_dir/core/build/libs/kafka_${SCALA_BINARY_VERSION}*.jar;
 do
   CLASSPATH=$CLASSPATH:$file

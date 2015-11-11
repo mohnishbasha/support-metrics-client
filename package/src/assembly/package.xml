@@ -29,9 +29,7 @@
     </fileSets>
     <dependencySets>
         <dependencySet>
-            <!-- Same directory as we use for Kafka's jar files;
-                 see https://github.com/confluentinc/kafka-packaging -->
-            <outputDirectory>share/java/kafka</outputDirectory>
+            <outputDirectory>share/java/confluent-support-metrics-client</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <scope>runtime</scope>
         </dependencySet>
