@@ -47,7 +47,7 @@ while [ $# -gt 0 ]; do
     --o)
       FILEOUT=$2
       shift 2
-      ;;    
+      ;;
     *)
       break
       ;;
