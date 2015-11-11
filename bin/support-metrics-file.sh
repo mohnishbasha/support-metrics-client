@@ -32,7 +32,7 @@ fi
 
 TOPIC="__ConfluentSupportTopic"
 TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
-FILEOUT="dump-${TOPIC}.${TIMESTAMP}.bin"
+FILEOUT="support-${TOPIC}.${TIMESTAMP}.bin"
 while [ $# -gt 0 ]; do
   COMMAND=$1
   case $COMMAND in
