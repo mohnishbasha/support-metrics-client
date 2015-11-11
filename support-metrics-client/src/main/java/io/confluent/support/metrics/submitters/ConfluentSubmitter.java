@@ -19,6 +19,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -52,15 +53,14 @@ public class ConfluentSubmitter {
   /**
    * Submits metrics to Confluent via the Internet.  Ignores null inputs.
    */
-  // TODO: Once requestKey is moved to the server we can shorten this signature and introduce an interface.
-  public void submit(String requestKey, byte[] encodedMetricsRecord) {
+  public void submit(byte[] encodedMetricsRecord) {
     if (encodedMetricsRecord != null) {
       int statusCode = DEFAULT_STATUS_CODE;
-      statusCode = sendSecurely(requestKey, encodedMetricsRecord);
+      statusCode = sendSecurely(encodedMetricsRecord);
       if (!submittedSuccessfully(statusCode)) {
         log.warn("Failed to submit metrics via secure channel, falling back to insecure channel");
-        log.info("Attempting insecure transmission of metrics to Confluent, using request key {}", requestKey);
-        statusCode = sendInsecurely(requestKey, encodedMetricsRecord);
+        log.info("Attempting insecure transmission of metrics to Confluent");
+        statusCode = sendInsecurely(encodedMetricsRecord);
         if (submittedSuccessfully(statusCode)) {
           log.info("Successfully submitted metrics to Confluent via insecure channel");
         } else {
@@ -78,30 +78,29 @@ public class ConfluentSubmitter {
     return statusCode == HttpStatus.SC_OK;
   }
 
-  private int sendSecurely(String requestKey, byte[] encodedMetricsRecord) {
-    return send(requestKey, encodedMetricsRecord, endpointHTTPS);
+  private int sendSecurely(byte[] encodedMetricsRecord) {
+    return send(encodedMetricsRecord, endpointHTTPS);
   }
 
-  private int sendInsecurely(String requestKey, byte[] encodedMetricsRecord) {
-    return send(requestKey, encodedMetricsRecord, endpointHTTP);
+  private int sendInsecurely(byte[] encodedMetricsRecord) {
+    return send(encodedMetricsRecord, endpointHTTP);
   }
 
-  private int send(String requestKey, byte[] encodedMetricsRecord, String endpoint) {
+  private int send(byte[] encodedMetricsRecord, String endpoint) {
     int statusCode = DEFAULT_STATUS_CODE;
     try {
       HttpPost httpPost = new HttpPost(endpoint);
       final RequestConfig config = RequestConfig.custom().
-          setConnectTimeout(requestTimeoutMs).
-          setConnectionRequestTimeout(requestTimeoutMs).
-          setSocketTimeout(requestTimeoutMs).
-          build();
+              setConnectTimeout(requestTimeoutMs).
+              setConnectionRequestTimeout(requestTimeoutMs).
+              setSocketTimeout(requestTimeoutMs).
+              build();
       CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
       MultipartEntityBuilder builder = MultipartEntityBuilder.create();
       builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-      builder.addTextBody("key", requestKey);
-      builder.addBinaryBody("data", encodedMetricsRecord);
+      builder.addBinaryBody("file", encodedMetricsRecord, ContentType.DEFAULT_BINARY, "filename");
       httpPost.setEntity(builder.build());
-      log.debug("Executing POST request with request key {}", requestKey);
+      log.debug("Executing POST request with data length {} bytes", encodedMetricsRecord.length);
       CloseableHttpResponse response = httpclient.execute(httpPost);
       log.debug("POST request returned {}", response.getStatusLine().toString());
       statusCode = response.getStatusLine().getStatusCode();
