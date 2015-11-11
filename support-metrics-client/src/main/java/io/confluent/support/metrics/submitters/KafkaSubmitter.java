@@ -1,17 +1,15 @@
 /**
  * Copyright 2015 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.confluent.support.metrics.submitters;
 
@@ -27,8 +25,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import kafka.server.KafkaServer;
-
 public class KafkaSubmitter {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaSubmitter.class);
@@ -37,33 +33,42 @@ public class KafkaSubmitter {
   private static final int retries = 0;
   private static final int retryBackoffMs = 10 * 1000;
 
-  private final KafkaServer server;
+  private final String bootstrapServers;
   private final String topic;
 
   /**
-   * @param topic The Kafka topic to which collected metrics are being sent.
    */
-  public KafkaSubmitter(KafkaServer server, String topic) {
-    if (server == null) {
-      throw new IllegalArgumentException("Server must not be null");
+  /**
+   * @param bootstrapServers The bootstrap brokers via which we connect to the Kafka cluster to
+   *                         which we submit data.  Example: "localhost:9092".
+   * @param topic            The Kafka topic to which data is being sent.
+   */
+  public KafkaSubmitter(String bootstrapServers, String topic) {
+    if (bootstrapServers == null || bootstrapServers.isEmpty()) {
+      throw new IllegalArgumentException("must specify bootstrap servers");
     } else {
-      this.server = server;
+      this.bootstrapServers = bootstrapServers;
     }
     if (topic == null || topic.isEmpty()) {
-      throw new IllegalArgumentException("Topic must not be empty");
+      throw new IllegalArgumentException("must specify topic");
     } else {
       this.topic = topic;
     }
   }
 
   /**
-   * Submits metrics to the configured Kafka topic.  Ignores null inputs.
    */
-  public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord != null) {
+  /**
+   * Submits data to the configured Kafka topic.  Ignores null inputs.
+   *
+   * @param bytes The (serialized) data to be sent.  The data is sent as the "value" of a Kafka
+   *              message.
+   */
+  public void submit(byte[] bytes) {
+    if (bytes != null) {
       Producer<byte[], byte[]> producer = createProducer();
       Future<RecordMetadata> response =
-          producer.send(new ProducerRecord<byte[], byte[]>(topic, encodedMetricsRecord));
+          producer.send(new ProducerRecord<byte[], byte[]>(topic, bytes));
       producer.close();
       // Block until Kafka acknowledged the receipt of the message
       try {
@@ -83,7 +88,7 @@ public class KafkaSubmitter {
 
   private Producer<byte[], byte[]> createProducer() {
     Properties props = new Properties();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ProducerConfig.RETRIES_CONFIG, retries);
     props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
     props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
@@ -92,12 +97,6 @@ public class KafkaSubmitter {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
         "org.apache.kafka.common.serialization.ByteArraySerializer");
     return new KafkaProducer<>(props);
-  }
-
-  private String bootstrapServers() {
-    String hostname = server.config().advertisedHostName();
-    Integer port = server.config().advertisedPort();
-    return hostname + ":" + port.toString();
   }
 
 }
