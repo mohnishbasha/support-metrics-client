@@ -96,29 +96,29 @@ public class MetricsReporter implements Runnable {
   }
 
   private long getReportIntervalMs(Properties serverConfiguration) {
-    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG);
+    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG);
     if (intervalString == null || intervalString.isEmpty()) {
-      intervalString = SupportConfig.CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DEFAULT;
+      intervalString = SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT;
     }
     try {
       long intervalHours = Long.parseLong(intervalString);
       if (intervalHours < 1) {
         throw new ConfigException(
-            SupportConfig.CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG,
+            SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
             intervalString,
             "Interval must be >= 1");
       }
       return intervalHours * 60 * 60 * 1000;
     } catch (NumberFormatException e) {
       throw new ConfigException(
-          SupportConfig.CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG,
+          SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
           intervalString,
           "Interval is not an integer number");
     }
   }
 
   private String getKafkaTopic(Properties serverConfiguration) {
-    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_CONFIG);
+    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     if (topic == null) {
       return "";
     } else {
@@ -133,11 +133,11 @@ public class MetricsReporter implements Runnable {
   }
 
   private String getEndpointHTTP(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CONFLUENT_HTTP_CONFIG, "");
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
   }
 
   private String getEndpointHTTPS(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CONFLUENT_HTTPS_CONFIG, "");
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
   }
 
   private boolean reportingEnabled() {

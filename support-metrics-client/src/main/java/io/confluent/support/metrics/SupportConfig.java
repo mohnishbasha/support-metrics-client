@@ -37,25 +37,25 @@ public class SupportConfig {
   /**
    * <code>confluent.support.metrics.report.interval.hours</code>
    */
-  public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG = "confluent.support.metrics.report.interval.hours";
-  private static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DOC = "Frequency of reporting in hours, e.g., 24 would indicate every day ";
-  public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DEFAULT = "24";
+  public static final String CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG = "confluent.support.metrics.report.interval.hours";
+  private static final String CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DOC = "Frequency of reporting in hours, e.g., 24 would indicate every day ";
+  public static final String CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT = "24";
 
   /**
    * <code>confluent.support.metrics.topic</code>
    */
-  public static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_CONFIG = "confluent.support.metrics.topic";
-  private static final String CONFLUENT_SUPPORT_INTERNAL_KAFKA_TOPIC_DOC = "Internal topic used for metric collection. If missing, metrics will not be collected in a Kafka topic ";
+  public static final String CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG = "confluent.support.metrics.topic";
+  private static final String CONFLUENT_SUPPORT_METRICS_TOPIC_DOC = "Internal topic used for metric collection. If missing, metrics will not be collected in a Kafka topic ";
 
   /**
    * <code>confluent.support.metrics.endpoint.insecure</code>
    */
-  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTP_CONFIG = "confluent.support.metrics.endpoint.insecure";
-  private static final String CONFLUENT_SUPPORT_CONFLUENT_HTTP_DOC = "Confluent endpoint that receives metrics over HTTP";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG = "confluent.support.metrics.endpoint.insecure";
+  private static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DOC = "Confluent endpoint that receives metrics over HTTP";
 
   /**
    * <code>confluent.support.metrics.endpoint.secure</code>
    */
-  public static final String CONFLUENT_SUPPORT_CONFLUENT_HTTPS_CONFIG = "confluent.support.metrics.endpoint.secure";
-  private static final String CONFLUENT_SUPPORT_CONFLUENT_HTTPS_DOC = "Confluent endpoint that receives metrics over HTTPS";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG = "confluent.support.metrics.endpoint.secure";
+  private static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DOC = "Confluent endpoint that receives metrics over HTTPS";
 }
