@@ -2,36 +2,36 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2
           http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-    <!-- Assembles a packaged jar that includes all dependencies. -->
-    <id>package</id>
-    <formats>
-        <format>dir</format>
-    </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
-    <fileSets>
-        <fileSet>
-            <directory>${project.parent.basedir}</directory>
-            <outputDirectory>share/doc/confluent-support-metrics-client/</outputDirectory>
-            <includes>
-                <include>README*</include>
-                <include>LICENSE*</include>
-                <include>NOTICE*</include>
-                <include>licenses/</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.parent.basedir}</directory>
-            <outputDirectory></outputDirectory>
-            <includes>
-                <include>bin/*</include>
-            </includes>
-        </fileSet>
-    </fileSets>
-    <dependencySets>
-        <dependencySet>
-            <outputDirectory>share/java/confluent-support-metrics-client</outputDirectory>
-            <useProjectArtifact>true</useProjectArtifact>
-            <scope>runtime</scope>
-        </dependencySet>
-    </dependencySets>
+  <!-- Assembles a packaged jar that includes all dependencies. -->
+  <id>package</id>
+  <formats>
+    <format>dir</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <fileSet>
+      <directory>${project.parent.basedir}</directory>
+      <outputDirectory>share/doc/confluent-support-metrics-client/</outputDirectory>
+      <includes>
+        <include>README*</include>
+        <include>LICENSE*</include>
+        <include>NOTICE*</include>
+        <include>licenses/</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>${project.parent.basedir}</directory>
+      <outputDirectory></outputDirectory>
+      <includes>
+        <include>bin/*</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>share/java/confluent-support-metrics-client</outputDirectory>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+    </dependencySet>
+  </dependencySets>
 </assembly>
