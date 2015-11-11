@@ -25,7 +25,7 @@
     <kafka.scala.version>2.11</kafka.scala.version>
     <junit.version>4.12</junit.version>
     <assertj.version>2.2.0</assertj.version>
-    <easymock.version>3.4</easymock.version>
+    <mockito.version>2.0.31-beta</mockito.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven-assembly.version>2.6</maven-assembly.version>
   </properties>

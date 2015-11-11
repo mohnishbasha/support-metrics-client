@@ -16,11 +16,13 @@ package io.confluent.support.metrics.submitters;
 import junit.framework.AssertionFailedError;
 
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.anyOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 public class KafkaSubmitterTest {
 
@@ -91,15 +93,29 @@ public class KafkaSubmitterTest {
     String anyTopic = "valueNotRelevant";
     KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
-    // This `expect` asserts zero interactions with the `producer.send()` method.
-    expect(producer.send(null, null)).andThrow(new AssertionFailedError()).anyTimes();
-    replay(producer);
     byte[] nullData = null;
 
     // When
     k.submit(nullData, producer);
 
     // Then
-    verify(producer);
+    verifyZeroInteractions(producer);
   }
+
+  @Test
+  public void testSubmit() {
+    // Given
+    String anyBootstrapServers = "localhost:1234";
+    String anyTopic = "valueNotRelevant";
+    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    Producer<byte[], byte[]> producer = mock(Producer.class);
+    byte[] anyData = new byte[10];
+
+    // When
+    k.submit(anyData, producer);
+
+    // Then
+    verify(producer).send(any(ProducerRecord.class));
+  }
+
 }

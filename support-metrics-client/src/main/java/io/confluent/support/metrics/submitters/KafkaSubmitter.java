@@ -76,7 +76,11 @@ public class KafkaSubmitter {
       producer.close();
       // Block until Kafka acknowledged the receipt of the message
       try {
-        response.get();
+        if (response != null) {
+          response.get();
+        } else {
+          log.error("Failed to submit metrics to Kafka topic {}: null response", topic);
+        }
         log.info("Successfully submitted metrics to Kafka topic {}", topic);
       } catch (InterruptedException e) {
         log.error("Failed to submit metrics to Kafka topic {} (canceled request): {}",
