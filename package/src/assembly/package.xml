@@ -29,7 +29,7 @@
   </fileSets>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>share/java/confluent-support-metrics-client</outputDirectory>
+      <outputDirectory>share/java/confluent-support-metrics-client/</outputDirectory>
       <useProjectArtifact>true</useProjectArtifact>
       <scope>runtime</scope>
     </dependencySet>
