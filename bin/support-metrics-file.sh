@@ -45,6 +45,7 @@ print_help() {
   echo "             Default: '$FILEOUT'"
   echo "             Note that, when using the default value, the timestamp is dynamically"
   echo "             generated at each run of this tool."
+  echo "--help       Print this help message."
   echo
   echo "Important notes:"
   echo "* Make sure that Zookeeper and Kafka are running while executing this tool."
@@ -62,15 +63,15 @@ while [ $# -gt 0 ]; do
       ZOOKEEPER_SERVER=$2
       shift 2
       ;;
-    --topic)
+    -t|--topic)
       TOPIC=$2
       shift 2
       ;;
-    --output)
+    -o|--output)
       FILEOUT=$2
       shift 2
       ;;
-    --help)
+    -h|--help)
       shift 1
       print_help $MYSELF
       exit 1
