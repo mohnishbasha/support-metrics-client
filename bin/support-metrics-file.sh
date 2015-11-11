@@ -77,6 +77,10 @@ while [ $# -gt 0 ]; do
       exit 1
       ;;
     *)
+      echo "*** ERROR: Unknown parameter '$COMMAND'"
+      echo
+      print_help $MYSELF
+      exit 2
       break
       ;;
   esac
