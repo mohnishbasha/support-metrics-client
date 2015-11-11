@@ -56,7 +56,9 @@ public class ConfluentSubmitter {
    * Submits metrics to Confluent via the Internet.  Ignores null inputs.
    */
   public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord != null) {
+    if (encodedMetricsRecord == null) {
+      throw new IllegalArgumentException("must send non-NULL record");
+    } else {
       int statusCode = DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
         statusCode = sendSecurely(encodedMetricsRecord);
@@ -77,8 +79,6 @@ public class ConfluentSubmitter {
           log.error("Metrics will not be submitted because all endpoints are disabled");
         }
       }
-    } else {
-      log.error("Could not submit metrics to Confluent (metrics data missing)");
     }
   }
 

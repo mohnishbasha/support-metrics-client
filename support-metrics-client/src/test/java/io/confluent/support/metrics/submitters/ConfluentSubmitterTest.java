@@ -100,4 +100,22 @@ public class ConfluentSubmitterTest {
         }
     }
 
+    @Test
+    public void testSubmitIgnoresNullInput() {
+        // Given
+        String httpEndpoint = "valueNotRelevant";
+        String httpsEndpoint = "valueNotRelevant";
+
+        // When
+        ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+        byte[] nullData = null;
+
+        // When
+        try {
+            c.submit(nullData);
+            fail("IllegalArgumentException expected because data is NULL");
+        } catch (Exception e) {
+            assertThat(e).hasMessage("must send non-NULL record");
+        }
+    }
 }
