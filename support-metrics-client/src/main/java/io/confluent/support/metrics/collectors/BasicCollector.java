@@ -20,8 +20,7 @@ public class BasicCollector implements Collector {
    */
   @Override
   public GenericContainer collectMetrics() {
-    SupportKafkaMetricsBasic metricsRecord = null;
-    metricsRecord = new SupportKafkaMetricsBasic();
+    SupportKafkaMetricsBasic metricsRecord = new SupportKafkaMetricsBasic();
     metricsRecord.setTimestamp(time.nowInUnixTime());
     metricsRecord.setKafkaVersion(AppInfoParser.getVersion());
     // TODO: Correctly determine the CP version information.
