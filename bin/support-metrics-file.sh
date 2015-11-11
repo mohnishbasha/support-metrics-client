@@ -14,25 +14,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#
-# This script produces a dump file in the current directory
-#
+MYSELF=`basename $0`
+
+###
+### Configuration
+###
+TOPIC="__ConfluentSupportTopic"
+TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
+FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.bin"
 
 
-if [ "x$KAFKA_HEAP_OPTS" = "x" ]; then
-  export KAFKA_HEAP_OPTS="-Xmx512M"
-fi
+###
+### Main
+###
 
-echo "Make sure that zookeeper and brokers are running while executing this command"
-if [ $# -lt 3 ];
-then
-  echo "USAGE: $0 --zookeeper <server:port> --topic <Kafka support topic> [--o <output file>]"
+print_help() {
+  local script_name="$1"
+  echo "Creates a so-called 'support metrics bundle' file in the current directory."
+  echo "This support metrics bundle contains metrics retrieved from the target Kafka cluster."
+  echo
+  echo "Usage: $script_name --zookeeper <server:port> [--topic <Kafka support topic>] [--output <output file>]"
+  echo
+  echo "Parameters:"
+  echo "-zookeeper   The ZooKeeper connection string to access the Kafka cluster from"
+  echo "             which metrics support will be retrieved."
+  echo "             Example: 'localhost:2181'"
+  echo "--topic      The Kafka topic from which the support metrics will be retrieved."
+  echo "             Default: '$TOPIC'"
+  echo "--output     Output filename of the support metrics bundle."
+  echo "             Default: '$FILEOUT'"
+  echo "             Note that, when using the default value, the timestamp is dynamically"
+  echo "             generated at each run of this tool."
+  echo
+  echo "Important notes:"
+  echo "* Make sure that Zookeeper and Kafka are running while executing this tool."
+}
+
+if [ $# -eq 0 ]; then
+  print_help $MYSELF
   exit 1
 fi
 
-TOPIC="__ConfluentSupportTopic"
-TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
-FILEOUT="support-${TOPIC}.${TIMESTAMP}.bin"
 while [ $# -gt 0 ]; do
   COMMAND=$1
   case $COMMAND in
@@ -44,9 +66,14 @@ while [ $# -gt 0 ]; do
       TOPIC=$2
       shift 2
       ;;
-    --o)
+    --output)
       FILEOUT=$2
       shift 2
+      ;;
+    --help)
+      shift 1
+      print_help $MYSELF
+      exit 1
       ;;
     *)
       break
@@ -54,7 +81,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-
+if [ "x$KAFKA_HEAP_OPTS" = "x" ]; then
+  export KAFKA_HEAP_OPTS="-Xmx512M"
+fi
 
 exec $(dirname $0)/kafka-run-class io.confluent.support.metrics.tools.KafkaMetricsToFile $ZOOKEEPER_SERVER $TOPIC $FILEOUT
-echo "Data collection complete. Please attach output file $FILEOUT to support ticket"
+if [ $? -eq 0 ]; then
+  echo "Support metrics bundle created at $FILEOUT.  You may attach this file to your support tickets."
+else
+  echo "ERROR: Could not create support metrics bundle."
+fi
