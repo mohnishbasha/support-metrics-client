@@ -1,17 +1,15 @@
 /**
  * Copyright 2015 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.confluent.support.metrics.submitters;
 
@@ -56,22 +54,45 @@ public class ConfluentSubmitter {
   public void submit(byte[] encodedMetricsRecord) {
     if (encodedMetricsRecord != null) {
       int statusCode = DEFAULT_STATUS_CODE;
-      statusCode = sendSecurely(encodedMetricsRecord);
-      if (!submittedSuccessfully(statusCode)) {
-        log.warn("Failed to submit metrics via secure channel, falling back to insecure channel");
-        log.info("Attempting insecure transmission of metrics to Confluent");
-        statusCode = sendInsecurely(encodedMetricsRecord);
-        if (submittedSuccessfully(statusCode)) {
-          log.info("Successfully submitted metrics to Confluent via insecure channel");
+      if (isSecureEndpointEnabled()) {
+        statusCode = sendSecurely(encodedMetricsRecord);
+        if (!submittedSuccessfully(statusCode)) {
+          if (isInsecureEndpointEnabled()) {
+            log.warn("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
+            submitToInsecureEndpoint(encodedMetricsRecord);
+          } else {
+            log.warn("Failed to submit metrics via secure endpoint -- giving up");
+          }
         } else {
-          log.warn("Failed to submit metrics to Confluent via insecure channel");
+          log.info("Successfully submitted metrics to Confluent via secure endpoint");
         }
       } else {
-        log.info("Successfully submitted metrics to Confluent via secure channel");
+        if (isInsecureEndpointEnabled()) {
+          submitToInsecureEndpoint(encodedMetricsRecord);
+        } else {
+          log.error("Metrics will not be submitted because all endpoints are disabled");
+        }
       }
     } else {
       log.error("Could not submit metrics to Confluent (metrics data missing)");
     }
+  }
+
+  private void submitToInsecureEndpoint(byte[] encodedMetricsRecord) {
+    int statusCode = sendInsecurely(encodedMetricsRecord);
+    if (submittedSuccessfully(statusCode)) {
+      log.info("Successfully submitted metrics to Confluent via insecure endpoint");
+    } else {
+      log.warn("Failed to submit metrics to Confluent via insecure endpoint -- giving up");
+    }
+  }
+
+  private boolean isSecureEndpointEnabled() {
+    return !endpointHTTPS.isEmpty();
+  }
+
+  private boolean isInsecureEndpointEnabled() {
+    return !endpointHTTP.isEmpty();
   }
 
   private boolean submittedSuccessfully(int statusCode) {
@@ -91,10 +112,10 @@ public class ConfluentSubmitter {
     try {
       HttpPost httpPost = new HttpPost(endpoint);
       final RequestConfig config = RequestConfig.custom().
-              setConnectTimeout(requestTimeoutMs).
-              setConnectionRequestTimeout(requestTimeoutMs).
-              setSocketTimeout(requestTimeoutMs).
-              build();
+          setConnectTimeout(requestTimeoutMs).
+          setConnectionRequestTimeout(requestTimeoutMs).
+          setSocketTimeout(requestTimeoutMs).
+          build();
       CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
       MultipartEntityBuilder builder = MultipartEntityBuilder.create();
       builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
