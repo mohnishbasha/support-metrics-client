@@ -35,9 +35,9 @@ public class SupportConfig {
   }
 
   /**
-   * <code>confluent.support.report.interval.hours</code>
+   * <code>confluent.support.metrics.report.interval.hours</code>
    */
-  public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG = "confluent.support.report.interval.hours";
+  public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_CONFIG = "confluent.support.metrics.report.interval.hours";
   private static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DOC = "Frequency of reporting in hours, e.g., 24 would indicate every day ";
   public static final String CONFLUENT_SUPPORT_REPORT_INTERVAL_HOURS_DEFAULT = "24";
 
