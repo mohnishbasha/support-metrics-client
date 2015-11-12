@@ -14,7 +14,8 @@
 package io.confluent.support.metrics.submitters;
 
 import junit.framework.AssertionFailedError;
-
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.protocol.HTTP;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Test;
@@ -105,17 +106,14 @@ public class ConfluentSubmitterTest {
         // Given
         String httpEndpoint = "valueNotRelevant";
         String httpsEndpoint = "valueNotRelevant";
-
-        // When
+        HttpPost p = mock(HttpPost.class);
         ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
         byte[] nullData = null;
 
         // When
-        try {
-            c.submit(nullData);
-            fail("IllegalArgumentException expected because data is NULL");
-        } catch (Exception e) {
-            assertThat(e).hasMessage("must send non-NULL record");
-        }
+        c.submit(null, p);
+
+        // Then
+        verifyZeroInteractions(p);
     }
 }
