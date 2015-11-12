@@ -29,7 +29,19 @@ import io.confluent.support.metrics.common.TimeUtils;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
+import kafka.admin.AdminUtils;
+import kafka.common.InvalidTopicException;
+import kafka.admin.AdminOperationException;
+import kafka.common.TopicExistsException;
 import kafka.server.KafkaServer;
+import kafka.server.RunningAsBroker;
+import kafka.server.RunningAsController;
+import kafka.server.PendingControlledShutdown;
+import kafka.server.BrokerShuttingDown;
+import kafka.utils.ZkUtils;
+import kafka.cluster.Broker;
+import scala.Int;
+import scala.collection.Seq;
 
 
 /**
@@ -45,13 +57,16 @@ public class MetricsReporter implements Runnable {
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
-
   private final Random random = new Random();
   private final KafkaSubmitter kafkaSubmitter;
   private final ConfluentSubmitter confluentSubmitter;
   private final Collector metricsCollector;
   private final AvroSerializer encoder = new AvroSerializer();
   private final TimeUtils time = new TimeUtils();
+  private final KafkaServer server;
+  private int supportTopicReplication = 3;
+  private int supportTopicPartitions = 1;
+  private final int settlingTimeMs = 10000;
 
   /**
    * @param server              The Kafka server.
@@ -85,7 +100,24 @@ public class MetricsReporter implements Runnable {
     if (!reportingEnabled()) {
       log.info("Metrics collection disabled by broker configuration");
     }
+    this.server = server;
   }
+
+  private void checkOrCreateTopic(KafkaServer server, String supportTopic)  {
+    ZkUtils zkUtils = server.zkUtils();
+    Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
+    supportTopicReplication = (supportTopicReplication < brokerList.size()) ? supportTopicReplication : brokerList.size();
+    try {
+      log.info("Attempting to create topic {} with {} replicas. # total brokers {}", supportTopic, supportTopicReplication, brokerList.size());
+      AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, supportTopicReplication, new Properties());
+    } catch (TopicExistsException te) {
+      // topic already exists, success
+      log.info("Topic {} exists.", supportTopic);
+    } catch (AdminOperationException e) {
+      log.info(e.getMessage());
+    }
+  }
+
 
   private String getCustomerId(Properties serverConfiguration) {
     String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
@@ -153,6 +185,32 @@ public class MetricsReporter implements Runnable {
   }
 
   public void run() {
+    log.info("Waiting for server to initialize...");
+    while (reportingEnabled()) {
+      try {
+        // let the server settle
+        Thread.sleep(settlingTimeMs);
+
+        // if server has suddently transitioned to shutting down, just exit
+        if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
+                server.brokerState().currentState() == BrokerShuttingDown.state()) {
+          return;
+        }
+
+        // if server is running, proceed to collecting metrics
+        if (server.brokerState().currentState() == RunningAsBroker.state() ||
+                server.brokerState().currentState() == RunningAsController.state()) {
+          break;
+        }
+      } catch (InterruptedException i) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+    }
+
+    // at this point attempt to create support topic, if not already there
+    checkOrCreateTopic(server, supportTopic);
+
     log.info("Metrics collection started");
     while (reportingEnabled()) {
       try {
