@@ -103,7 +103,7 @@ public class MetricsReporter implements Runnable {
     this.server = server;
   }
 
-  private void checkOrCreateTopic(KafkaServer server, String supportTopic)  {
+  private void createTopicIfMissing(KafkaServer server, String supportTopic)  {
     ZkUtils zkUtils = server.zkUtils();
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
     supportTopicReplication = (supportTopicReplication < brokerList.size()) ? supportTopicReplication : brokerList.size();
@@ -189,7 +189,7 @@ public class MetricsReporter implements Runnable {
     while (reportingEnabled()) {
       try {
         // let the server settle
-        Thread.sleep(settlingTimeMs);
+        Thread.sleep(addOnePercentJitter(settlingTimeMs));
 
         // if server has suddently transitioned to shutting down, just exit
         if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
@@ -209,7 +209,7 @@ public class MetricsReporter implements Runnable {
     }
 
     // at this point attempt to create support topic, if not already there
-    checkOrCreateTopic(server, supportTopic);
+    createTopicIfMissing(server, supportTopic);
 
     log.info("Metrics collection started");
     while (reportingEnabled()) {
