@@ -17,11 +17,10 @@ package io.confluent.support.metrics.collectors;
 
 import org.apache.avro.generic.GenericContainer;
 import org.apache.kafka.common.utils.AppInfoParser;
-
+import io.confluent.support.metrics.util.Version;
 import io.confluent.support.metrics.SupportKafkaMetricsBasic;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.TimeUtils;
-
 public class BasicCollector implements Collector {
 
   private final TimeUtils time;
@@ -38,8 +37,8 @@ public class BasicCollector implements Collector {
     SupportKafkaMetricsBasic metricsRecord = new SupportKafkaMetricsBasic();
     metricsRecord.setTimestamp(time.nowInUnixTime());
     metricsRecord.setKafkaVersion(AppInfoParser.getVersion());
-    // TODO: Correctly determine the CP version information.
-    metricsRecord.setConfluentPlatformVersion(AppInfoParser.getVersion());
+    metricsRecord.setConfluentPlatformVersion(Version.getVersion());
+
     return metricsRecord;
   }
 
