@@ -32,6 +32,14 @@
       <outputDirectory>share/java/confluent-support-metrics-client/</outputDirectory>
       <useProjectArtifact>true</useProjectArtifact>
       <scope>runtime</scope>
+      <!-- We intentionally exclude Kafka and any of its transitive dependencies.
+           This is safe because during packaging we will integrate this project's
+           jar files into Kafka (think: /usr/share/java/kafka/). -->
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <excludes>
+        <exclude>org.apache.kafka:kafka_*</exclude>
+        <exclude>org.apache.kafka:kafka-clients</exclude>
+      </excludes>
     </dependencySet>
   </dependencySets>
 </assembly>
