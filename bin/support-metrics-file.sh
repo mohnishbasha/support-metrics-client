@@ -21,7 +21,7 @@ MYSELF=`basename $0`
 ###
 TOPIC="__confluent.support.metrics"
 TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
-FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.bin"
+FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.zip"
 
 
 ###
