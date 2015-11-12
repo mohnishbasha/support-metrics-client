@@ -56,9 +56,7 @@ public class ConfluentSubmitter {
    * Submits metrics to Confluent via the Internet.  Ignores null inputs.
    */
   public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord == null) {
-      throw new IllegalArgumentException("must send non-NULL record");
-    } else {
+    if (encodedMetricsRecord != null) {
       int statusCode = DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
         statusCode = sendSecurely(encodedMetricsRecord);
@@ -79,6 +77,8 @@ public class ConfluentSubmitter {
           log.error("Metrics will not be submitted because all endpoints are disabled");
         }
       }
+    } else {
+      log.error("Could not submit metrics to Confluent (metrics data missing)");
     }
   }
 
@@ -112,29 +112,34 @@ public class ConfluentSubmitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
+    return submit(encodedMetricsRecord, new HttpPost(endpoint));
+  }
+
+  // This method is `protected` instead of `private` to be visible for testing.
+  protected int submit(byte[] bytes, HttpPost httpPost) {
     int statusCode = DEFAULT_STATUS_CODE;
-    try {
-      HttpPost httpPost = new HttpPost(endpoint);
-      final RequestConfig config = RequestConfig.custom().
-          setConnectTimeout(requestTimeoutMs).
-          setConnectionRequestTimeout(requestTimeoutMs).
-          setSocketTimeout(requestTimeoutMs).
-          build();
-      CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-      MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-      builder.addBinaryBody("file", encodedMetricsRecord, ContentType.DEFAULT_BINARY, "filename");
-      httpPost.setEntity(builder.build());
-      log.debug("Executing POST request with data length {} bytes", encodedMetricsRecord.length);
-      CloseableHttpResponse response = httpclient.execute(httpPost);
-      log.debug("POST request returned {}", response.getStatusLine().toString());
-      statusCode = response.getStatusLine().getStatusCode();
-      response.close();
-      httpclient.close();
-    } catch (IOException e) {
-      log.debug("Could not submit metrics to Confluent via endpoint {}: {}", endpoint, e.getMessage());
+    if (bytes != null && httpPost != null) {
+      try {
+        final RequestConfig config = RequestConfig.custom().
+                setConnectTimeout(requestTimeoutMs).
+                setConnectionRequestTimeout(requestTimeoutMs).
+                setSocketTimeout(requestTimeoutMs).
+                build();
+        CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
+        httpPost.setEntity(builder.build());
+        log.debug("Executing POST request with data length {} bytes", bytes.length);
+        CloseableHttpResponse response = httpclient.execute(httpPost);
+        log.debug("POST request returned {}", response.getStatusLine().toString());
+        statusCode = response.getStatusLine().getStatusCode();
+        response.close();
+        httpclient.close();
+      } catch (IOException e) {
+        log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
+      }
     }
     return statusCode;
   }
-
 }
