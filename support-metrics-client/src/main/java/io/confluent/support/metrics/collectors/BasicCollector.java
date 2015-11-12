@@ -17,7 +17,7 @@ package io.confluent.support.metrics.collectors;
 
 import org.apache.avro.generic.GenericContainer;
 import org.apache.kafka.common.utils.AppInfoParser;
-import io.confluent.support.metrics.util.Version;
+import io.confluent.support.metrics.common.Version;
 import io.confluent.support.metrics.SupportKafkaMetricsBasic;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.TimeUtils;
