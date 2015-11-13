@@ -9,13 +9,13 @@ This repository contains the client application for metrics collection of proact
 
 ## Requirements
 
-This project requires Kafka 0.9 built against Scala 2.11, which as of 02-Nov-2015 is not yet officially released.
+This project requires Kafka 0.9 built against Scala 2.10, which as of 02-Nov-2015 is not yet officially released.
 You must therefore manually build Kafka and install it to your local Maven repository:
 
 ```shell
-# Install Kafka trunk/master (w/ Scala 2.11) to local maven directory
+# Install Kafka trunk/master (w/ Scala 2.10) to local maven directory
 $ git clone git@github.com:confluentinc/kafka.git && cd kafka
-$ ./gradlew -PscalaVersion=2.11.7 clean install
+$ ./gradlew -PscalaVersion=2.10.5 clean install
 ```
 
 Also, this project requires [support-metrics-common](https://github.com/confluentinc/support-metrics-common)
