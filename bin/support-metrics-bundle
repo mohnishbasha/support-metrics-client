@@ -19,9 +19,9 @@ MYSELF=`basename $0`
 ###
 ### Configuration
 ###
-TOPIC="__confluent.support.metrics"
+CONFLUENT_SUPPORT_METRICS_TOPIC="__confluent.support.metrics"
 TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
-FILEOUT="support-metrics-${TOPIC}.${TIMESTAMP}.zip"
+FILEOUT="support-metrics-${CONFLUENT_SUPPORT_METRICS_TOPIC}.${TIMESTAMP}.zip"
 
 
 ###
@@ -40,7 +40,7 @@ print_help() {
   echo "             which metrics support will be retrieved."
   echo "             Example: 'localhost:2181'"
   echo "--topic      The Kafka topic from which the support metrics will be retrieved."
-  echo "             Default: '$TOPIC'"
+  echo "             Default: '$CONFLUENT_SUPPORT_METRICS_TOPIC'"
   echo "--output     Output filename of the support metrics bundle."
   echo "             Default: '$FILEOUT'"
   echo "             Note that, when using the default value, the timestamp is dynamically"
@@ -66,7 +66,7 @@ while [ $# -gt 0 ]; do
       shift 2
       ;;
     -t|--topic)
-      TOPIC=$2
+      CONFLUENT_SUPPORT_METRICS_TOPIC=$2
       shift 2
       ;;
     -o|--output)
@@ -92,7 +92,7 @@ if [ "x$KAFKA_HEAP_OPTS" = "x" ]; then
   export KAFKA_HEAP_OPTS="-Xmx512M"
 fi
 
-exec $(dirname $0)/kafka-run-class io.confluent.support.metrics.tools.KafkaMetricsToFile $ZOOKEEPER_SERVER $TOPIC $FILEOUT
+exec $(dirname $0)/kafka-run-class io.confluent.support.metrics.tools.KafkaMetricsToFile $ZOOKEEPER_SERVER $CONFLUENT_SUPPORT_METRICS_TOPIC $FILEOUT
 if [ $? -eq 0 ]; then
   echo "Support metrics bundle created at $FILEOUT.  You may attach this file to your support tickets."
 else
