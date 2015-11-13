@@ -47,8 +47,9 @@ print_help() {
   echo "             generated at each run of this tool."
   echo "--help       Print this help message."
   echo
-  echo "Important notes:"
-  echo "* Make sure that Zookeeper and Kafka are running while executing this tool."
+  echo "Important notes for running this tool:"
+  echo "* Kafka and ZooKeeper must be up and running."
+  echo "* Kafka and Zookeeper must be accessible from the machine on which this tool is executed."
   echo
   echo "Copyright 2015 Confluent Inc. <http://confluent.io/>"
 }
