@@ -20,6 +20,11 @@ package io.confluent.support.metrics;
 /**
  * Configuration for the Confluent Support options. Documentation for these configurations can be
  * found in TBD
+ *
+ * Note: These Confluent-specific settings are added to {@code config/server.properties} by
+ * Confluent's <a href="https://github.com/confluentinc/kafka-packaging">kafka-packaging</a> via a
+ * patch file.  If you need to make any changes (e.g. renaming settings, adding/removing settings),
+ * then make sure to also update the patch file accordingly.
  */
 public class SupportConfig {
 
