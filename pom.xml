@@ -22,7 +22,10 @@
   <properties>
     <avro.version>1.7.7</avro.version>
     <kafka.version>0.9.0.0</kafka.version>
-    <kafka.scala.version>2.11</kafka.scala.version>
+    <!-- For the moment we must use the "first" Kafka Scala version that we built
+         during packaging (cf. `kafka-packaging`), otherwise the build of this
+         project will fail during packaging due to missing Kafka libraries. -->
+    <kafka.scala.version>2.10</kafka.scala.version>
     <junit.version>4.12</junit.version>
     <assertj.version>2.2.0</assertj.version>
     <mockito.version>2.0.31-beta</mockito.version>
