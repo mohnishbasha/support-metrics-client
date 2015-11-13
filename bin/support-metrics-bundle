@@ -36,7 +36,7 @@ print_help() {
   echo "This support metrics bundle contains metrics retrieved from the target Kafka cluster."
   echo
   echo "Parameters:"
-  echo "-zookeeper   The ZooKeeper connection string to access the Kafka cluster from"
+  echo "--zookeeper  The ZooKeeper connection string to access the Kafka cluster from"
   echo "             which metrics support will be retrieved."
   echo "             Example: 'localhost:2181'"
   echo "--topic      The Kafka topic from which the support metrics will be retrieved."
