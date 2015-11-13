@@ -21,7 +21,7 @@ MYSELF=`basename $0`
 ###
 CONFLUENT_SUPPORT_METRICS_TOPIC="__confluent.support.metrics"
 TIMESTAMP=`date -u +"%Y%m%d-%H%M%S"`
-FILEOUT="support-metrics-${CONFLUENT_SUPPORT_METRICS_TOPIC}.${TIMESTAMP}.zip"
+BUNDLE_FILE="support-metrics-${CONFLUENT_SUPPORT_METRICS_TOPIC}.${TIMESTAMP}.zip"
 
 
 ###
@@ -30,7 +30,7 @@ FILEOUT="support-metrics-${CONFLUENT_SUPPORT_METRICS_TOPIC}.${TIMESTAMP}.zip"
 
 print_help() {
   local script_name="$1"
-  echo "Usage: $script_name --zookeeper <server:port> [--topic <Kafka support topic>] [--output <output file>]"
+  echo "Usage: $script_name --zookeeper <server:port> [--topic <Kafka support topic>] [--file <bundle output file>]"
   echo
   echo "Creates a so-called 'support metrics bundle' file in the current directory."
   echo "This support metrics bundle contains metrics retrieved from the target Kafka cluster."
@@ -41,8 +41,8 @@ print_help() {
   echo "             Example: 'localhost:2181'"
   echo "--topic      The Kafka topic from which the support metrics will be retrieved."
   echo "             Default: '$CONFLUENT_SUPPORT_METRICS_TOPIC'"
-  echo "--output     Output filename of the support metrics bundle."
-  echo "             Default: '$FILEOUT'"
+  echo "--file       Output filename of the support metrics bundle."
+  echo "             Default: '$BUNDLE_FILE'"
   echo "             Note that, when using the default value, the timestamp is dynamically"
   echo "             generated at each run of this tool."
   echo "--help       Print this help message."
@@ -69,8 +69,8 @@ while [ $# -gt 0 ]; do
       CONFLUENT_SUPPORT_METRICS_TOPIC=$2
       shift 2
       ;;
-    -o|--output)
-      FILEOUT=$2
+    -f|--file)
+      BUNDLE_FILE=$2
       shift 2
       ;;
     -h|--help)
@@ -92,9 +92,9 @@ if [ "x$KAFKA_HEAP_OPTS" = "x" ]; then
   export KAFKA_HEAP_OPTS="-Xmx512M"
 fi
 
-exec $(dirname $0)/kafka-run-class io.confluent.support.metrics.tools.KafkaMetricsToFile $ZOOKEEPER_SERVER $CONFLUENT_SUPPORT_METRICS_TOPIC $FILEOUT
+exec $(dirname $0)/kafka-run-class io.confluent.support.metrics.tools.KafkaMetricsToFile $ZOOKEEPER_SERVER $CONFLUENT_SUPPORT_METRICS_TOPIC $BUNDLE_FILE
 if [ $? -eq 0 ]; then
-  echo "Support metrics bundle created at $FILEOUT.  You may attach this file to your support tickets."
+  echo "Support metrics bundle created at $BUNDLE_FILE.  You may attach this file to your support tickets."
 else
   echo "ERROR: Could not create support metrics bundle."
 fi
