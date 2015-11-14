@@ -19,8 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 
 import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
@@ -30,7 +32,7 @@ import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
 import kafka.admin.AdminUtils;
-import kafka.common.InvalidTopicException;
+import kafka.log.LogConfig;
 import kafka.admin.AdminOperationException;
 import kafka.common.TopicExistsException;
 import kafka.server.KafkaServer;
@@ -40,7 +42,7 @@ import kafka.server.PendingControlledShutdown;
 import kafka.server.BrokerShuttingDown;
 import kafka.utils.ZkUtils;
 import kafka.cluster.Broker;
-import scala.Int;
+import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
 
@@ -66,6 +68,7 @@ public class MetricsReporter implements Runnable {
   private final KafkaServer server;
   private int supportTopicReplication = 3;
   private int supportTopicPartitions = 1;
+  private Long retentionMs = new Long(365 * 24 * 60 * 60 * 1000L);
   private final int settlingTimeMs = 10000;
 
   /**
@@ -104,12 +107,26 @@ public class MetricsReporter implements Runnable {
   }
 
   private void createTopicIfMissing(KafkaServer server, String supportTopic)  {
+    int actualReplication = 0;
     ZkUtils zkUtils = server.zkUtils();
+    if (AdminUtils.topicExists(zkUtils, supportTopic)) {
+      verifySupportTopic();
+      return;
+    }
+
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    supportTopicReplication = (supportTopicReplication < brokerList.size()) ? supportTopicReplication : brokerList.size();
+    if (brokerList.size() < supportTopicReplication) {
+      log.warn("Creating the support metrics topic " + supportTopic + " using a replication factor of " +
+              brokerList.size() + ", which is less than the desired one of "
+              + supportTopicReplication + ". If this is a production environment, it's " +
+              "important to add more brokers and increase the replication factor of the topic.");
+    }
+    actualReplication = Math.min(supportTopicReplication, brokerList.size());
     try {
-      log.info("Attempting to create topic {} with {} replicas. # total brokers {}", supportTopic, supportTopicReplication, brokerList.size());
-      AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, supportTopicReplication, new Properties());
+      Properties metricsTopicProps = new Properties();
+      metricsTopicProps.put(LogConfig.RetentionMsProp(), retentionMs.toString());
+      log.info("Attempting to create topic {} with {} replicas. # total brokers {}", supportTopic, actualReplication, brokerList.size());
+      AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
       // topic already exists, success
       log.info("Topic {} exists.", supportTopic);
@@ -118,6 +135,26 @@ public class MetricsReporter implements Runnable {
     }
   }
 
+  private void verifySupportTopic() {
+    Set<String> topics = new HashSet<String>();
+    topics.add(supportTopic);
+
+    // check # partition and the replication factor
+    scala.collection.Map partitionAssignment = server.zkUtils().getPartitionAssignmentForTopics(
+            JavaConversions.asScalaSet(topics).toSeq())
+            .get(supportTopic).get();
+
+    if (partitionAssignment.size() != supportTopicPartitions) {
+      log.warn("The support topic " + supportTopic + " should have only {} partitions.", supportTopicPartitions);
+    }
+
+    if (((Seq) partitionAssignment.get(0).get()).size() < supportTopicReplication) {
+      log.warn("The replication factor of the metrics topic " + supportTopic + " is less than the " +
+              "desired one of " + supportTopicReplication + ". If this is a production " +
+              "environment, it's important to add more brokers and increase the replication " +
+              "factor of the topic.");
+    }
+  }
 
   private String getCustomerId(Properties serverConfiguration) {
     String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
