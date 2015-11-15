@@ -22,6 +22,7 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +47,28 @@ public class ConfluentSubmitter {
   public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify Confluent Service endpoint");
+    }
+    if (endpointHTTP != null) {
+      if (!testEndpointValid(new String[]{"http"}, endpointHTTP)) {
+        throw new IllegalArgumentException("invalid Confluent Service HTTP endpoint");
+      }
+    }
+    if (endpointHTTPS != null) {
+      if (!testEndpointValid(new String[]{"https"}, endpointHTTPS)) {
+        throw new IllegalArgumentException("invalid Confluent Service HTTPS endpoint");
+      }
+    }
+    this.endpointHTTP = endpointHTTP;
+    this.endpointHTTPS = endpointHTTPS;
+
+  }
+
+  private boolean testEndpointValid(String[] schemes, String endpoint) {
+    UrlValidator urlValidator = new UrlValidator(schemes);
+    if (urlValidator.isValid(endpoint)) {
+      return true;
     } else {
-      this.endpointHTTP = endpointHTTP;
-      this.endpointHTTPS = endpointHTTPS;
+      return false;
     }
   }
 

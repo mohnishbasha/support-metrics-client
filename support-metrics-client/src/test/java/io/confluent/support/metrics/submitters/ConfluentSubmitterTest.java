@@ -90,8 +90,8 @@ public class ConfluentSubmitterTest {
     @Test
     public void testValidArgumentsForConstructor() {
         // Given
-        String httpEndpoint = "http://endpoint1";
-        String httpsEndpoint = "https://endpoint1";
+        String httpEndpoint = "http://example.com";
+        String httpsEndpoint = "https://example.com";
 
         // When/Then
         try {
@@ -102,10 +102,40 @@ public class ConfluentSubmitterTest {
     }
 
     @Test
+    public void testInValidArgumentsForConstructorInvalidEndpoints() {
+        // Given
+        String httpEndpoint = "not a valid URL";
+        String httpsEndpoint = "https://not a valid URL";
+
+        // When/Then
+        try {
+            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+            fail("IllegalArgumentException expected because endpoints are invalid");
+        } catch (Exception e) {
+            assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
+        }
+    }
+
+    @Test
+    public void testInValidArgumentsForConstructorMismatchedEndpoints() {
+        // Given
+        String httpEndpoint = "https://example.com";
+        String httpsEndpoint = "http://example.com";
+
+        // When/Then
+        try {
+            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+            fail("IllegalArgumentException expected because endpoints are invalid");
+        } catch (Exception e) {
+            assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
+        }
+    }
+
+    @Test
     public void testSubmitIgnoresNullInput() {
         // Given
-        String httpEndpoint = "valueNotRelevant";
-        String httpsEndpoint = "valueNotRelevant";
+        String httpEndpoint = "http://example.com";
+        String httpsEndpoint = "https://example.com";
         HttpPost p = mock(HttpPost.class);
         ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
         byte[] nullData = null;
