@@ -135,13 +135,16 @@ public class MetricsReporter implements Runnable {
     }
 
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    if (brokerList.size() < SUPPORT_TOPIC_REPLICATION) {
-      log.warn("Creating the support metrics topic " + supportTopic + " using a replication factor of " +
-              brokerList.size() + ", which is less than the desired one of "
-              + SUPPORT_TOPIC_REPLICATION + ".  If this is a production environment, it's " +
-              "important to add more brokers and increase the replication factor of the topic.");
-    }
     actualReplication = Math.min(SUPPORT_TOPIC_REPLICATION, brokerList.size());
+    if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
+      log.warn("Creating the support metrics topic {} with a replication factor of {}, which is " +
+          "less than the desired replication factor of {} (reason: this cluster contains only {} " +
+          "brokers).  If you happen to add more brokers to this cluster, then it is important to " +
+          "increase the replication factor of the topic to eventually {} to ensure reliable and " +
+          "durable metrics collection.",
+          supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, brokerList.size(),
+          SUPPORT_TOPIC_REPLICATION);
+    }
     try {
       Properties metricsTopicProps = new Properties();
       metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
