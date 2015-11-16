@@ -63,7 +63,17 @@ public class MetricsReporter implements Runnable {
   private static final long RETENTION_MS = 365 * 24 * 60 * 60 * 1000L;
 
   private static final long SETTLING_TIME_MS = 10 * 1000L;
+
+  /**
+   * Default replication factor of the support metrics topic.
+   * Used when creating the topic in case it doesn't exist yet.
+   */
   private static final int SUPPORT_TOPIC_REPLICATION = 3;
+
+  /**
+   * Default number of partitions of the support metrics topic.
+   * Used when creating the topic in case it doesn't exist yet.
+   */
   private static final int SUPPORT_TOPIC_PARTITIONS = 1;
 
   private final String customerId;
