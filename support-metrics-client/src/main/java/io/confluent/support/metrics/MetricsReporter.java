@@ -64,6 +64,7 @@ public class MetricsReporter implements Runnable {
 
   private static final long SETTLING_TIME_MS = 10 * 1000L;
   private static final int SUPPORT_TOPIC_REPLICATION = 3;
+  private static final int SUPPORT_TOPIC_PARTITIONS = 1;
 
   private final String customerId;
   private final long reportIntervalMs;
@@ -75,7 +76,6 @@ public class MetricsReporter implements Runnable {
   private final AvroSerializer encoder = new AvroSerializer();
   private final TimeUtils time = new TimeUtils();
   private final KafkaServer server;
-  private int supportTopicPartitions = 1;
 
   /**
    * @param server              The Kafka server.
@@ -133,7 +133,7 @@ public class MetricsReporter implements Runnable {
       metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
       log.info("Attempting to create support metrics topic {} with {} replicas, assuming {} total brokers",
           supportTopic, actualReplication, brokerList.size());
-      AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, actualReplication, metricsTopicProps);
+      AdminUtils.createTopic(zkUtils, supportTopic, SUPPORT_TOPIC_PARTITIONS, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
       // topic already exists, success
       log.info("Support metrics topic {} already exists", supportTopic);
@@ -151,8 +151,8 @@ public class MetricsReporter implements Runnable {
             JavaConversions.asScalaSet(topics).toSeq())
             .get(supportTopic).get();
 
-    if (partitionAssignment.size() != supportTopicPartitions) {
-      log.warn("The support topic " + supportTopic + " should have only {} partitions.", supportTopicPartitions);
+    if (partitionAssignment.size() != SUPPORT_TOPIC_PARTITIONS) {
+      log.warn("The support topic " + supportTopic + " should have only {} partitions.", SUPPORT_TOPIC_PARTITIONS);
     }
 
     if (((Seq) partitionAssignment.get(0).get()).size() < SUPPORT_TOPIC_REPLICATION) {
