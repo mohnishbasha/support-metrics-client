@@ -261,6 +261,7 @@ public class MetricsReporter implements Runnable {
             break;
           }
         } catch (InterruptedException i) {
+          // Restore the interrupted status.
           Thread.currentThread().interrupt();
           return;
         }
