@@ -234,7 +234,7 @@ public class MetricsReporter implements Runnable {
         // let the server settle
         Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
 
-        // if server has suddently transitioned to shutting down, just exit
+        // if server has suddenly transitioned to shutting down, just exit
         if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
                 server.brokerState().currentState() == BrokerShuttingDown.state()) {
           return;
