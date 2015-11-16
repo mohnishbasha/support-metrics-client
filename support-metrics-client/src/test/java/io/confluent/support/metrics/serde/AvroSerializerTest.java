@@ -14,14 +14,17 @@
 
 package io.confluent.support.metrics.serde;
 
+
 import org.apache.avro.generic.GenericContainer;
 import org.junit.Test;
 
-
-import java.util.List;
+import java.util.Properties;
 import io.confluent.support.metrics.collectors.BasicCollector;
+import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.TimeUtils;
+import kafka.server.KafkaConfig$;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -34,6 +37,32 @@ public class AvroSerializerTest {
     public void testBasicCollectorSerializeDeserializeMatchSchema() {
         byte[] encodedMetricsRecord = null;
         Collector metricsCollector = new BasicCollector(time);
+        GenericContainer metricsRecord = metricsCollector.collectMetrics();
+        GenericContainer[] metricsRecord2 = null;
+
+        // serialize
+        try {
+            encodedMetricsRecord = encoder.serialize(metricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because serialize values are valid");
+        }
+
+        // deserialize
+        try {
+            metricsRecord2 = decoder.deserialize(metricsRecord.getSchema(), encodedMetricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because deserialize values are valid");
+        }
+        assertThat(metricsRecord2.length).isEqualTo(1);
+        assertThat(metricsRecord.getSchema()).isEqualTo(metricsRecord2[0].getSchema());
+    }
+
+    @Test
+    public void testFullCollectorSerializeDeserializeMatchSchema() {
+        byte[] encodedMetricsRecord = null;
+        Properties serverConfiguration = new Properties();
+        serverConfiguration.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), "0");
+        Collector metricsCollector = new FullCollector(null, serverConfiguration, Runtime.getRuntime(), time);
         GenericContainer metricsRecord = metricsCollector.collectMetrics();
         GenericContainer[] metricsRecord2 = null;
 
