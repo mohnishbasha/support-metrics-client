@@ -244,48 +244,54 @@ public class MetricsReporter implements Runnable {
 
   public void run() {
     log.info("Waiting for server to initialize...");
-    while (reportingEnabled()) {
-      try {
-        // let the server settle
-        Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
+    if (reportingEnabled()) {
+      while (true) {
+        try {
+          waitForServerToSettle(SETTLING_TIME_MS);
 
-        // if server has suddenly transitioned to shutting down, just exit
-        if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
-                server.brokerState().currentState() == BrokerShuttingDown.state()) {
+          // if server has suddenly transitioned to shutting down, just exit
+          if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
+              server.brokerState().currentState() == BrokerShuttingDown.state()) {
+            return;
+          }
+
+          // if server is running, proceed to collecting metrics
+          if (server.brokerState().currentState() == RunningAsBroker.state() ||
+              server.brokerState().currentState() == RunningAsController.state()) {
+            break;
+          }
+        } catch (InterruptedException i) {
+          Thread.currentThread().interrupt();
           return;
         }
+      }
 
-        // if server is running, proceed to collecting metrics
-        if (server.brokerState().currentState() == RunningAsBroker.state() ||
-                server.brokerState().currentState() == RunningAsController.state()) {
+      // At this point attempt to create support topic, if not already there.
+      createTopicIfMissing(server, supportTopic);
+
+      log.info("Metrics collection started");
+      while (true) {
+        try {
+          Thread.sleep(addOnePercentJitter(reportIntervalMs));
+          submitMetrics();
+        } catch (InterruptedException i) {
+          // Submit a final metrics update before shutdown.
+          submitMetrics();
+          // Restore the interrupted status.
+          Thread.currentThread().interrupt();
+          break;
+        } catch (Exception e) {
+          log.info("Terminating metrics collection: {}", e.getMessage());
           break;
         }
-      } catch (InterruptedException i) {
-        Thread.currentThread().interrupt();
-        return;
       }
     }
 
-    // at this point attempt to create support topic, if not already there
-    createTopicIfMissing(server, supportTopic);
-
-    log.info("Metrics collection started");
-    while (reportingEnabled()) {
-      try {
-        Thread.sleep(addOnePercentJitter(reportIntervalMs));
-        submitMetrics();
-      } catch (InterruptedException i) {
-        // Submit a final metrics update before shutdown.
-        submitMetrics();
-        // Restore the interrupted status.
-        Thread.currentThread().interrupt();
-        break;
-      } catch (Exception e) {
-        log.info("Terminating metrics collection: {}", e.getMessage());
-        break;
-      }
-    }
     log.info("Metrics collection stopped");
+  }
+
+  private void waitForServerToSettle(long settlingTimeMs) throws InterruptedException {
+    Thread.sleep(addOnePercentJitter(settlingTimeMs));
   }
 
   private long addOnePercentJitter(long reportIntervalMs) {
