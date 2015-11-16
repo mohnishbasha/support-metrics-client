@@ -56,6 +56,12 @@ public class MetricsReporter implements Runnable {
 
   private static final Logger log = LoggerFactory.getLogger(MetricsReporter.class);
 
+  /**
+   * Default "retention.ms" setting (i.e. time-based retention) of the support metrics topic.
+   * Used when creating the topic in case it doesn't exist yet.
+   */
+  private static final long RETENTION_MS = 365 * 24 * 60 * 60 * 1000L;
+
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
@@ -68,7 +74,6 @@ public class MetricsReporter implements Runnable {
   private final KafkaServer server;
   private int supportTopicReplication = 3;
   private int supportTopicPartitions = 1;
-  private Long retentionMs = new Long(365 * 24 * 60 * 60 * 1000L);
   private final int settlingTimeMs = 10000;
 
   /**
@@ -124,7 +129,7 @@ public class MetricsReporter implements Runnable {
     actualReplication = Math.min(supportTopicReplication, brokerList.size());
     try {
       Properties metricsTopicProps = new Properties();
-      metricsTopicProps.put(LogConfig.RetentionMsProp(), retentionMs.toString());
+      metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
       log.info("Attempting to create topic {} with {} replicas. # total brokers {}", supportTopic, actualReplication, brokerList.size());
       AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
