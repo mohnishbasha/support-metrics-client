@@ -131,11 +131,12 @@ public class MetricsReporter implements Runnable {
     try {
       Properties metricsTopicProps = new Properties();
       metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
-      log.info("Attempting to create topic {} with {} replicas. # total brokers {}", supportTopic, actualReplication, brokerList.size());
+      log.info("Attempting to create support metrics topic {} with {} replicas, assuming {} total brokers",
+          supportTopic, actualReplication, brokerList.size());
       AdminUtils.createTopic(zkUtils, supportTopic, supportTopicPartitions, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
       // topic already exists, success
-      log.info("Topic {} exists.", supportTopic);
+      log.info("Support metrics topic {} already exists", supportTopic);
     } catch (AdminOperationException e) {
       log.info(e.getMessage());
     }
