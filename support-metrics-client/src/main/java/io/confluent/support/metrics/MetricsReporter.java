@@ -167,15 +167,17 @@ public class MetricsReporter implements Runnable {
 
     int actualNumPartitions = partitionAssignment.size();
     if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
-      log.warn("The support topic " + supportTopic + " should have only {} partitions.", SUPPORT_TOPIC_PARTITIONS);
+      log.warn("The support topic {} should have only {} partitions.",
+          supportTopic, SUPPORT_TOPIC_PARTITIONS);
     }
 
-    int actualReplicationFactor = ((Seq) partitionAssignment.get(0).get()).size();
-    if (actualReplicationFactor < SUPPORT_TOPIC_REPLICATION) {
-      log.warn("The replication factor of the metrics topic " + supportTopic + " is less than the " +
-              "desired one of " + SUPPORT_TOPIC_REPLICATION + ". If this is a production " +
-              "environment, it's important to add more brokers and increase the replication " +
-              "factor of the topic.");
+    int actualReplication = ((Seq) partitionAssignment.get(0).get()).size();
+    if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
+      log.warn("The replication factor of the support metrics topic {} is {}, which is less than " +
+          "the desired replication factor of {}.  If you happen to add more brokers to this " +
+          "cluster, then it is important to increase the replication factor of the topic to " +
+          "eventually {} to ensure reliable and durable metrics collection.",
+          supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, SUPPORT_TOPIC_REPLICATION);
     }
   }
 
