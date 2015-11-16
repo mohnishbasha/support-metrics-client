@@ -62,6 +62,8 @@ public class MetricsReporter implements Runnable {
    */
   private static final long RETENTION_MS = 365 * 24 * 60 * 60 * 1000L;
 
+  private static final long SETTLING_TIME_MS = 10 * 1000L;
+
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
@@ -74,7 +76,6 @@ public class MetricsReporter implements Runnable {
   private final KafkaServer server;
   private int supportTopicReplication = 3;
   private int supportTopicPartitions = 1;
-  private final int settlingTimeMs = 10000;
 
   /**
    * @param server              The Kafka server.
@@ -231,7 +232,7 @@ public class MetricsReporter implements Runnable {
     while (reportingEnabled()) {
       try {
         // let the server settle
-        Thread.sleep(addOnePercentJitter(settlingTimeMs));
+        Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
 
         // if server has suddently transitioned to shutting down, just exit
         if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
