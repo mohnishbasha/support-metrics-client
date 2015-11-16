@@ -88,7 +88,6 @@ public class MetricsReporter implements Runnable {
   private final ConfluentSubmitter confluentSubmitter;
   private final Collector metricsCollector;
   private final AvroSerializer encoder = new AvroSerializer();
-  private final TimeUtils time = new TimeUtils();
   private final KafkaServer server;
 
   /**
@@ -98,6 +97,7 @@ public class MetricsReporter implements Runnable {
    */
   public MetricsReporter(KafkaServer server, Properties serverConfiguration, Runtime serverRuntime) {
     customerId = getCustomerId(serverConfiguration);
+    TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousCustomerId(customerId)) {
       metricsCollector = new BasicCollector(time);
     } else {
