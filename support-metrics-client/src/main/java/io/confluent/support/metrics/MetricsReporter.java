@@ -161,8 +161,6 @@ public class MetricsReporter implements Runnable {
   private void verifySupportTopic() {
     Set<String> topics = new HashSet<>();
     topics.add(supportTopic);
-
-    // check # partition and the replication factor
     scala.collection.Map partitionAssignment = server.zkUtils().getPartitionAssignmentForTopics(
             JavaConversions.asScalaSet(topics).toSeq())
             .get(supportTopic).get();
