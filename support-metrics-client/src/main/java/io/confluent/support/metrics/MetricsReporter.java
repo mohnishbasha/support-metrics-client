@@ -63,6 +63,7 @@ public class MetricsReporter implements Runnable {
   private static final long RETENTION_MS = 365 * 24 * 60 * 60 * 1000L;
 
   private static final long SETTLING_TIME_MS = 10 * 1000L;
+  private static final int SUPPORT_TOPIC_REPLICATION = 3;
 
   private final String customerId;
   private final long reportIntervalMs;
@@ -74,7 +75,6 @@ public class MetricsReporter implements Runnable {
   private final AvroSerializer encoder = new AvroSerializer();
   private final TimeUtils time = new TimeUtils();
   private final KafkaServer server;
-  private int supportTopicReplication = 3;
   private int supportTopicPartitions = 1;
 
   /**
@@ -121,13 +121,13 @@ public class MetricsReporter implements Runnable {
     }
 
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    if (brokerList.size() < supportTopicReplication) {
+    if (brokerList.size() < SUPPORT_TOPIC_REPLICATION) {
       log.warn("Creating the support metrics topic " + supportTopic + " using a replication factor of " +
               brokerList.size() + ", which is less than the desired one of "
-              + supportTopicReplication + ". If this is a production environment, it's " +
+              + SUPPORT_TOPIC_REPLICATION + ". If this is a production environment, it's " +
               "important to add more brokers and increase the replication factor of the topic.");
     }
-    actualReplication = Math.min(supportTopicReplication, brokerList.size());
+    actualReplication = Math.min(SUPPORT_TOPIC_REPLICATION, brokerList.size());
     try {
       Properties metricsTopicProps = new Properties();
       metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
@@ -155,9 +155,9 @@ public class MetricsReporter implements Runnable {
       log.warn("The support topic " + supportTopic + " should have only {} partitions.", supportTopicPartitions);
     }
 
-    if (((Seq) partitionAssignment.get(0).get()).size() < supportTopicReplication) {
+    if (((Seq) partitionAssignment.get(0).get()).size() < SUPPORT_TOPIC_REPLICATION) {
       log.warn("The replication factor of the metrics topic " + supportTopic + " is less than the " +
-              "desired one of " + supportTopicReplication + ". If this is a production " +
+              "desired one of " + SUPPORT_TOPIC_REPLICATION + ". If this is a production " +
               "environment, it's important to add more brokers and increase the replication " +
               "factor of the topic.");
     }
