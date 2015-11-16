@@ -167,7 +167,8 @@ public class MetricsReporter implements Runnable {
 
     int actualNumPartitions = partitionAssignment.size();
     if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
-      log.warn("The support topic {} should have only {} partitions.",
+      log.warn("The support topic {} should have only {} partitions.  Having more partitions " +
+          "should not hurt but it is only needed under special circumstances.",
           supportTopic, SUPPORT_TOPIC_PARTITIONS);
     }
 
