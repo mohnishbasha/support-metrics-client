@@ -151,7 +151,7 @@ public class MetricsReporter implements Runnable {
     } catch (TopicExistsException te) {
       log.info("Support metrics topic {} already exists", supportTopic);
     } catch (AdminOperationException e) {
-      log.info(e.getMessage());
+      log.error("Could not create support metrics topic {}: {}", supportTopic, e.getMessage());
     }
   }
 
