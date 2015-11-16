@@ -149,7 +149,6 @@ public class MetricsReporter implements Runnable {
           supportTopic, actualReplication, brokerList.size());
       AdminUtils.createTopic(zkUtils, supportTopic, SUPPORT_TOPIC_PARTITIONS, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
-      // topic already exists, success
       log.info("Support metrics topic {} already exists", supportTopic);
     } catch (AdminOperationException e) {
       log.info(e.getMessage());
