@@ -167,11 +167,13 @@ public class MetricsReporter implements Runnable {
             JavaConversions.asScalaSet(topics).toSeq())
             .get(supportTopic).get();
 
-    if (partitionAssignment.size() != SUPPORT_TOPIC_PARTITIONS) {
+    int actualNumPartitions = partitionAssignment.size();
+    if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
       log.warn("The support topic " + supportTopic + " should have only {} partitions.", SUPPORT_TOPIC_PARTITIONS);
     }
 
-    if (((Seq) partitionAssignment.get(0).get()).size() < SUPPORT_TOPIC_REPLICATION) {
+    int actualReplicationFactor = ((Seq) partitionAssignment.get(0).get()).size();
+    if (actualReplicationFactor < SUPPORT_TOPIC_REPLICATION) {
       log.warn("The replication factor of the metrics topic " + supportTopic + " is less than the " +
               "desired one of " + SUPPORT_TOPIC_REPLICATION + ". If this is a production " +
               "environment, it's important to add more brokers and increase the replication " +
