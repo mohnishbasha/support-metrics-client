@@ -161,24 +161,34 @@ public class MetricsReporter implements Runnable {
   private void verifySupportTopic() {
     Set<String> topics = new HashSet<>();
     topics.add(supportTopic);
-    scala.collection.Map partitionAssignment = server.zkUtils().getPartitionAssignmentForTopics(
-            JavaConversions.asScalaSet(topics).toSeq())
-            .get(supportTopic).get();
-
-    int actualNumPartitions = partitionAssignment.size();
-    if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
-      log.warn("The support metrics topic {} should have only {} partitions.  Having more " +
-          "partitions should not hurt but it is only needed under special circumstances.",
-          supportTopic, SUPPORT_TOPIC_PARTITIONS);
-    }
-
-    int actualReplication = ((Seq) partitionAssignment.get(0).get()).size();
-    if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
-      log.warn("The replication factor of the support metrics topic {} is {}, which is less than " +
-          "the desired replication factor of {}.  If you happen to add more brokers to this " +
-          "cluster, then it is important to increase the replication factor of the topic to " +
-          "eventually {} to ensure reliable and durable metrics collection.",
-          supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, SUPPORT_TOPIC_REPLICATION);
+    scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
+        server.zkUtils().getPartitionAssignmentForTopics(JavaConversions.asScalaSet(topics).
+            toSeq()).get(supportTopic);
+    if (!partitionAssignmentOption.isEmpty()) {
+      scala.collection.Map partitionAssignment = partitionAssignmentOption.get();
+      int actualNumPartitions = partitionAssignment.size();
+      if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
+        log.warn("The support metrics topic {} should have only {} partitions.  Having more " +
+                "partitions should not hurt but it is only needed under special circumstances.",
+            supportTopic, SUPPORT_TOPIC_PARTITIONS);
+      }
+      int firstPartitionId = 0;
+      scala.Option<Seq<Object>> replicasOfFirstPartitionOption =
+          partitionAssignment.get(firstPartitionId);
+      if (!replicasOfFirstPartitionOption.isEmpty()) {
+        int actualReplication = replicasOfFirstPartitionOption.get().size();
+        if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
+          log.warn("The replication factor of the support metrics topic {} is {}, which is less than " +
+                  "the desired replication factor of {}.  If you happen to add more brokers to this " +
+                  "cluster, then it is important to increase the replication factor of the topic to " +
+                  "eventually {} to ensure reliable and durable metrics collection.",
+              supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, SUPPORT_TOPIC_REPLICATION);
+        }
+      } else {
+        log.error("No replicas known for partition 0 of support metrics topic {}", supportTopic);
+      }
+    } else {
+      log.error("No partitions are assigned to support metrics topic {}", supportTopic);
     }
   }
 
