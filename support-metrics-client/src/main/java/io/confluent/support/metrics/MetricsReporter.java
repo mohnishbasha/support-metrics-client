@@ -138,7 +138,7 @@ public class MetricsReporter implements Runnable {
     if (brokerList.size() < SUPPORT_TOPIC_REPLICATION) {
       log.warn("Creating the support metrics topic " + supportTopic + " using a replication factor of " +
               brokerList.size() + ", which is less than the desired one of "
-              + SUPPORT_TOPIC_REPLICATION + ". If this is a production environment, it's " +
+              + SUPPORT_TOPIC_REPLICATION + ".  If this is a production environment, it's " +
               "important to add more brokers and increase the replication factor of the topic.");
     }
     actualReplication = Math.min(SUPPORT_TOPIC_REPLICATION, brokerList.size());
@@ -243,11 +243,11 @@ public class MetricsReporter implements Runnable {
   }
 
   public void run() {
-    log.info("Waiting for server to initialize...");
     if (reportingEnabled()) {
+      log.info("Waiting for monitored server to start up...");
       while (true) {
         try {
-          waitForServerToSettle(SETTLING_TIME_MS);
+          Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
 
           // if server has suddenly transitioned to shutting down, just exit
           if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
@@ -267,7 +267,6 @@ public class MetricsReporter implements Runnable {
         }
       }
 
-      // At this point attempt to create support topic, if not already there.
       createTopicIfMissing(server, supportTopic);
 
       log.info("Metrics collection started");
@@ -289,10 +288,6 @@ public class MetricsReporter implements Runnable {
     }
 
     log.info("Metrics collection stopped");
-  }
-
-  private void waitForServerToSettle(long settlingTimeMs) throws InterruptedException {
-    Thread.sleep(addOnePercentJitter(settlingTimeMs));
   }
 
   private long addOnePercentJitter(long reportIntervalMs) {
