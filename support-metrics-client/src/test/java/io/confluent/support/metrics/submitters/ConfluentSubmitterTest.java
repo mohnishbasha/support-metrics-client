@@ -98,7 +98,7 @@ public class ConfluentSubmitterTest {
   }
 
   @Test
-  public void testInValidArgumentsForConstructorInvalidEndpoints() {
+  public void testInvalidArgumentsForConstructorInvalidEndpoints() {
     // Given
     String httpEndpoint = "not a valid URL";
     String httpsEndpoint = "https://not a valid URL";
@@ -113,7 +113,7 @@ public class ConfluentSubmitterTest {
   }
 
   @Test
-  public void testInValidArgumentsForConstructorMismatchedEndpoints() {
+  public void testInvalidArgumentsForConstructorMismatchedEndpoints() {
     // Given
     String httpEndpoint = "https://example.com";
     String httpsEndpoint = "http://example.com";
