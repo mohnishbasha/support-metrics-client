@@ -62,7 +62,7 @@ public class ConfluentSubmitterTest {
     // When/Then
     try {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-      fail("IllegalArgumentException expected because endpoints are empty");
+      fail("IllegalArgumentException expected because endpoints are null/empty");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
@@ -77,7 +77,7 @@ public class ConfluentSubmitterTest {
     // When/Then
     try {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-      fail("IllegalArgumentException expected because endpoints are empty");
+      fail("IllegalArgumentException expected because endpoints are empty/null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
@@ -117,7 +117,7 @@ public class ConfluentSubmitterTest {
     // When/Then
     try {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-      fail("IllegalArgumentException expected because endpoints are invalid");
+      fail("IllegalArgumentException expected because endpoints are mismatched");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
     }
