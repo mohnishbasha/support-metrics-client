@@ -84,4 +84,57 @@ public class AvroSerializerTest {
         assertThat(metricsRecord.getSchema()).isEqualTo(metricsRecord2[0].getSchema());
     }
 
+    @Test
+    public void testFullCollectorSerializeDeserializeMatchSchemaTwoZk() {
+        byte[] encodedMetricsRecord = null;
+        Properties serverConfiguration = new Properties();
+        serverConfiguration.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), "localhost:2181,localhost:2222");
+        serverConfiguration.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), "0");
+        Collector metricsCollector = new FullCollector(null, serverConfiguration, Runtime.getRuntime(), time);
+        GenericContainer metricsRecord = metricsCollector.collectMetrics();
+        GenericContainer[] metricsRecord2 = null;
+
+        // serialize
+        try {
+            encodedMetricsRecord = encoder.serialize(metricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because serialize values are valid");
+        }
+
+        // deserialize
+        try {
+            metricsRecord2 = decoder.deserialize(metricsRecord.getSchema(), encodedMetricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because deserialize values are valid");
+        }
+        assertThat(metricsRecord2.length).isEqualTo(1);
+        assertThat(metricsRecord.getSchema()).isEqualTo(metricsRecord2[0].getSchema());
+    }
+
+    @Test
+    public void testFullCollectorSerializeDeserializeMatchSchemaNoZk() {
+        byte[] encodedMetricsRecord = null;
+        Properties serverConfiguration = new Properties();
+        serverConfiguration.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), "0");
+        Collector metricsCollector = new FullCollector(null, serverConfiguration, Runtime.getRuntime(), time);
+        GenericContainer metricsRecord = metricsCollector.collectMetrics();
+        GenericContainer[] metricsRecord2 = null;
+
+        // serialize
+        try {
+            encodedMetricsRecord = encoder.serialize(metricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because serialize values are valid");
+        }
+
+        // deserialize
+        try {
+            metricsRecord2 = decoder.deserialize(metricsRecord.getSchema(), encodedMetricsRecord);
+        } catch (Exception e) {
+            fail("Success expected because deserialize values are valid");
+        }
+        assertThat(metricsRecord2.length).isEqualTo(1);
+        assertThat(metricsRecord.getSchema()).isEqualTo(metricsRecord2[0].getSchema());
+    }
+
 }
