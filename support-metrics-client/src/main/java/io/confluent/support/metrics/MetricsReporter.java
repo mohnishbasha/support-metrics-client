@@ -213,8 +213,8 @@ public class MetricsReporter implements Runnable {
             }
           }
         } catch (InterruptedException i) {
-          Thread.currentThread().interrupt();
           terminateEarly = true;
+          Thread.currentThread().interrupt();
         }
       }
 
@@ -233,8 +233,8 @@ public class MetricsReporter implements Runnable {
           } catch (InterruptedException i) {
             submitMetrics();
             log.info("Stopping metrics collection because the monitored broker is shutting down...");
-            Thread.currentThread().interrupt();
             keepRunning = false;
+            Thread.currentThread().interrupt();
           } catch (Exception e) {
             log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
             keepRunning = false;
