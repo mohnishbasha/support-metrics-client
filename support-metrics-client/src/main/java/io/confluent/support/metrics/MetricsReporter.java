@@ -205,8 +205,10 @@ public class MetricsReporter implements Runnable {
           if (kafkaUtilities.isShuttingDown(server)) {
             keepWaitingForServerToStartup = false;
             terminateEarly = true;
+            log.info("Stopping metrics collection prematurely because broker is shutting down");
           } else {
             if (kafkaUtilities.isReadyForMetricsCollection(server)) {
+              log.info("Monitored broker is now ready");
               keepWaitingForServerToStartup = false;
             }
           }
@@ -217,7 +219,7 @@ public class MetricsReporter implements Runnable {
       }
 
       if (terminateEarly) {
-        log.info("Stopping metrics collection before it even started...");
+        log.info("Metrics collection stopped before it even started");
         return;
       }
 
@@ -232,6 +234,7 @@ public class MetricsReporter implements Runnable {
           submitMetrics();
         } catch (InterruptedException i) {
           submitMetrics();
+          log.info("Stopping metrics collection because the monitored broker is shutting down...");
           Thread.currentThread().interrupt();
           keepRunning = false;
         } catch (Exception e) {
