@@ -37,6 +37,8 @@ import kafka.server.KafkaServer;
  *
  * Metrics are being reported to a Kafka topic within the same cluster and/or to Confluent via the
  * Internet.
+ *
+ * This class is not thread-safe.
  */
 public class MetricsReporter implements Runnable {
 
@@ -192,39 +194,49 @@ public class MetricsReporter implements Runnable {
 
   public void run() {
     if (reportingEnabled()) {
-      log.info("Waiting for monitored server to start up...");
-      while (true) {
+      boolean keepWaitingForServerToStartup = true;
+      boolean terminateEarly = false;
+      while (keepWaitingForServerToStartup) {
         try {
+          long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
           Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
+          log.info("Waiting {} ms for the monitored broker to finish starting up..." + waitTimeMs);
 
           if (kafkaUtilities.isShuttingDown(server)) {
-            return;
-          }
-
-          if (kafkaUtilities.isReadyForMetricsCollection(server)) {
-            break;
+            keepWaitingForServerToStartup = false;
+            terminateEarly = true;
+          } else {
+            if (kafkaUtilities.isReadyForMetricsCollection(server)) {
+              keepWaitingForServerToStartup = false;
+            }
           }
         } catch (InterruptedException i) {
           Thread.currentThread().interrupt();
-          return;
+          terminateEarly = true;
         }
+      }
+
+      if (terminateEarly) {
+        log.info("Stopping metrics collection before it even started...");
+        return;
       }
 
       kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
           SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
 
-      log.info("Metrics collection started");
-      while (true) {
+      log.info("Metrics collection starting...");
+      boolean keepRunning = true;
+      while (keepRunning) {
         try {
           Thread.sleep(addOnePercentJitter(reportIntervalMs));
           submitMetrics();
         } catch (InterruptedException i) {
           submitMetrics();
           Thread.currentThread().interrupt();
-          break;
+          keepRunning = false;
         } catch (Exception e) {
-          log.info("Terminating metrics collection: {}", e.getMessage());
-          break;
+          log.info("Stopping metrics collection: {}", e.getMessage());
+          keepRunning = false;
         }
       }
     }
