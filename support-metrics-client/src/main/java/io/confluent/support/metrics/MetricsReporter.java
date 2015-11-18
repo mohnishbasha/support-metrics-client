@@ -19,58 +19,46 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Set;
 
 import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.TimeUtils;
+import io.confluent.support.metrics.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
-import kafka.admin.AdminUtils;
-import kafka.log.LogConfig;
-import kafka.admin.AdminOperationException;
-import kafka.common.TopicExistsException;
 import kafka.server.KafkaServer;
-import kafka.server.RunningAsBroker;
-import kafka.server.RunningAsController;
-import kafka.server.PendingControlledShutdown;
-import kafka.server.BrokerShuttingDown;
-import kafka.utils.ZkUtils;
-import kafka.cluster.Broker;
-import scala.collection.JavaConversions;
-import scala.collection.Seq;
-
 
 /**
  * Periodically reports metrics collected from a Kafka broker.
  *
  * Metrics are being reported to a Kafka topic within the same cluster and/or to Confluent via the
  * Internet.
+ *
+ * This class is not thread-safe.
  */
 public class MetricsReporter implements Runnable {
 
   private static final Logger log = LoggerFactory.getLogger(MetricsReporter.class);
 
   /**
-   * Default "retention.ms" setting (i.e. time-based retention) of the support metrics topic.
-   * Used when creating the topic in case it doesn't exist yet.
+   * Default "retention.ms" setting (i.e. time-based retention) of the support metrics topic. Used
+   * when creating the topic in case it doesn't exist yet.
    */
   private static final long RETENTION_MS = 365 * 24 * 60 * 60 * 1000L;
 
   /**
-   * Default replication factor of the support metrics topic.
-   * Used when creating the topic in case it doesn't exist yet.
+   * Default replication factor of the support metrics topic. Used when creating the topic in case
+   * it doesn't exist yet.
    */
   private static final int SUPPORT_TOPIC_REPLICATION = 3;
 
   /**
-   * Default number of partitions of the support metrics topic.
-   * Used when creating the topic in case it doesn't exist yet.
+   * Default number of partitions of the support metrics topic. Used when creating the topic in case
+   * it doesn't exist yet.
    */
   private static final int SUPPORT_TOPIC_PARTITIONS = 1;
 
@@ -89,13 +77,26 @@ public class MetricsReporter implements Runnable {
   private final Collector metricsCollector;
   private final AvroSerializer encoder = new AvroSerializer();
   private final KafkaServer server;
+  private final KafkaUtilities kafkaUtilities;
+
+  public MetricsReporter(KafkaServer server,
+                         Properties serverConfiguration,
+                         Runtime serverRuntime) {
+    this(server, serverConfiguration, serverRuntime, new KafkaUtilities());
+  }
 
   /**
    * @param server              The Kafka server.
    * @param serverConfiguration The properties this server was created from.
    * @param serverRuntime       The Java runtime of the server that is being monitored.
+   * @param kafkaUtilities      An instance of {@link KafkaUtilities} that will be used to perform
+   *                            e.g. Kafka topic management if needed.
    */
-  public MetricsReporter(KafkaServer server, Properties serverConfiguration, Runtime serverRuntime) {
+  public MetricsReporter(KafkaServer server,
+                         Properties serverConfiguration,
+                         Runtime serverRuntime,
+                         KafkaUtilities kafkaUtilities) {
+    this.kafkaUtilities = kafkaUtilities;
     customerId = getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousCustomerId(customerId)) {
@@ -124,72 +125,6 @@ public class MetricsReporter implements Runnable {
       log.info("Metrics collection disabled by broker configuration");
     }
     this.server = server;
-  }
-
-  private void createTopicIfMissing(KafkaServer server, String supportTopic)  {
-    int actualReplication = 0;
-    ZkUtils zkUtils = server.zkUtils();
-    if (AdminUtils.topicExists(zkUtils, supportTopic)) {
-      verifySupportTopic();
-      return;
-    }
-
-    Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    actualReplication = Math.min(SUPPORT_TOPIC_REPLICATION, brokerList.size());
-    if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
-      log.warn("Creating the support metrics topic {} with a replication factor of {}, which is " +
-          "less than the desired replication factor of {} (reason: this cluster contains only {} " +
-          "brokers).  If you happen to add more brokers to this cluster, then it is important to " +
-          "increase the replication factor of the topic to eventually {} to ensure reliable and " +
-          "durable metrics collection.",
-          supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, brokerList.size(),
-          SUPPORT_TOPIC_REPLICATION);
-    }
-    try {
-      Properties metricsTopicProps = new Properties();
-      metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(RETENTION_MS));
-      log.info("Attempting to create support metrics topic {} with {} replicas, assuming {} total brokers",
-          supportTopic, actualReplication, brokerList.size());
-      AdminUtils.createTopic(zkUtils, supportTopic, SUPPORT_TOPIC_PARTITIONS, actualReplication, metricsTopicProps);
-    } catch (TopicExistsException te) {
-      log.info("Support metrics topic {} already exists", supportTopic);
-    } catch (AdminOperationException e) {
-      log.error("Could not create support metrics topic {}: {}", supportTopic, e.getMessage());
-    }
-  }
-
-  private void verifySupportTopic() {
-    Set<String> topics = new HashSet<>();
-    topics.add(supportTopic);
-    scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
-        server.zkUtils().getPartitionAssignmentForTopics(JavaConversions.asScalaSet(topics).
-            toSeq()).get(supportTopic);
-    if (!partitionAssignmentOption.isEmpty()) {
-      scala.collection.Map partitionAssignment = partitionAssignmentOption.get();
-      int actualNumPartitions = partitionAssignment.size();
-      if (actualNumPartitions != SUPPORT_TOPIC_PARTITIONS) {
-        log.warn("The support metrics topic {} should have only {} partitions.  Having more " +
-                "partitions should not hurt but it is only needed under special circumstances.",
-            supportTopic, SUPPORT_TOPIC_PARTITIONS);
-      }
-      int firstPartitionId = 0;
-      scala.Option<Seq<Object>> replicasOfFirstPartitionOption =
-          partitionAssignment.get(firstPartitionId);
-      if (!replicasOfFirstPartitionOption.isEmpty()) {
-        int actualReplication = replicasOfFirstPartitionOption.get().size();
-        if (actualReplication < SUPPORT_TOPIC_REPLICATION) {
-          log.warn("The replication factor of the support metrics topic {} is {}, which is less than " +
-                  "the desired replication factor of {}.  If you happen to add more brokers to this " +
-                  "cluster, then it is important to increase the replication factor of the topic to " +
-                  "eventually {} to ensure reliable and durable metrics collection.",
-              supportTopic, actualReplication, SUPPORT_TOPIC_REPLICATION, SUPPORT_TOPIC_REPLICATION);
-        }
-      } else {
-        log.error("No replicas known for partition 0 of support metrics topic {}", supportTopic);
-      }
-    } else {
-      log.error("No partitions are assigned to support metrics topic {}", supportTopic);
-    }
   }
 
   private String getCustomerId(Properties serverConfiguration) {
@@ -259,45 +194,51 @@ public class MetricsReporter implements Runnable {
 
   public void run() {
     if (reportingEnabled()) {
-      log.info("Waiting for monitored server to start up...");
-      while (true) {
+      boolean keepWaitingForServerToStartup = true;
+      boolean terminateEarly = false;
+      while (keepWaitingForServerToStartup) {
         try {
+          long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
           Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
+          log.info("Waiting {} ms for the monitored broker to finish starting up..." + waitTimeMs);
 
-          // if server has suddenly transitioned to shutting down, just exit
-          if (server.brokerState().currentState() == PendingControlledShutdown.state() ||
-              server.brokerState().currentState() == BrokerShuttingDown.state()) {
-            return;
-          }
-
-          // if server is running, proceed to collecting metrics
-          if (server.brokerState().currentState() == RunningAsBroker.state() ||
-              server.brokerState().currentState() == RunningAsController.state()) {
-            break;
+          if (kafkaUtilities.isShuttingDown(server)) {
+            keepWaitingForServerToStartup = false;
+            terminateEarly = true;
+            log.info("Stopping metrics collection prematurely because broker is shutting down");
+          } else {
+            if (kafkaUtilities.isReadyForMetricsCollection(server)) {
+              log.info("Monitored broker is now ready");
+              keepWaitingForServerToStartup = false;
+            }
           }
         } catch (InterruptedException i) {
-          // Restore the interrupted status.
+          terminateEarly = true;
           Thread.currentThread().interrupt();
-          return;
         }
       }
 
-      createTopicIfMissing(server, supportTopic);
+      if (terminateEarly) {
+        log.info("Metrics collection stopped before it even started");
+      } else {
+        kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+            SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
 
-      log.info("Metrics collection started");
-      while (true) {
-        try {
-          Thread.sleep(addOnePercentJitter(reportIntervalMs));
-          submitMetrics();
-        } catch (InterruptedException i) {
-          // Submit a final metrics update before shutdown.
-          submitMetrics();
-          // Restore the interrupted status.
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          log.info("Terminating metrics collection: {}", e.getMessage());
-          break;
+        log.info("Starting metrics collection from monitored broker...");
+        boolean keepRunning = true;
+        while (keepRunning) {
+          try {
+            Thread.sleep(addOnePercentJitter(reportIntervalMs));
+            submitMetrics();
+          } catch (InterruptedException i) {
+            submitMetrics();
+            log.info("Stopping metrics collection because the monitored broker is shutting down...");
+            keepRunning = false;
+            Thread.currentThread().interrupt();
+          } catch (Exception e) {
+            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
+            keepRunning = false;
+          }
         }
       }
     }
@@ -334,4 +275,5 @@ public class MetricsReporter implements Runnable {
       log.error("Could not submit metrics to Confluent: {}", e.toString());
     }
   }
+
 }
