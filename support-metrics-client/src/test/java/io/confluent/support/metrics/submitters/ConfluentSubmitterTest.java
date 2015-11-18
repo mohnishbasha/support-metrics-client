@@ -13,137 +13,133 @@
  */
 package io.confluent.support.metrics.submitters;
 
-import junit.framework.AssertionFailedError;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.protocol.HTTP;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.anyOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class ConfluentSubmitterTest {
 
-    @Test
-    public void testInvalidArgumentsForConstructorNullEndpoints() {
-        // Given
-        String httpEndpoint = null;
-        String httpsEndpoint = null;
+  @Test
+  public void testInvalidArgumentsForConstructorNullEndpoints() {
+    // Given
+    String httpEndpoint = null;
+    String httpsEndpoint = null;
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are null");
-        } catch (IllegalArgumentException e) {
-            assertThat(e).hasMessage("must specify Confluent Service endpoint");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are null");
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
+  }
 
-    @Test
-    public void testInvalidArgumentsForConstructorEmptyEndpoints() {
-        // Given
-        String httpEndpoint = "";
-        String httpsEndpoint = "";
+  @Test
+  public void testInvalidArgumentsForConstructorEmptyEndpoints() {
+    // Given
+    String httpEndpoint = "";
+    String httpsEndpoint = "";
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are empty");
-        } catch (IllegalArgumentException e) {
-            assertThat(e).hasMessage("must specify Confluent Service endpoint");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are empty");
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
+  }
 
-    @Test
-    public void testInvalidArgumentsForConstructorNullEmptyEndpoints() {
-        // Given
-        String httpEndpoint = null;
-        String httpsEndpoint = "";
+  @Test
+  public void testInvalidArgumentsForConstructorNullEmptyEndpoints() {
+    // Given
+    String httpEndpoint = null;
+    String httpsEndpoint = "";
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are empty");
-        } catch (IllegalArgumentException e) {
-            assertThat(e).hasMessage("must specify Confluent Service endpoint");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are empty");
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
+  }
 
-    @Test
-    public void testInvalidArgumentsForConstructorEmptyNullEndpoints() {
-        // Given
-        String httpEndpoint = "";
-        String httpsEndpoint = null;
+  @Test
+  public void testInvalidArgumentsForConstructorEmptyNullEndpoints() {
+    // Given
+    String httpEndpoint = "";
+    String httpsEndpoint = null;
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are empty");
-        } catch (IllegalArgumentException e) {
-            assertThat(e).hasMessage("must specify Confluent Service endpoint");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are empty");
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessage("must specify Confluent Service endpoint");
     }
+  }
 
-    @Test
-    public void testValidArgumentsForConstructor() {
-        // Given
-        String httpEndpoint = "http://example.com";
-        String httpsEndpoint = "https://example.com";
+  @Test
+  public void testValidArgumentsForConstructor() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-        } catch (Exception e) {
-            fail("Success expected because endpoints are valid");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+    } catch (Exception e) {
+      fail("Success expected because endpoints are valid");
     }
+  }
 
-    @Test
-    public void testInValidArgumentsForConstructorInvalidEndpoints() {
-        // Given
-        String httpEndpoint = "not a valid URL";
-        String httpsEndpoint = "https://not a valid URL";
+  @Test
+  public void testInValidArgumentsForConstructorInvalidEndpoints() {
+    // Given
+    String httpEndpoint = "not a valid URL";
+    String httpsEndpoint = "https://not a valid URL";
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are invalid");
-        } catch (Exception e) {
-            assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are invalid");
+    } catch (Exception e) {
+      assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
     }
+  }
 
-    @Test
-    public void testInValidArgumentsForConstructorMismatchedEndpoints() {
-        // Given
-        String httpEndpoint = "https://example.com";
-        String httpsEndpoint = "http://example.com";
+  @Test
+  public void testInValidArgumentsForConstructorMismatchedEndpoints() {
+    // Given
+    String httpEndpoint = "https://example.com";
+    String httpsEndpoint = "http://example.com";
 
-        // When/Then
-        try {
-            new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-            fail("IllegalArgumentException expected because endpoints are invalid");
-        } catch (Exception e) {
-            assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
-        }
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are invalid");
+    } catch (Exception e) {
+      assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
     }
+  }
 
-    @Test
-    public void testSubmitIgnoresNullInput() {
-        // Given
-        String httpEndpoint = "http://example.com";
-        String httpsEndpoint = "https://example.com";
-        HttpPost p = mock(HttpPost.class);
-        ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-        byte[] nullData = null;
+  @Test
+  public void testSubmitIgnoresNullInput() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
+    HttpPost p = mock(HttpPost.class);
+    ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+    byte[] nullData = null;
 
-        // When
-        c.submit(null, p);
+    // When
+    c.submit(null, p);
 
-        // Then
-        verifyZeroInteractions(p);
-    }
+    // Then
+    verifyZeroInteractions(p);
+  }
 }
