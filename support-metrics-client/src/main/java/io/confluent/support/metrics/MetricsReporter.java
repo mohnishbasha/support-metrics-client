@@ -220,26 +220,25 @@ public class MetricsReporter implements Runnable {
 
       if (terminateEarly) {
         log.info("Metrics collection stopped before it even started");
-        return;
-      }
+      } else {
+        kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+            SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
 
-      kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
-          SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
-
-      log.info("Metrics collection starting...");
-      boolean keepRunning = true;
-      while (keepRunning) {
-        try {
-          Thread.sleep(addOnePercentJitter(reportIntervalMs));
-          submitMetrics();
-        } catch (InterruptedException i) {
-          submitMetrics();
-          log.info("Stopping metrics collection because the monitored broker is shutting down...");
-          Thread.currentThread().interrupt();
-          keepRunning = false;
-        } catch (Exception e) {
-          log.error("Stopping metrics collection: {}", e.getMessage());
-          keepRunning = false;
+        log.info("Metrics collection starting...");
+        boolean keepRunning = true;
+        while (keepRunning) {
+          try {
+            Thread.sleep(addOnePercentJitter(reportIntervalMs));
+            submitMetrics();
+          } catch (InterruptedException i) {
+            submitMetrics();
+            log.info("Stopping metrics collection because the monitored broker is shutting down...");
+            Thread.currentThread().interrupt();
+            keepRunning = false;
+          } catch (Exception e) {
+            log.error("Stopping metrics collection: {}", e.getMessage());
+            keepRunning = false;
+          }
         }
       }
     }
