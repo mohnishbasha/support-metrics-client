@@ -235,7 +235,7 @@ public class MetricsReporter implements Runnable {
           Thread.currentThread().interrupt();
           keepRunning = false;
         } catch (Exception e) {
-          log.info("Stopping metrics collection: {}", e.getMessage());
+          log.error("Stopping metrics collection: {}", e.getMessage());
           keepRunning = false;
         }
       }
