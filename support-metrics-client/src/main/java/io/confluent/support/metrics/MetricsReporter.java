@@ -205,7 +205,6 @@ public class MetricsReporter implements Runnable {
             break;
           }
         } catch (InterruptedException i) {
-          // Restore the interrupted status.
           Thread.currentThread().interrupt();
           return;
         }
@@ -220,9 +219,7 @@ public class MetricsReporter implements Runnable {
           Thread.sleep(addOnePercentJitter(reportIntervalMs));
           submitMetrics();
         } catch (InterruptedException i) {
-          // Submit a final metrics update before shutdown.
           submitMetrics();
-          // Restore the interrupted status.
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
