@@ -53,7 +53,7 @@ public class KafkaUtilities {
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
     actualReplication = Math.min(replication, brokerList.size());
     if (actualReplication < replication) {
-      log.warn("The replication factor of topic {} will be set to {}, which is  less than the " +
+      log.warn("The replication factor of topic {} will be set to {}, which is less than the " +
               "desired replication factor of {} (reason: this cluster contains only {} brokers).  " +
               "If you happen to add more brokers to this cluster, then it is important to increase " +
               "the replication factor of the topic to eventually {} to ensure reliable and  durable " +
