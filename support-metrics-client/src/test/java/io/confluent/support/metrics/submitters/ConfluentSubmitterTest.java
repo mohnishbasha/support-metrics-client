@@ -111,13 +111,13 @@ public class ConfluentSubmitterTest {
   @Test
   public void testInvalidArgumentsForConstructorMismatchedEndpoints() {
     // Given
-    String httpEndpoint = "https://example.com";
-    String httpsEndpoint = "http://example.com";
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-      fail("IllegalArgumentException expected because endpoints are mismatched");
+      new ConfluentSubmitter(httpsEndpoint, httpEndpoint);
+      fail("IllegalArgumentException expected because endpoints were provided in the wrong order");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
     }
