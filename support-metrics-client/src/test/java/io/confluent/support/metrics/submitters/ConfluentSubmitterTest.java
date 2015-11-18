@@ -34,7 +34,7 @@ public class ConfluentSubmitterTest {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are null");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify Confluent Service endpoint");
+      assertThat(e).hasMessage("must specify endpoints");
     }
   }
 
@@ -49,7 +49,7 @@ public class ConfluentSubmitterTest {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are empty");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify Confluent Service endpoint");
+      assertThat(e).hasMessage("must specify endpoints");
     }
   }
 
@@ -64,7 +64,7 @@ public class ConfluentSubmitterTest {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are null/empty");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify Confluent Service endpoint");
+      assertThat(e).hasMessage("must specify endpoints");
     }
   }
 
@@ -79,7 +79,7 @@ public class ConfluentSubmitterTest {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are empty/null");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify Confluent Service endpoint");
+      assertThat(e).hasMessage("must specify endpoints");
     }
   }
 
@@ -94,17 +94,32 @@ public class ConfluentSubmitterTest {
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorInvalidEndpoints() {
+  public void testInvalidArgumentsForConstructorInvalidHttpEndpoint() {
     // Given
-    String httpEndpoint = "not a valid URL";
-    String httpsEndpoint = "https://not a valid URL";
+    String httpEndpoint = "invalid URL";
+    String httpsEndpoint = "https://example.com";
 
     // When/Then
     try {
       new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are invalid");
     } catch (Exception e) {
-      assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
+      assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
+    }
+  }
+
+  @Test
+  public void testInvalidArgumentsForConstructorInvalidHttpsEndpoint() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "invalid URL";
+
+    // When/Then
+    try {
+      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      fail("IllegalArgumentException expected because endpoints are invalid");
+    } catch (Exception e) {
+      assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
 
@@ -119,7 +134,7 @@ public class ConfluentSubmitterTest {
       new ConfluentSubmitter(httpsEndpoint, httpEndpoint);
       fail("IllegalArgumentException expected because endpoints were provided in the wrong order");
     } catch (Exception e) {
-      assertThat(e).hasMessageStartingWith("invalid Confluent Service HTTP");
+      assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
 
