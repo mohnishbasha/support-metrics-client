@@ -44,14 +44,13 @@ public class KafkaUtilities {
                                    int replication,
                                    long retentionMs) {
 
-    int actualReplication = 0;
     if (AdminUtils.topicExists(zkUtils, topic)) {
       verifySupportTopic(zkUtils, topic, partitions, replication);
       return;
     }
 
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    actualReplication = Math.min(replication, brokerList.size());
+    int actualReplication = Math.min(replication, brokerList.size());
     if (actualReplication < replication) {
       log.warn("The replication factor of topic {} will be set to {}, which is less than the " +
               "desired replication factor of {} (reason: this cluster contains only {} brokers).  " +
