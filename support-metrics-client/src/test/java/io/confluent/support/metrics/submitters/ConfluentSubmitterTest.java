@@ -90,11 +90,7 @@ public class ConfluentSubmitterTest {
     String httpsEndpoint = "https://example.com";
 
     // When/Then
-    try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-    } catch (Exception e) {
-      fail("Success expected because endpoints are valid");
-    }
+    new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
   }
 
   @Test
