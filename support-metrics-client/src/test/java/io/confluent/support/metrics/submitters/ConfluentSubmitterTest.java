@@ -137,7 +137,7 @@ public class ConfluentSubmitterTest {
     byte[] nullData = null;
 
     // When
-    c.submit(null, p);
+    c.submit(nullData, p);
 
     // Then
     verifyZeroInteractions(p);
