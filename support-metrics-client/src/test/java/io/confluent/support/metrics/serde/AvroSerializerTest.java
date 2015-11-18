@@ -61,6 +61,7 @@ public class AvroSerializerTest {
     public void testFullCollectorSerializeDeserializeMatchSchema() {
         byte[] encodedMetricsRecord = null;
         Properties serverConfiguration = new Properties();
+        serverConfiguration.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), "localhost:2181");
         serverConfiguration.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), "0");
         Collector metricsCollector = new FullCollector(null, serverConfiguration, Runtime.getRuntime(), time);
         GenericContainer metricsRecord = metricsCollector.collectMetrics();
