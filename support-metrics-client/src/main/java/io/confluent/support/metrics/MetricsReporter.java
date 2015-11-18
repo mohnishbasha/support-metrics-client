@@ -224,7 +224,7 @@ public class MetricsReporter implements Runnable {
         kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
             SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
 
-        log.info("Metrics collection starting...");
+        log.info("Starting metrics collection from monitored broker...");
         boolean keepRunning = true;
         while (keepRunning) {
           try {
@@ -236,7 +236,7 @@ public class MetricsReporter implements Runnable {
             Thread.currentThread().interrupt();
             keepRunning = false;
           } catch (Exception e) {
-            log.error("Stopping metrics collection: {}", e.getMessage());
+            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
             keepRunning = false;
           }
         }
