@@ -21,6 +21,16 @@
         "string"
       ],
       "doc": "The version of the Confluent Platform this broker is running."
+    },
+    {
+      "name": "collectorState",
+      "type": "int",
+      "doc": "The state of the collector (e.g., Running or Shutting down)."
+    },
+    {
+      "name": "UUID",
+      "type": "string",
+      "doc": "A broker unique identifier valid for the runtime of a broker (until shutdown)."
     }
   ]
 }
