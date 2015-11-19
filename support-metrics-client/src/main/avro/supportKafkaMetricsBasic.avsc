@@ -30,7 +30,7 @@
     {
       "name": "UUID",
       "type": "string",
-      "doc": "A broker unique identifier valid for the runtime of a broker (until shutdown)."
+      "doc": "A unique identifier that is valid for the runtime of a broker.  The identifier is generated at broker startup and lost at shutdown/crash."
     }
   ]
 }
