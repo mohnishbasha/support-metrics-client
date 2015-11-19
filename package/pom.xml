@@ -30,6 +30,28 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- Include Kafka as a provided dependency. It should not be pulled in, but this reference
+         allows us to package it with the development-mode "packaging" so you don't need to jump
+         through classpath hoops.  It also has the side-effect of being able to override
+         `kafka.version` on the command line (`mvn -Dkafka.version=...`);  if we omit the
+         Kafka dependency definitions here, the override won't work.
+
+         Lastly, setting a provided dependency has the effect that the package will exclude
+         the Kafka any of its transitive dependencies.  This is safe because during CP packaging
+         we will integrate this project's jar files into Kafka (think: /usr/share/java/kafka/).
+     -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_${kafka.scala.version}</artifactId>
+      <version>${kafka.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>${kafka.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
