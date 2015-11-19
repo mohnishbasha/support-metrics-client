@@ -41,7 +41,7 @@ public class BasicCollector implements Collector {
     metricsRecord.setKafkaVersion(AppInfoParser.getVersion());
     metricsRecord.setConfluentPlatformVersion(Version.getVersion());
     metricsRecord.setCollectorState(collectorState.ordinal());
-    metricsRecord.setUUID(Uuid.getUUID());
+    metricsRecord.setBrokerProcessUUID(Uuid.getUUID());
     return metricsRecord;
   }
 
