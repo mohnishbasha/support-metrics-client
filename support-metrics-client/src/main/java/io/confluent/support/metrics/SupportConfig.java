@@ -1,21 +1,19 @@
 /**
  * Copyright 2015 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.confluent.support.metrics;
 
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
 // TODO: Document these settings.
 
@@ -36,21 +34,6 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG = "confluent.support.customer.id";
   private static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DOC = "Customer ID assigned by Confluent";
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT = "anonymous";
-  private static final String customerPattern = "c\\d{1,30}";
-
-  public static boolean isAnonymousCustomerId(String customerId) {
-    return customerId.toLowerCase().equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
-  }
-
-  public static boolean isWellFormedCustomerId(String customerId) {
-    if (isAnonymousCustomerId(customerId)) {
-      return true;
-    }
-
-    Pattern pattern = Pattern.compile(customerPattern);
-    Matcher matcher = pattern.matcher(customerId.toLowerCase());
-    return matcher.matches();
-  }
 
   /**
    * <code>confluent.support.metrics.report.interval.hours</code>
@@ -76,4 +59,35 @@ public class SupportConfig {
    */
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG = "confluent.support.metrics.endpoint.secure";
   private static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DOC = "Confluent endpoint that receives metrics over HTTPS";
+
+  private static final Pattern customerPattern = Pattern.compile("c\\d{1,30}");
+
+  /**
+   * @param customerId The value of "confluent.support.customer.id".
+   * @return True if the value matches the setting we use to denote anonymous users.
+   */
+  public static boolean isAnonymousUser(String customerId) {
+    return customerId != null && customerId.toLowerCase().equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
+  }
+
+  /**
+   * @param customerId The value of "confluent.support.customer.id".
+   * @return True if the value matches the pattern of Confluent's internal customer ids.
+   */
+  public static boolean isConfluentCustomer(String customerId) {
+    if (customerId != null) {
+      return customerPattern.matcher(customerId.toLowerCase()).matches();
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * @param customerId The value of "confluent.support.customer.id".
+   * @return True if the value is syntactically correct.
+   */
+  public static boolean isSyntacticallyCorrectCustomerId(String customerId) {
+    return isAnonymousUser(customerId) || isConfluentCustomer(customerId);
+  }
+
 }

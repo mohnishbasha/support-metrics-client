@@ -99,7 +99,7 @@ public class MetricsReporter implements Runnable {
     this.kafkaUtilities = kafkaUtilities;
     customerId = getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
-    if (SupportConfig.isAnonymousCustomerId(customerId)) {
+    if (SupportConfig.isAnonymousUser(customerId)) {
       metricsCollector = new BasicCollector(time);
     } else {
       metricsCollector = new FullCollector(server, serverConfiguration, serverRuntime, time);
@@ -135,7 +135,7 @@ public class MetricsReporter implements Runnable {
     if (id == null || id.isEmpty()) {
       id = fallbackId;
     }
-    if (!SupportConfig.isWellFormedCustomerId(id)) {
+    if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {
       log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
       id = fallbackId;
     }
