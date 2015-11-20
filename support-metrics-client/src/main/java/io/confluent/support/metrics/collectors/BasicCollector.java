@@ -21,9 +21,11 @@ import io.confluent.support.metrics.common.Version;
 import io.confluent.support.metrics.SupportKafkaMetricsBasic;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.TimeUtils;
+import io.confluent.support.metrics.common.Uuid;
 public class BasicCollector implements Collector {
 
   private final TimeUtils time;
+  private CollectorState collectorState;
 
   public BasicCollector(TimeUtils time) {
     this.time = time;
@@ -38,8 +40,18 @@ public class BasicCollector implements Collector {
     metricsRecord.setTimestamp(time.nowInUnixTime());
     metricsRecord.setKafkaVersion(AppInfoParser.getVersion());
     metricsRecord.setConfluentPlatformVersion(Version.getVersion());
-
+    metricsRecord.setCollectorState(collectorState.ordinal());
+    metricsRecord.setBrokerProcessUUID(Uuid.getUUID());
     return metricsRecord;
   }
 
+  @Override
+  public CollectorState getState() {
+    return collectorState;
+  }
+
+  @Override
+  public void setState(CollectorState collectorState) {
+    this.collectorState = collectorState;
+  }
 }
