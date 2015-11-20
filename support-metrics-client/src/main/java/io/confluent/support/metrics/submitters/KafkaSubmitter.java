@@ -31,8 +31,8 @@ public class KafkaSubmitter {
 
   private static final Integer requiredNumAcks = 0;
   private static final int retries = 0;
-  private static final int retryBackoffMs = 10 * 1000;
-
+  private static final int retryBackoffMs = 1 * 1000;
+  private static final int maxBlockMs = 10 * 1000;
   private final String bootstrapServers;
   private final String topic;
 
@@ -100,6 +100,7 @@ public class KafkaSubmitter {
     props.put(ProducerConfig.RETRIES_CONFIG, retries);
     props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
     props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
+    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
         "org.apache.kafka.common.serialization.ByteArraySerializer");
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
