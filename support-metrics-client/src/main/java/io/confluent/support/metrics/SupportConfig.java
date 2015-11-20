@@ -36,7 +36,7 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG = "confluent.support.customer.id";
   private static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DOC = "Customer ID assigned by Confluent";
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT = "anonymous";
-  private static final String customerPattern = "c\\d{5}";
+  private static final String customerPattern = "c\\d{1,30}";
 
   public static boolean isAnonymousCustomerId(String customerId) {
     return customerId.toLowerCase().equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);

@@ -23,7 +23,7 @@ public class SupportConfigTest {
   @Test
   public void testWellFormedCustomerId() {
     // Given
-    String[] idWellFormed = {"C10239", "C00000", "c43345", "anonymous", "ANONYmouS"};
+    String[] idWellFormed = {"C1", "C00000", "c43", "anonymous", "ANONYmouS", "c123456789012345678901234567890"};
 
     for (String s : idWellFormed) {
       if (!SupportConfig.isWellFormedCustomerId(s)) {
@@ -35,7 +35,7 @@ public class SupportConfigTest {
   @Test
   public void testNotWellFormedCustomerId() {
     // Given
-    String[] idNotWellFormed = {"", "C", "C1", "C12", "123", "C123456", "1234567"};
+    String[] idNotWellFormed = {"", "C", "123", "123C456", "1234567c", "c1234567890123456789012345678901"};
 
     for (String s : idNotWellFormed) {
       if (SupportConfig.isWellFormedCustomerId(s)) {
