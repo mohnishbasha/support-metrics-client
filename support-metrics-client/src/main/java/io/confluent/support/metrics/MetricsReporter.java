@@ -136,8 +136,8 @@ public class MetricsReporter implements Runnable {
       id = fallbackId;
     }
     if (!SupportConfig.isWellFormedCustomerId(id)) {
-      id = fallbackId;
       log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
+      id = fallbackId;
     }
     return id;
   }
