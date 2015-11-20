@@ -36,10 +36,10 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG = "confluent.support.customer.id";
   private static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DOC = "Customer ID assigned by Confluent";
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT = "anonymous";
-  private static final String customerPattern = "C\\d{5}";
+  private static final String customerPattern = "c\\d{5}";
 
   public static boolean isAnonymousCustomerId(String customerId) {
-    return customerId.equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
+    return customerId.toLowerCase().equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
   }
 
   public static boolean isWellFormedCustomerId(String customerId) {
@@ -48,7 +48,7 @@ public class SupportConfig {
     }
 
     Pattern pattern = Pattern.compile(customerPattern);
-    Matcher matcher = pattern.matcher(customerId);
+    Matcher matcher = pattern.matcher(customerId.toLowerCase());
     return matcher.matches();
   }
 

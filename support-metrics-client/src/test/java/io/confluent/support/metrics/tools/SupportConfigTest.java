@@ -23,15 +23,19 @@ public class SupportConfigTest {
   @Test
   public void testWellFormedCustomerId() {
     // Given
-    String[] idWellFormed = {"C10239", "C00000", "C43345", "anonymous"};
-    String[] idNotWellFormed = {"", "C", "C1", "C12", "123", "C123456", "1234567"};
-
+    String[] idWellFormed = {"C10239", "C00000", "c43345", "anonymous", "ANONYmouS"};
 
     for (String s : idWellFormed) {
       if (!SupportConfig.isWellFormedCustomerId(s)) {
         fail("String expected to be well-formed customer ID");
       }
     }
+  }
+
+  @Test
+  public void testNotWellFormedCustomerId() {
+    // Given
+    String[] idNotWellFormed = {"", "C", "C1", "C12", "123", "C123456", "1234567"};
 
     for (String s : idNotWellFormed) {
       if (SupportConfig.isWellFormedCustomerId(s)) {
