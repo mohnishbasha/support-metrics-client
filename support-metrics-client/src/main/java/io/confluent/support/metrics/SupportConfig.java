@@ -15,6 +15,8 @@
  */
 package io.confluent.support.metrics;
 
+import java.util.regex.*;
+
 // TODO: Document these settings.
 
 /**
@@ -34,9 +36,20 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG = "confluent.support.customer.id";
   private static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DOC = "Customer ID assigned by Confluent";
   public static final String CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT = "anonymous";
+  private static final String customerPattern = "C\\d{5}";
 
   public static boolean isAnonymousCustomerId(String customerId) {
     return customerId.equals(CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
+  }
+
+  public static boolean isWellFormedCustomerId(String customerId) {
+    if (isAnonymousCustomerId(customerId)) {
+      return true;
+    }
+
+    Pattern pattern = Pattern.compile(customerPattern);
+    Matcher matcher = pattern.matcher(customerId);
+    return matcher.matches();
   }
 
   /**

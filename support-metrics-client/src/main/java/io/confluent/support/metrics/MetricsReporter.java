@@ -134,6 +134,10 @@ public class MetricsReporter implements Runnable {
     if (id == null || id.isEmpty()) {
       id = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
     }
+    if (!SupportConfig.isWellFormedCustomerId(id)) {
+      log.error("Customer ID field {} does not match a valid Confluent customer ID.", id);
+      id = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
+    }
     return id;
   }
 
