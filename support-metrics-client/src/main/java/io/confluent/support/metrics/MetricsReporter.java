@@ -202,7 +202,7 @@ public class MetricsReporter implements Runnable {
         try {
           long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
           Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
-          log.info("Waiting {} ms for the monitored broker to finish starting up..." + waitTimeMs);
+          log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
 
           if (kafkaUtilities.isShuttingDown(server)) {
             keepWaitingForServerToStartup = false;
