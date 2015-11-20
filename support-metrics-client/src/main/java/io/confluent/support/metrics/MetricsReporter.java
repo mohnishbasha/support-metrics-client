@@ -30,8 +30,6 @@ import io.confluent.support.metrics.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
-import kafka.server.BrokerShuttingDown;
-import kafka.server.BrokerStates;
 import kafka.server.KafkaServer;
 
 /**
@@ -106,7 +104,7 @@ public class MetricsReporter implements Runnable {
     } else {
       metricsCollector = new FullCollector(server, serverConfiguration, serverRuntime, time);
     }
-    metricsCollector.setState(Collector.CollectorState.Running);
+    metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 
     reportIntervalMs = getReportIntervalMs(serverConfiguration);
 
@@ -209,7 +207,7 @@ public class MetricsReporter implements Runnable {
           if (kafkaUtilities.isShuttingDown(server)) {
             keepWaitingForServerToStartup = false;
             terminateEarly = true;
-            metricsCollector.setState(Collector.CollectorState.ShuttingDown);
+            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
             log.info("Stopping metrics collection prematurely because broker is shutting down");
           } else {
             if (kafkaUtilities.isReadyForMetricsCollection(server)) {
@@ -219,7 +217,7 @@ public class MetricsReporter implements Runnable {
           }
         } catch (InterruptedException i) {
           terminateEarly = true;
-          metricsCollector.setState(Collector.CollectorState.ShuttingDown);
+          metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
           Thread.currentThread().interrupt();
         }
       }
@@ -237,7 +235,7 @@ public class MetricsReporter implements Runnable {
             Thread.sleep(addOnePercentJitter(reportIntervalMs));
             submitMetrics();
           } catch (InterruptedException i) {
-            metricsCollector.setState(Collector.CollectorState.ShuttingDown);
+            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
             submitMetrics();
             log.info("Stopping metrics collection because the monitored broker is shutting down...");
             keepRunning = false;
