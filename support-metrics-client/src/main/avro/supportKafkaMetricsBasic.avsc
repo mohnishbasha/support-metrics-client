@@ -7,7 +7,7 @@
     {
       "name": "timestamp",
       "type": "long",
-      "doc": "Time when this data record was created on the broker (Unix time)"
+      "doc": "Time when this data record was created on the broker (Unix time)."
     },
     {
       "name": "kafkaVersion",
