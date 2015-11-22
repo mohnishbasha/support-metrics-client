@@ -13,6 +13,7 @@
  */
 package io.confluent.support.metrics.submitters;
 
+import org.apache.commons.collections.functors.ExceptionClosure;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -156,7 +157,7 @@ public class ConfluentSubmitter {
         statusCode = response.getStatusLine().getStatusCode();
         response.close();
         httpclient.close();
-      } catch (IOException e) {
+      } catch (Exception e) {
         log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
       }
     }
