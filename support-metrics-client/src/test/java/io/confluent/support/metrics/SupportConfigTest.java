@@ -23,7 +23,7 @@ import static org.junit.Assert.assertThat;
 public class SupportConfigTest {
 
   private final String[] validCustomerIds = {
-      "c1", "C1", "c12", "C22", "c123", "C333", "c1234", "C4444",
+      "C0", "c1", "C1", "c12", "C22", "c123", "C333", "c1234", "C4444",
       "C00000", "C12345", "C99999", "C123456789", "C123456789012345678901234567890",
       "c00000", "c12345", "c99999", "c123456789", "c123456789012345678901234567890",
   };
