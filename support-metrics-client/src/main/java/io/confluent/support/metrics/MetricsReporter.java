@@ -66,7 +66,7 @@ public class MetricsReporter implements Runnable {
    * Length of the wait period we give the server to start up completely (in a different thread)
    * before we begin metrics collection.
    */
-  private static final long SETTLING_TIME_MS = 10 * 1000L;
+  private static final long SETTLING_TIME_MS = 1 * 1000L;
 
   private final String customerId;
   private final long reportIntervalMs;
@@ -203,12 +203,12 @@ public class MetricsReporter implements Runnable {
     if (reportingEnabled()) {
       boolean keepWaitingForServerToStartup = true;
       boolean terminateEarly = false;
+
       while (keepWaitingForServerToStartup) {
         try {
           long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
           Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
           log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
-
           if (kafkaUtilities.isShuttingDown(server)) {
             keepWaitingForServerToStartup = false;
             terminateEarly = true;
@@ -222,21 +222,24 @@ public class MetricsReporter implements Runnable {
           }
         } catch (InterruptedException i) {
           terminateEarly = true;
+          keepWaitingForServerToStartup = false;
           metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
           Thread.currentThread().interrupt();
         }
       }
-
       if (terminateEarly) {
         log.info("Metrics collection stopped before it even started");
       } else {
         kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
             SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
-
         log.info("Starting metrics collection from monitored broker...");
         boolean keepRunning = true;
         while (keepRunning) {
           try {
+            // it is possible that the thread was interrupted during the createTopicIfMissing call
+            if (Thread.currentThread().isInterrupted()) {
+              throw new InterruptedException();
+            }
             Thread.sleep(addOnePercentJitter(reportIntervalMs));
             submitMetrics();
           } catch (InterruptedException i) {
@@ -252,7 +255,6 @@ public class MetricsReporter implements Runnable {
         }
       }
     }
-
     log.info("Metrics collection stopped");
   }
 
