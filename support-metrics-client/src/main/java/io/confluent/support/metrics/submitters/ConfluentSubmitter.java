@@ -140,24 +140,26 @@ public class ConfluentSubmitter {
   protected int submit(byte[] bytes, HttpPost httpPost) {
     int statusCode = DEFAULT_STATUS_CODE;
     if (bytes != null && httpPost != null) {
-      try {
-        final RequestConfig config = RequestConfig.custom().
-                setConnectTimeout(requestTimeoutMs).
-                setConnectionRequestTimeout(requestTimeoutMs).
-                setSocketTimeout(requestTimeoutMs).
-                build();
-        CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-        builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
-        httpPost.setEntity(builder.build());
-        log.debug("Executing POST request with data length {} bytes", bytes.length);
-        CloseableHttpResponse response = httpclient.execute(httpPost);
+
+      // add the body to the request
+      MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+      builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
+      httpPost.setEntity(builder.build());
+
+      // set the HTTP config
+      final RequestConfig config = RequestConfig.custom().
+          setConnectTimeout(requestTimeoutMs).
+          setConnectionRequestTimeout(requestTimeoutMs).
+          setSocketTimeout(requestTimeoutMs).
+          build();
+
+      // send request
+      try (CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+           CloseableHttpResponse response = httpclient.execute(httpPost)) {
         log.debug("POST request returned {}", response.getStatusLine().toString());
         statusCode = response.getStatusLine().getStatusCode();
-        response.close();
-        httpclient.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
         log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
       }
     }
