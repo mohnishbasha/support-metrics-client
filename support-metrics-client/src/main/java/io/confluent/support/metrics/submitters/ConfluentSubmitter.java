@@ -83,10 +83,10 @@ public class ConfluentSubmitter {
         statusCode = sendSecurely(encodedMetricsRecord);
         if (!submittedSuccessfully(statusCode)) {
           if (isInsecureEndpointEnabled()) {
-            log.warn("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
+            log.error("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
             submitToInsecureEndpoint(encodedMetricsRecord);
           } else {
-            log.warn("Failed to submit metrics via secure endpoint -- giving up");
+            log.error("Failed to submit metrics via secure endpoint -- giving up");
           }
         } else {
           log.info("Successfully submitted metrics to Confluent via secure endpoint");
@@ -108,7 +108,7 @@ public class ConfluentSubmitter {
     if (submittedSuccessfully(statusCode)) {
       log.info("Successfully submitted metrics to Confluent via insecure endpoint");
     } else {
-      log.warn("Failed to submit metrics to Confluent via insecure endpoint -- giving up");
+      log.error("Failed to submit metrics to Confluent via insecure endpoint -- giving up");
     }
   }
 
