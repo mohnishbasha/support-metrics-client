@@ -18,7 +18,7 @@ import org.apache.kafka.common.utils.AppInfoParser;
 
 import io.confluent.support.metrics.SupportKafkaMetricsBasic;
 import io.confluent.support.metrics.common.Collector;
-import io.confluent.support.metrics.common.TimeUtils;
+import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.common.Uuid;
 import io.confluent.support.metrics.common.Version;
 
