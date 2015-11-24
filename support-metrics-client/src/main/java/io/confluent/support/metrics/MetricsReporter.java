@@ -97,7 +97,12 @@ public class MetricsReporter implements Runnable {
                          Runtime serverRuntime,
                          KafkaUtilities kafkaUtilities) {
     this.kafkaUtilities = kafkaUtilities;
-    customerId = getCustomerId(serverConfiguration);
+
+    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
+      throw new IllegalArgumentException("some arguments are null");
+    }
+
+    customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
       metricsCollector = new BasicCollector(time);
@@ -106,17 +111,17 @@ public class MetricsReporter implements Runnable {
     }
     metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 
-    reportIntervalMs = getReportIntervalMs(serverConfiguration);
+    reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
-    supportTopic = getKafkaTopic(serverConfiguration);
+    supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
     if (!supportTopic.isEmpty()) {
       kafkaSubmitter = new KafkaSubmitter(getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
     }
 
-    String endpointHTTP = getEndpointHTTP(serverConfiguration);
-    String endpointHTTPS = getEndpointHTTPS(serverConfiguration);
+    String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
+    String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
     if (!endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty()) {
       confluentSubmitter = new ConfluentSubmitter(endpointHTTP, endpointHTTPS);
     } else {
@@ -129,73 +134,23 @@ public class MetricsReporter implements Runnable {
     this.server = server;
   }
 
-  private String getCustomerId(Properties serverConfiguration) {
-    String fallbackId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
-    String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
-    if (id == null || id.isEmpty()) {
-      id = fallbackId;
-    }
-    if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {
-      log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
-      id = fallbackId;
-    }
-    return id;
-  }
 
-  private long getReportIntervalMs(Properties serverConfiguration) {
-    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG);
-    if (intervalString == null || intervalString.isEmpty()) {
-      intervalString = SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT;
-    }
-    try {
-      long intervalHours = Long.parseLong(intervalString);
-      if (intervalHours < 1) {
-        throw new ConfigException(
-            SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
-            intervalString,
-            "Interval must be >= 1");
-      }
-      return intervalHours * 60 * 60 * 1000;
-    } catch (NumberFormatException e) {
-      throw new ConfigException(
-          SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
-          intervalString,
-          "Interval is not an integer number");
-    }
-  }
-
-  private String getKafkaTopic(Properties serverConfiguration) {
-    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    if (topic == null) {
-      return "";
-    } else {
-      return topic;
-    }
-  }
-
-  private String getKafkaBootstrapServers(KafkaServer server) {
+  protected String getKafkaBootstrapServers(KafkaServer server) {
     String hostname = server.config().advertisedHostName();
     Integer port = server.config().advertisedPort();
     return hostname + ":" + port.toString();
   }
 
-  private String getEndpointHTTP(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
-  }
 
-  private String getEndpointHTTPS(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
-  }
-
-  private boolean reportingEnabled() {
+  protected boolean reportingEnabled() {
     return sendToKafkaEnabled() || sendToConfluentEnabled();
   }
 
-  private boolean sendToKafkaEnabled() {
+  protected boolean sendToKafkaEnabled() {
     return kafkaSubmitter != null;
   }
 
-  private boolean sendToConfluentEnabled() {
+  protected boolean sendToConfluentEnabled() {
     return confluentSubmitter != null;
   }
 
@@ -258,7 +213,7 @@ public class MetricsReporter implements Runnable {
     log.info("Metrics collection stopped");
   }
 
-  private long addOnePercentJitter(long reportIntervalMs) {
+  protected long addOnePercentJitter(long reportIntervalMs) {
     return reportIntervalMs + random.nextInt((int) reportIntervalMs / 100);
   }
 

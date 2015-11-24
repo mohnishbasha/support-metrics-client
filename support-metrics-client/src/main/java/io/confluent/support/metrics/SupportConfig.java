@@ -13,6 +13,11 @@
  */
 package io.confluent.support.metrics;
 
+import org.apache.kafka.common.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 // TODO: Document these settings.
@@ -27,6 +32,8 @@ import java.util.regex.Pattern;
  * then make sure to also update the patch file accordingly.
  */
 public class SupportConfig {
+
+  private static final Logger log = LoggerFactory.getLogger(SupportConfig.class);
 
   /**
    * <code>confluent.support.customer.id</code>
@@ -90,4 +97,55 @@ public class SupportConfig {
     return isAnonymousUser(customerId) || isConfluentCustomer(customerId);
   }
 
+  public static String getCustomerId(Properties serverConfiguration) {
+    String fallbackId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
+    String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
+    if (id == null || id.isEmpty()) {
+      id = fallbackId;
+    }
+    if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {
+      log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
+      id = fallbackId;
+    }
+    return id;
+  }
+
+  public static long getReportIntervalMs(Properties serverConfiguration) {
+    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG);
+    if (intervalString == null || intervalString.isEmpty()) {
+      intervalString = SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT;
+    }
+    try {
+      long intervalHours = Long.parseLong(intervalString);
+      if (intervalHours < 1) {
+        throw new ConfigException(
+            SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
+            intervalString,
+            "Interval must be >= 1");
+      }
+      return intervalHours * 60 * 60 * 1000;
+    } catch (NumberFormatException e) {
+      throw new ConfigException(
+          SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
+          intervalString,
+          "Interval is not an integer number");
+    }
+  }
+
+  public static String getKafkaTopic(Properties serverConfiguration) {
+    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    if (topic == null) {
+      return "";
+    } else {
+      return topic;
+    }
+  }
+
+  public static String getEndpointHTTP(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
+  }
+
+  public static String getEndpointHTTPS(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
+  }
 }

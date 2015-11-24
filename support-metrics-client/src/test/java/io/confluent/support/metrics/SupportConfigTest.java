@@ -134,6 +134,22 @@ public class SupportConfigTest {
     assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG)).isEqualTo("24");
   }
 
+  @Test
+  public void testValidParams() {
+    String filePath = null;
+    try {
+      filePath = prepareDefaultConfig();
+    } catch (IOException e) {
+      fail("Could not prepare default configuration file");
+    }
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
+    assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
+    assertThat(SupportConfig.getKafkaTopic(serverProps)).isEqualTo("__sample_topic");
+    assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://example.com");
+    assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
+  }
+
   private static String prepareDefaultConfig() throws IOException {
     String[] lines = {
         "broker.id=1", "zookeeper.connect=localhost:2181",
