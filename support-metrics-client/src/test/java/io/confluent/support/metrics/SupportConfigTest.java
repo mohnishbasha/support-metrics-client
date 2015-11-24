@@ -15,11 +15,21 @@ package io.confluent.support.metrics;
 
 import com.google.common.collect.ObjectArrays;
 
-import org.junit.Test;
+import junit.framework.Assert;
 
+import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+import kafka.Kafka;
+import kafka.server.KafkaConfig;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-
+import static org.assertj.core.api.Assertions.fail;
 public class SupportConfigTest {
 
   private final String[] validCustomerIds = {
@@ -89,6 +99,64 @@ public class SupportConfigTest {
       assertThat(invalidValue + " is a valid value for " + SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
           SupportConfig.isSyntacticallyCorrectCustomerId(invalidValue), is(false));
     }
+  }
+
+
+  @Test
+  public void testGetKafkaConfigFromProps() {
+    String filePath = null;
+    try {
+      filePath = prepareDefaultConfig();
+    } catch (IOException e) {
+      fail("Could not prepare default configuration file");
+    }
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    KafkaConfig cfg = KafkaConfig.fromProps(serverProps);
+    assertThat(cfg.brokerId()).isEqualTo(1);
+    assertThat(cfg.zkConnect()).isEqualTo("localhost:2181");
+  }
+
+  @Test
+  public void testGetKafkaConfigFromArgs() {
+    String filePath = null;
+    try {
+      filePath = prepareDefaultConfig();
+    } catch (IOException e) {
+      fail("Could not prepare default configuration file");
+    }
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    assertThat(serverProps.get("broker.id")).isEqualTo("1");
+    assertThat(serverProps.get("zookeeper.connect")).isEqualTo("localhost:2181");
+    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG)).isEqualTo("anonymous");
+    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG )).isEqualTo("http://example.com");
+    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG)).isEqualTo("https://example.com");
+    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG)).isEqualTo("__sample_topic");
+    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG)).isEqualTo("24");
+  }
+
+  private static String prepareDefaultConfig() throws IOException {
+    String[] lines = {
+        "broker.id=1", "zookeeper.connect=localhost:2181",
+        SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG + "=anonymous",
+        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG + "=http://example.com",
+        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG + "=https://example.com",
+        SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG + "=__sample_topic",
+        SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG + "=24"
+    };
+    return prepareConfig(lines);
+  }
+
+  private static String prepareConfig(String[] lines) throws IOException {
+    File file = File.createTempFile("supportedkafkatest", ".properties");
+    file.deleteOnExit();
+
+    FileOutputStream out = new FileOutputStream(file);
+    for (String line : lines) {
+      out.write(line.getBytes());
+      out.write("\n".getBytes());
+    }
+    out.close();
+    return file.getAbsolutePath();
   }
 
 }
