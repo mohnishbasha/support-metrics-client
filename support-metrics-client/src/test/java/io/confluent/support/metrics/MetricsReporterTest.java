@@ -21,13 +21,14 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
+import java.io.IOException;
 import java.util.Properties;
-
 import io.confluent.support.metrics.utils.ZookeeperUtils;
+import kafka.Kafka;
 import kafka.server.KafkaServer;
 import kafka.zk.EmbeddedZookeeper;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 public class MetricsReporterTest  {
@@ -46,7 +47,6 @@ public class MetricsReporterTest  {
     ZookeeperUtils.stopServer(server);
     ZookeeperUtils.stopZookeeper(zookeeper);
   }
-
 
   @Test
   public void testInvalidArgumentsForConstructorNullServer() {
@@ -93,5 +93,42 @@ public class MetricsReporterTest  {
     }
   }
 
+  @Test
+  public void testValidConstructor() {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps = null;
+
+    try {
+      serverProps = Kafka.getPropsFromArgs(new String[]{ZookeeperUtils.prepareDefaultConfig()});
+    } catch (IOException e) {
+      fail("Could not create default properties");
+    }
+
+    // When/Then
+    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    assertThat(reporter.reportingEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void testAddOnePercentJitter() {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps = null;
+    long[] baseArray = {-2232, -1, 0, 99, 100, 101, 1000, 10000, 38742};
+
+    try {
+      serverProps = Kafka.getPropsFromArgs(new String[]{ZookeeperUtils.prepareDefaultConfig()});
+    } catch (IOException e) {
+      fail("Could not create default properties");
+    }
+
+    // When/Then
+    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    for (long base : baseArray) {
+      assertThat(reporter.addOnePercentJitter(base)).isBetween(base, base + Math.abs(base)/100);
+    }
+  }
 
 }

@@ -115,7 +115,7 @@ public class MetricsReporter implements Runnable {
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
     if (!supportTopic.isEmpty()) {
-      kafkaSubmitter = new KafkaSubmitter(getKafkaBootstrapServers(server), supportTopic);
+      kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
     }
@@ -133,14 +133,6 @@ public class MetricsReporter implements Runnable {
     }
     this.server = server;
   }
-
-
-  protected String getKafkaBootstrapServers(KafkaServer server) {
-    String hostname = server.config().advertisedHostName();
-    Integer port = server.config().advertisedPort();
-    return hostname + ":" + port.toString();
-  }
-
 
   protected boolean reportingEnabled() {
     return sendToKafkaEnabled() || sendToConfluentEnabled();
@@ -213,8 +205,14 @@ public class MetricsReporter implements Runnable {
     log.info("Metrics collection stopped");
   }
 
-  protected long addOnePercentJitter(long reportIntervalMs) {
-    return reportIntervalMs + random.nextInt((int) reportIntervalMs / 100);
+  /**
+   * Adds 1% to a value. If value is 0, returns 0. If value is negative, adds 1% of abs(value) to it
+   * @param value: Number to add 1% to. Could be negative.
+   * @return Value +1% of abs(value)
+   */
+  protected long addOnePercentJitter(long value) {
+    if (value == 0 || value < 100) return value;
+    return value + random.nextInt((int) Math.abs(value) / 100);
   }
 
   private void submitMetrics() {

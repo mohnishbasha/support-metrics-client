@@ -14,16 +14,11 @@
 package io.confluent.support.metrics;
 
 import com.google.common.collect.ObjectArrays;
-
-import junit.framework.Assert;
-
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+import io.confluent.support.metrics.utils.ZookeeperUtils;
 
 import kafka.Kafka;
 import kafka.server.KafkaConfig;
@@ -106,7 +101,7 @@ public class SupportConfigTest {
   public void testGetKafkaConfigFromProps() {
     String filePath = null;
     try {
-      filePath = prepareDefaultConfig();
+      filePath = ZookeeperUtils.prepareDefaultConfig();
     } catch (IOException e) {
       fail("Could not prepare default configuration file");
     }
@@ -120,7 +115,7 @@ public class SupportConfigTest {
   public void testGetKafkaConfigFromArgs() {
     String filePath = null;
     try {
-      filePath = prepareDefaultConfig();
+      filePath = ZookeeperUtils.prepareDefaultConfig();
     } catch (IOException e) {
       fail("Could not prepare default configuration file");
     }
@@ -138,7 +133,7 @@ public class SupportConfigTest {
   public void testValidParams() {
     String filePath = null;
     try {
-      filePath = prepareDefaultConfig();
+      filePath = ZookeeperUtils.prepareDefaultConfig();
     } catch (IOException e) {
       fail("Could not prepare default configuration file");
     }
@@ -150,29 +145,6 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
   }
 
-  private static String prepareDefaultConfig() throws IOException {
-    String[] lines = {
-        "broker.id=1", "zookeeper.connect=localhost:2181",
-        SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG + "=anonymous",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG + "=http://example.com",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG + "=https://example.com",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG + "=__sample_topic",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG + "=24"
-    };
-    return prepareConfig(lines);
-  }
 
-  private static String prepareConfig(String[] lines) throws IOException {
-    File file = File.createTempFile("supportedkafkatest", ".properties");
-    file.deleteOnExit();
-
-    FileOutputStream out = new FileOutputStream(file);
-    for (String line : lines) {
-      out.write(line.getBytes());
-      out.write("\n".getBytes());
-    }
-    out.close();
-    return file.getAbsolutePath();
-  }
 
 }

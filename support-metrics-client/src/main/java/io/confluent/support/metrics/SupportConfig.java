@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import kafka.server.KafkaServer;
+
 // TODO: Document these settings.
 
 /**
@@ -139,6 +141,12 @@ public class SupportConfig {
     } else {
       return topic;
     }
+  }
+
+  public static String getKafkaBootstrapServers(KafkaServer server) {
+    String hostname = server.config().advertisedHostName();
+    Integer port = server.config().advertisedPort();
+    return hostname + ":" + port.toString();
   }
 
   public static String getEndpointHTTP(Properties serverConfiguration) {
