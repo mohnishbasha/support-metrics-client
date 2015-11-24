@@ -66,7 +66,7 @@ public class MetricsReporter implements Runnable {
    * Length of the wait period we give the server to start up completely (in a different thread)
    * before we begin metrics collection.
    */
-  private static final long SETTLING_TIME_MS = 1 * 1000L;
+  private static final long SETTLING_TIME_MS = 10 * 1000L;
 
   private final String customerId;
   private final long reportIntervalMs;
