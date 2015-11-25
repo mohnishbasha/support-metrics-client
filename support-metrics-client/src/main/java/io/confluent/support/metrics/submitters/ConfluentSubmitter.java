@@ -46,15 +46,16 @@ public class ConfluentSubmitter {
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
   public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
+
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify endpoints");
     }
-    if (endpointHTTP != null) {
+    if (endpointHTTP != null && !endpointHTTP.isEmpty()) {
       if (!testEndpointValid(new String[]{"http"}, endpointHTTP)) {
         throw new IllegalArgumentException("invalid HTTP endpoint");
       }
     }
-    if (endpointHTTPS != null) {
+    if (endpointHTTPS != null && !endpointHTTPS.isEmpty()) {
       if (!testEndpointValid(new String[]{"https"}, endpointHTTPS)) {
         throw new IllegalArgumentException("invalid HTTPS endpoint");
       }

@@ -72,6 +72,34 @@ public class SupportConfig {
   private static final Pattern customerPattern = Pattern.compile("c\\d{1,30}");
 
   /**
+   * A check on whether Proactive Support (PS) is enabled or not. PS is disabled when
+   * none of the parameters CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG,
+   * CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG are specified. Otherwise, if even one of them is specified,
+   * PS is on
+   * @param serverConfiguration
+   * @return false if PS is not enabled, true if PS is enabled
+   */
+  public static boolean isProactiveSupportEnabled(Properties serverConfiguration) {
+    if (serverConfiguration == null) {
+      return false;
+    }
+    String supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
+    String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
+    String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
+
+    if (supportTopic != null && !supportTopic.isEmpty()) {
+      return true;
+    }
+
+    if ((endpointHTTP != null && !endpointHTTP.isEmpty()) ||
+        (endpointHTTPS != null && !endpointHTTPS.isEmpty())) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * @param customerId The value of "confluent.support.customer.id".
    * @return True if the value matches the setting we use to denote anonymous users.
    */

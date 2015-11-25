@@ -134,4 +134,59 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://example.com");
     assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
   }
+
+  @Test
+  public void isProactiveSupportEnabledFull() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+  }
+
+  @Test
+  public void isProactiveSupportEnabledTopicOnly() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+  }
+
+  @Test
+  public void isProactiveSupportEnabledHTTPOnly() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+  }
+
+  @Test
+  public void isProactiveSupportEnabledHTTPSOnly() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+  }
+
+  @Test
+  public void isProactiveSupportDisabled() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(false);
+  }
+
 }

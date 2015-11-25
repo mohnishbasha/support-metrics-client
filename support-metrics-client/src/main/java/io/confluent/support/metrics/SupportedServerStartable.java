@@ -50,9 +50,20 @@ public class SupportedServerStartable {
     KafkaConfig serverConfig = KafkaConfig.fromProps(props);
     Option<String> noThreadNamePrefix = Option.empty();
     server = new KafkaServer(serverConfig, SystemTime$.MODULE$, noThreadNamePrefix);
-    Runtime serverRuntime = Runtime.getRuntime();
-    metricsReporter = new MetricsReporter(server, props, serverRuntime);
-    metricsThread = Utils.daemonThread("BrokerMetricsReporter", metricsReporter);
+
+    try {
+      if (SupportConfig.isProactiveSupportEnabled(props)) {
+        Runtime serverRuntime = Runtime.getRuntime();
+        metricsReporter = new MetricsReporter(server, props, serverRuntime);
+        metricsThread = Utils.daemonThread("BrokerMetricsReporter", metricsReporter);
+      } else {
+        log.warn("Proactive Support is disabled");
+      }
+    } catch (Exception e) {
+      // We catch any exceptions to prevent collateral damage to the more important broker
+      // threads that are running in the same JVM.
+      log.error("Failed to start metrics reporter: {}", e.getMessage());
+    }
   }
 
   public void startup() {

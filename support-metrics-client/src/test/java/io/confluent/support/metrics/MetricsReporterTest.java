@@ -103,5 +103,94 @@ public class MetricsReporterTest  {
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
     assertThat(reporter.reportingEnabled()).isEqualTo(true);
     assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void testValidConstructorTopicOnly() throws IOException {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps;
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
+    // When/Then
+    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    assertThat(reporter.reportingEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(false);
+  }
+
+  @Test
+  public void testValidConstructorHTTPOnly() throws IOException {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps;
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
+    // When/Then
+    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    assertThat(reporter.reportingEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
+    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void testValidConstructorHTTPSOnly() throws IOException {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps;
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+
+    // When/Then
+    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    assertThat(reporter.reportingEnabled()).isEqualTo(true);
+    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
+    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void testValidConstructorInvalidHTTPSOnly() throws IOException {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps;
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    serverProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "http://example.com");
+
+    // When/Then
+    try {
+      MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+      fail("IllegalArgumentException expected because endpoints was of wrong type");
+    } catch (Exception e){
+      assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
+    }
+  }
+
+  @Test
+  public void testValidConstructorInvalidHTTPOnly() throws IOException {
+    // Given
+    Runtime serverRuntime = Runtime.getRuntime();
+    Properties serverProps;
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    serverProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "https://example.com");
+
+    // When/Then
+    try {
+      MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+      fail("IllegalArgumentException expected because endpoints was of wrong type");
+    } catch (Exception e){
+      assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
+    }
   }
 }
