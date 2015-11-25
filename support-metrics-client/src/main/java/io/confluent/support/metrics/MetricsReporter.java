@@ -70,7 +70,7 @@ public class MetricsReporter implements Runnable {
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
-  private final KafkaSubmitter kafkaSubmitter;
+  private KafkaSubmitter kafkaSubmitter;
   private final ConfluentSubmitter confluentSubmitter;
   private final Collector metricsCollector;
   private final AvroSerializer encoder = new AvroSerializer();
@@ -115,7 +115,7 @@ public class MetricsReporter implements Runnable {
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
-    if (!supportTopic.isEmpty()) {
+    if (supportTopic != null && !supportTopic.isEmpty()) {
       kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
@@ -147,39 +147,50 @@ public class MetricsReporter implements Runnable {
     return confluentSubmitter != null;
   }
 
-  public void run() {
-    if (reportingEnabled()) {
-      boolean keepWaitingForServerToStartup = true;
-      boolean terminateEarly = false;
+  /**
+   * Waits for the kafka server to start. If the server fails to start this method will return
+   *
+   * @return true if server has started, false for any other server failures to start
+   */
+  private boolean waitForServer() {
+    boolean keepWaitingForServerToStartup = true;
+    boolean terminateEarly = false;
 
-      while (keepWaitingForServerToStartup) {
-        try {
-          long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
-          log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
-          Thread.sleep(waitTimeMs);
-          if (kafkaUtilities.isShuttingDown(server)) {
-            keepWaitingForServerToStartup = false;
-            terminateEarly = true;
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            log.info("Stopping metrics collection prematurely because broker is shutting down");
-          } else {
-            if (kafkaUtilities.isReadyForMetricsCollection(server)) {
-              log.info("Monitored broker is now ready");
-              keepWaitingForServerToStartup = false;
-            }
-          }
-        } catch (InterruptedException i) {
-          terminateEarly = true;
+    while (keepWaitingForServerToStartup) {
+      try {
+        long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
+        log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
+        Thread.sleep(waitTimeMs);
+        if (kafkaUtilities.isShuttingDown(server)) {
           keepWaitingForServerToStartup = false;
+          terminateEarly = true;
           metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-          Thread.currentThread().interrupt();
+          log.info("Stopping metrics collection prematurely because broker is shutting down");
+        } else {
+          if (kafkaUtilities.isReadyForMetricsCollection(server)) {
+            log.info("Monitored broker is now ready");
+            keepWaitingForServerToStartup = false;
+          }
         }
+      } catch (InterruptedException i) {
+        terminateEarly = true;
+        keepWaitingForServerToStartup = false;
+        metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+        Thread.currentThread().interrupt();
       }
+    }
+    return terminateEarly;
+  }
+
+
+  public void run() {
+    boolean terminateEarly = false;
+    if (reportingEnabled()) {
+      terminateEarly = waitForServer();
+
       if (terminateEarly) {
         log.info("Metrics collection stopped before it even started");
       } else {
-        kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
-            SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
         log.info("Starting metrics collection from monitored broker...");
         boolean keepRunning = true;
         while (keepRunning) {
@@ -217,7 +228,12 @@ public class MetricsReporter implements Runnable {
 
     try {
       if (sendToKafkaEnabled()) {
-        kafkaSubmitter.submit(encodedMetricsRecord);
+        // attempt to create the topic. If failures occur, try again in the next round, however
+        // the current batch of metrics will be lost.
+        if (kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+            SUPPORT_TOPIC_REPLICATION, RETENTION_MS)) {
+          kafkaSubmitter.submit(encodedMetricsRecord);
+        }
       }
     } catch (RuntimeException e) {
       log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.toString());
