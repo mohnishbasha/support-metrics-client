@@ -102,6 +102,9 @@ public class MetricsReporter implements Runnable {
 
     customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
+    if (time == null) {
+      throw new NullPointerException("Could not get TimeUtils object");
+    }
     if (SupportConfig.isAnonymousUser(customerId)) {
       metricsCollector = new BasicCollector(time);
     } else {

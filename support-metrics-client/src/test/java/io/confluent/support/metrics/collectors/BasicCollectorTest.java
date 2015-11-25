@@ -1,0 +1,55 @@
+/**
+ * Copyright 2015 Confluent Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.confluent.support.metrics.collectors;
+
+import org.apache.avro.generic.GenericContainer;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.exceptions.misusing.NullInsteadOfMockException;
+import org.apache.kafka.common.utils.AppInfoParser;
+import io.confluent.support.metrics.SupportConfig;
+import io.confluent.support.metrics.SupportKafkaMetricsBasic;
+import io.confluent.support.metrics.common.Collector;
+import io.confluent.support.metrics.common.Uuid;
+import io.confluent.support.metrics.common.Version;
+import io.confluent.support.metrics.common.time.TimeUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.core.Is.is;
+
+public class BasicCollectorTest {
+
+  @Test
+  public void testCollectMetrics() {
+    TimeUtils time = new TimeUtils();
+    Uuid uuid = new Uuid();
+    long now = time.nowInUnixTime();
+    Collector metricsCollector = new BasicCollector(time, uuid);
+    GenericContainer metricsRecord = metricsCollector.collectMetrics();
+
+    // basic checks
+    assertThat(metricsRecord).isInstanceOf(SupportKafkaMetricsBasic.class);
+    assertThat(metricsRecord.getSchema()).isEqualTo(SupportKafkaMetricsBasic.getClassSchema());
+
+    // check each field
+    SupportKafkaMetricsBasic mB = (SupportKafkaMetricsBasic)metricsRecord;
+    assertThat(mB.getTimestamp()).isBetween(now, time.nowInUnixTime());
+    assertThat(mB.getKafkaVersion()).isEqualTo(AppInfoParser.getVersion());
+    assertThat(mB.getConfluentPlatformVersion()).isEqualTo(Version.getVersion());
+    assertThat(mB.getCollectorState()).isEqualTo(metricsCollector.getRuntimeState().stateId());
+    assertThat(mB.getBrokerProcessUUID()).isEqualTo(uuid.toString());
+  }
+}
