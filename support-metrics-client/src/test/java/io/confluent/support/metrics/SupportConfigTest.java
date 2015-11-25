@@ -18,13 +18,12 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.util.Properties;
-import io.confluent.support.metrics.utils.ZookeeperUtils;
+import io.confluent.support.metrics.utils.KafkaServerUtils;
 
 import kafka.Kafka;
 import kafka.server.KafkaConfig;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 public class SupportConfigTest {
 
   private final String[] validCustomerIds = {
@@ -98,13 +97,10 @@ public class SupportConfigTest {
 
 
   @Test
-  public void testGetKafkaConfigFromProps() {
-    String filePath = null;
-    try {
-      filePath = ZookeeperUtils.prepareDefaultConfig();
-    } catch (IOException e) {
-      fail("Could not prepare default configuration file");
-    }
+  public void proactiveSupportConfigIsValidKafkaConfig() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     KafkaConfig cfg = KafkaConfig.fromProps(serverProps);
     assertThat(cfg.brokerId()).isEqualTo(1);
@@ -112,13 +108,10 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void testGetKafkaConfigFromArgs() {
-    String filePath = null;
-    try {
-      filePath = ZookeeperUtils.prepareDefaultConfig();
-    } catch (IOException e) {
-      fail("Could not prepare default configuration file");
-    }
+  public void testProactiveSupportConfigFromArgs() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     assertThat(serverProps.get("broker.id")).isEqualTo("1");
     assertThat(serverProps.get("zookeeper.connect")).isEqualTo("localhost:2181");
@@ -130,13 +123,10 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void testValidParams() {
-    String filePath = null;
-    try {
-      filePath = ZookeeperUtils.prepareDefaultConfig();
-    } catch (IOException e) {
-      fail("Could not prepare default configuration file");
-    }
+  public void testValidProactiveSupportConfig() throws IOException {
+    String filePath;
+    filePath = KafkaServerUtils.prepareDefaultConfig();
+
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
     assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
@@ -144,7 +134,4 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://example.com");
     assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
   }
-
-
-
 }

@@ -14,13 +14,11 @@
 package io.confluent.support.metrics;
 
 import org.apache.avro.generic.GenericContainer;
-import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Random;
 
 import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
@@ -30,6 +28,7 @@ import io.confluent.support.metrics.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
+import io.confluent.support.metrics.utils.Jitter;
 import kafka.server.KafkaServer;
 
 /**
@@ -71,7 +70,6 @@ public class MetricsReporter implements Runnable {
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
-  private final Random random = new Random();
   private final KafkaSubmitter kafkaSubmitter;
   private final ConfluentSubmitter confluentSubmitter;
   private final Collector metricsCollector;
@@ -153,9 +151,9 @@ public class MetricsReporter implements Runnable {
 
       while (keepWaitingForServerToStartup) {
         try {
-          long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
-          Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
+          long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
           log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
+          Thread.sleep(waitTimeMs);
           if (kafkaUtilities.isShuttingDown(server)) {
             keepWaitingForServerToStartup = false;
             terminateEarly = true;
@@ -187,7 +185,7 @@ public class MetricsReporter implements Runnable {
             if (Thread.currentThread().isInterrupted()) {
               throw new InterruptedException();
             }
-            Thread.sleep(addOnePercentJitter(reportIntervalMs));
+            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
             submitMetrics();
           } catch (InterruptedException i) {
             metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
@@ -203,16 +201,6 @@ public class MetricsReporter implements Runnable {
       }
     }
     log.info("Metrics collection stopped");
-  }
-
-  /**
-   * Adds 1% to a value. If value is 0, returns 0. If value is negative, adds 1% of abs(value) to it
-   * @param value: Number to add 1% to. Could be negative.
-   * @return Value +1% of abs(value)
-   */
-  protected long addOnePercentJitter(long value) {
-    if (value == 0 || value < 100) return value;
-    return value + random.nextInt((int) Math.abs(value) / 100);
   }
 
   private void submitMetrics() {

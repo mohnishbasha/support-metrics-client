@@ -17,7 +17,7 @@ import kafka.zk.EmbeddedZookeeper;
 import scala.Option;
 import scala.Option$;
 
-public class ZookeeperUtils {
+public class KafkaServerUtils {
 
   public static EmbeddedZookeeper startZookeeper() {
     EmbeddedZookeeper zookeeper = new EmbeddedZookeeper();
