@@ -74,10 +74,10 @@ public class ConfluentSubmitter {
   }
 
   /**
-   * Submits metrics to Confluent via the Internet.  Ignores null inputs.
+   * Submits metrics to Confluent via the Internet.  Ignores null or empty inputs.
    */
   public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord != null) {
+    if (encodedMetricsRecord != null && encodedMetricsRecord.length > 0) {
       int statusCode = DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
         statusCode = sendSecurely(encodedMetricsRecord);
@@ -139,7 +139,7 @@ public class ConfluentSubmitter {
   // This method is `protected` instead of `private` to be visible for testing.
   protected int submit(byte[] bytes, HttpPost httpPost) {
     int statusCode = DEFAULT_STATUS_CODE;
-    if (bytes != null && httpPost != null) {
+    if (bytes != null && bytes.length > 0 && httpPost != null) {
 
       // add the body to the request
       MultipartEntityBuilder builder = MultipartEntityBuilder.create();

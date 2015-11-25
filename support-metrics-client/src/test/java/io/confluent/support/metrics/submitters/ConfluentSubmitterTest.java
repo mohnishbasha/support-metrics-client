@@ -153,4 +153,20 @@ public class ConfluentSubmitterTest {
     // Then
     verifyZeroInteractions(p);
   }
+
+  @Test
+  public void testSubmitIgnoresEmptyInput() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
+    HttpPost p = mock(HttpPost.class);
+    ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+    byte[] emptyData = new byte[0];
+
+    // When
+    c.submit(emptyData, p);
+
+    // Then
+    verifyZeroInteractions(p);
+  }
 }
