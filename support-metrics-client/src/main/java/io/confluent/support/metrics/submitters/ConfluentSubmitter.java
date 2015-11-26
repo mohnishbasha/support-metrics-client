@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class ConfluentSubmitter {
+public class ConfluentSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(ConfluentSubmitter.class);
 
@@ -76,6 +76,7 @@ public class ConfluentSubmitter {
   /**
    * Submits metrics to Confluent via the Internet.  Ignores null or empty inputs.
    */
+  @Override
   public void submit(byte[] encodedMetricsRecord) {
     if (encodedMetricsRecord != null && encodedMetricsRecord.length > 0) {
       int statusCode = DEFAULT_STATUS_CODE;

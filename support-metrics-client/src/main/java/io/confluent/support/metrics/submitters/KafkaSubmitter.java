@@ -25,7 +25,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class KafkaSubmitter {
+public class KafkaSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaSubmitter.class);
 
@@ -64,6 +64,7 @@ public class KafkaSubmitter {
    * @param bytes The (serialized) data to be sent.  The data is sent as the "value" of a Kafka
    *              message.
    */
+  @Override
   public void submit(byte[] bytes) {
     submit(bytes, createProducer());
   }
