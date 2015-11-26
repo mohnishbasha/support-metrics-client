@@ -117,6 +117,7 @@ public class SupportConfig {
     String fallbackId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
     String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
     if (id == null || id.isEmpty()) {
+      log.error("No customer ID configured -- falling back to id '{}'", fallbackId);
       id = fallbackId;
     }
     if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {

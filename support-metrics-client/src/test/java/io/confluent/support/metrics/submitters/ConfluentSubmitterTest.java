@@ -34,12 +34,12 @@ public class ConfluentSubmitterTest {
 
   private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
   private static Properties serverProps;
-  private static String testEndpoint;
+  private static String secureLiveTestEndpoint;
 
   @BeforeClass
   public static void startPrep() {
     serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    testEndpoint = serverProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    secureLiveTestEndpoint = serverProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
   }
 
   @Test
@@ -224,14 +224,49 @@ public class ConfluentSubmitterTest {
   }
 
   @Test
+  public void testSubmitInvalidCustomer() {
+    // Given
+    HttpPost p = new HttpPost(secureLiveTestEndpoint);
+    byte[] anyData = "anyData".getBytes();
+
+    // When/Then
+    for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
+      try {
+        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, secureLiveTestEndpoint);
+        assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
+      } catch (Exception e){
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
+    }
+  }
+
+  @Test
+  public void testSubmitInvalidAnonymousUser() {
+    // Given
+    HttpPost p = new HttpPost(secureLiveTestEndpoint);
+    byte[] anyData = "anyData".getBytes();
+
+    // When/Then
+    for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
+      try {
+        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, secureLiveTestEndpoint);
+        assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
+      } catch (Exception e){
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
+
+    }
+  }
+
+  @Test
   public void testSubmitValidCustomer() {
     // Given
-    HttpPost p = new HttpPost(testEndpoint);
+    HttpPost p = new HttpPost(secureLiveTestEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
     for (String invalidCustomerId : CustomerIdExamples.validCustomerIds) {
-      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
+      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, secureLiveTestEndpoint);
       int status = c.send(anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
@@ -241,12 +276,12 @@ public class ConfluentSubmitterTest {
   @Test
   public void testSubmitValidAnonymousUser() {
     // Given
-    HttpPost p = new HttpPost(testEndpoint);
+    HttpPost p = new HttpPost(secureLiveTestEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
     for (String invalidCustomerId : CustomerIdExamples.validAnonymousIds) {
-      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
+      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, secureLiveTestEndpoint);
       int status = c.send(anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
