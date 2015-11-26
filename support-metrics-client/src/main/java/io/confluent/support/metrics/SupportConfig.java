@@ -102,11 +102,7 @@ public class SupportConfig {
    * @return True if the value matches the pattern of Confluent's internal customer ids.
    */
   public static boolean isConfluentCustomer(String customerId) {
-    if (customerId != null) {
-      return customerPattern.matcher(customerId.toLowerCase()).matches();
-    } else {
-      return false;
-    }
+    return customerId != null && customerPattern.matcher(customerId.toLowerCase()).matches();
   }
 
   /**
