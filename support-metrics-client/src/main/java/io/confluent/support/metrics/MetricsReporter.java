@@ -223,7 +223,7 @@ public class MetricsReporter implements Runnable {
         }
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.toString());
+      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.getMessage());
     }
 
     try {
@@ -231,7 +231,7 @@ public class MetricsReporter implements Runnable {
         confluentSubmitter.submit(encodedMetricsRecord);
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Confluent: {}", e.toString());
+      log.error("Could not submit metrics to Confluent: {}", e.getMessage());
     }
   }
 
