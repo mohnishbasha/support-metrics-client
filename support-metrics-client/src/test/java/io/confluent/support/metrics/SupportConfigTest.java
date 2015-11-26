@@ -141,7 +141,7 @@ public class SupportConfigTest {
     filePath = KafkaServerUtils.prepareDefaultConfig();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
   }
 
   @Test
@@ -152,7 +152,7 @@ public class SupportConfigTest {
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
   }
 
   @Test
@@ -163,7 +163,7 @@ public class SupportConfigTest {
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
   }
 
   @Test
@@ -174,7 +174,7 @@ public class SupportConfigTest {
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(true);
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
   }
 
   @Test
@@ -186,7 +186,7 @@ public class SupportConfigTest {
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isEqualTo(false);
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isFalse();
   }
 
 }
