@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class WebServer {
-  private static final Logger log = LoggerFactory.getLogger(WebServer.class);
+public class WebClient {
+  private static final Logger log = LoggerFactory.getLogger(WebClient.class);
   private static final int requestTimeoutMs = 2000;
   public static final int DEFAULT_STATUS_CODE = HttpStatus.SC_BAD_GATEWAY;
 

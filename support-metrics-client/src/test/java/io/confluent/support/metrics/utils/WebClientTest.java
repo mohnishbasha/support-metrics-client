@@ -16,22 +16,19 @@ package io.confluent.support.metrics.utils;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.kafka.common.errors.WakeupException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.exceptions.verification.WantedButNotInvoked;
 
 import java.util.Properties;
 
 import io.confluent.support.metrics.SupportConfig;
-import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import kafka.Kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class WebServerTest {
+public class WebClientTest {
   private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
   private static Properties serverProps;
   private static String secureLiveTestEndpoint;
@@ -49,7 +46,7 @@ public class WebServerTest {
     byte[] nullData = null;
 
     // When
-    WebServer.send(customerId, nullData, p);
+    WebClient.send(customerId, nullData, p);
 
     // Then
     verifyZeroInteractions(p);
@@ -62,7 +59,7 @@ public class WebServerTest {
     byte[] emptyData = new byte[0];
 
     // When
-    WebServer.send(customerId, emptyData, p);
+    WebClient.send(customerId, emptyData, p);
 
     // Then
     verifyZeroInteractions(p);
@@ -76,7 +73,7 @@ public class WebServerTest {
 
     // When/Then
     for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
-      assertThat(WebServer.send(invalidCustomerId, anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
+      assertThat(WebClient.send(invalidCustomerId, anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
     }
   }
 
@@ -88,7 +85,7 @@ public class WebServerTest {
 
     // When/Then
     for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
-      assertThat(WebServer.send(invalidCustomerId, anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
+      assertThat(WebClient.send(invalidCustomerId, anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
     }
   }
 
@@ -100,7 +97,7 @@ public class WebServerTest {
 
     // When/Then
     for (String validCustomerId : CustomerIdExamples.validCustomerIds) {
-      int status = WebServer.send(validCustomerId, anyData, p);
+      int status = WebClient.send(validCustomerId, anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
     }
@@ -114,7 +111,7 @@ public class WebServerTest {
 
     // When/Then
     for (String validCustomerId : CustomerIdExamples.validAnonymousIds) {
-       int status = WebServer.send(validCustomerId, anyData, p);
+       int status = WebClient.send(validCustomerId, anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
     }

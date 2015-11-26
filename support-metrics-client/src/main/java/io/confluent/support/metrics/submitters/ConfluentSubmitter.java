@@ -15,7 +15,7 @@ package io.confluent.support.metrics.submitters;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpStatus;
-import io.confluent.support.metrics.utils.WebServer;
+import io.confluent.support.metrics.utils.WebClient;
 import io.confluent.support.metrics.SupportConfig;
 
 import org.apache.http.client.methods.HttpPost;
@@ -74,7 +74,7 @@ public class ConfluentSubmitter implements Submitter {
   @Override
   public void submit(byte[] bytes) {
     if (bytes != null && bytes.length > 0) {
-      int statusCode = WebServer.DEFAULT_STATUS_CODE;
+      int statusCode = WebClient.DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
         statusCode = sendSecurely(bytes);
         if (!submittedSuccessfully(statusCode)) {
@@ -129,6 +129,6 @@ public class ConfluentSubmitter implements Submitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
-    return WebServer.send(customerId, encodedMetricsRecord, new HttpPost(endpoint));
+    return WebClient.send(customerId, encodedMetricsRecord, new HttpPost(endpoint));
   }
 }
