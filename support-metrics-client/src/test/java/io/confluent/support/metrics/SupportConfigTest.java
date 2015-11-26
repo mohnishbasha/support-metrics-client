@@ -101,21 +101,19 @@ public class SupportConfigTest {
 
   @Test
   public void proactiveSupportConfigIsValidKafkaConfig() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     KafkaConfig cfg = KafkaConfig.fromProps(serverProps);
+
     assertThat(cfg.brokerId()).isEqualTo(1);
     assertThat(cfg.zkConnect()).isEqualTo("localhost:2181");
   }
 
   @Test
   public void testProactiveSupportConfigFromArgs() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+
     assertThat(serverProps.get("broker.id")).isEqualTo("1");
     assertThat(serverProps.get("zookeeper.connect")).isEqualTo("localhost:2181");
     assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG)).isEqualTo("anonymous");
@@ -127,10 +125,9 @@ public class SupportConfigTest {
 
   @Test
   public void testValidProactiveSupportConfig() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+
     assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
     assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
     assertThat(SupportConfig.getKafkaTopic(serverProps)).isEqualTo("__sample_topic");
@@ -140,8 +137,7 @@ public class SupportConfigTest {
 
   @Test
   public void isProactiveSupportEnabledFull() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
 
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
@@ -149,8 +145,7 @@ public class SupportConfigTest {
 
   @Test
   public void isProactiveSupportEnabledTopicOnly() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
@@ -160,8 +155,7 @@ public class SupportConfigTest {
 
   @Test
   public void isProactiveSupportEnabledHTTPOnly() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
@@ -171,8 +165,7 @@ public class SupportConfigTest {
 
   @Test
   public void isProactiveSupportEnabledHTTPSOnly() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
@@ -182,8 +175,7 @@ public class SupportConfigTest {
 
   @Test
   public void isProactiveSupportDisabled() {
-    String filePath;
-    filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
+    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
