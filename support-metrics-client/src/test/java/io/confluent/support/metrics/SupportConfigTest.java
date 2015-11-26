@@ -20,6 +20,7 @@ import org.junit.Test;
 import java.util.Properties;
 
 import io.confluent.support.metrics.utils.KafkaServerUtils;
+import io.confluent.support.metrics.utils.cIdUtils;
 import kafka.Kafka;
 import kafka.server.KafkaConfig;
 
@@ -29,26 +30,10 @@ import static org.junit.Assert.assertThat;
 
 public class SupportConfigTest {
 
-  private final String[] validCustomerIds = {
-      "C0", "c1", "C1", "c12", "C22", "c123", "C333", "c1234", "C4444",
-      "C00000", "C12345", "C99999", "C123456789", "C123456789012345678901234567890",
-      "c00000", "c12345", "c99999", "c123456789", "c123456789012345678901234567890",
-  };
-
-  // These invalid customer ids should not include valid anonymous user IDs.
-  private final String[] invalidCustomerIds = {
-      "0c000", "0000C", null, "", "c", "C", "Hello", "World", "1", "12", "123", "1234", "12345"
-  };
-
-  private final String[] validAnonymousIds = {"anonymous", "ANONYMOUS", "anonyMOUS"};
-
-  // These invalid anonymous user IDs should not include valid customer IDs.
-  private final String[] invalidAnonymousIds = {null, "", "anon", "anonymou", "ANONYMOU"};
-
 
   @Test
   public void testValidCustomer() {
-    for (String validId : validCustomerIds) {
+    for (String validId : cIdUtils.validCustomerIds) {
       assertThat(validId + " is an invalid customer identifier",
           SupportConfig.isConfluentCustomer(validId), is(true));
     }
@@ -56,7 +41,7 @@ public class SupportConfigTest {
 
   @Test
   public void testInvalidCustomer() {
-    String[] invalidIds = ObjectArrays.concat(invalidCustomerIds, validAnonymousIds, String.class);
+    String[] invalidIds = ObjectArrays.concat(cIdUtils.invalidCustomerIds, cIdUtils.validAnonymousIds, String.class);
     for (String invalidCustomerId : invalidIds) {
       assertThat(invalidCustomerId + " is a valid customer identifier",
           SupportConfig.isConfluentCustomer(invalidCustomerId), is(false));
@@ -65,7 +50,7 @@ public class SupportConfigTest {
 
   @Test
   public void testValidAnonymousUser() {
-    for (String validId : validAnonymousIds) {
+    for (String validId : cIdUtils.validAnonymousIds) {
       assertThat(validId + " is an invalid anonymous user identifier",
           SupportConfig.isAnonymousUser(validId), is(true));
     }
@@ -73,7 +58,7 @@ public class SupportConfigTest {
 
   @Test
   public void testInvalidAnonymousUser() {
-    String[] invalidIds = ObjectArrays.concat(invalidAnonymousIds, validCustomerIds, String.class);
+    String[] invalidIds = ObjectArrays.concat(cIdUtils.invalidAnonymousIds, cIdUtils.validCustomerIds, String.class);
     for (String invalidId : invalidIds) {
       assertThat(invalidId + " is a valid anonymous user identifier",
           SupportConfig.isAnonymousUser(invalidId), is(false));
@@ -82,7 +67,7 @@ public class SupportConfigTest {
 
   @Test
   public void testCustomerIdValidSettings() {
-    String[] validValues = ObjectArrays.concat(validAnonymousIds, validCustomerIds, String.class);
+    String[] validValues = ObjectArrays.concat(cIdUtils.validAnonymousIds, cIdUtils.validCustomerIds, String.class);
     for (String validValue : validValues) {
       assertThat(validValue + " is an invalid value for " + SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
           SupportConfig.isSyntacticallyCorrectCustomerId(validValue), is(true));
@@ -91,7 +76,7 @@ public class SupportConfigTest {
 
   @Test
   public void testCustomerIdInvalidSettings() {
-    String[] invalidValues = ObjectArrays.concat(invalidAnonymousIds, invalidCustomerIds, String.class);
+    String[] invalidValues = ObjectArrays.concat(cIdUtils.invalidAnonymousIds, cIdUtils.invalidCustomerIds, String.class);
     for (String invalidValue : invalidValues) {
       assertThat(invalidValue + " is a valid value for " + SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
           SupportConfig.isSyntacticallyCorrectCustomerId(invalidValue), is(false));

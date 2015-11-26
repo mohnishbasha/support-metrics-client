@@ -18,6 +18,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.content.StringBody;
+
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -34,7 +36,7 @@ public class ConfluentSubmitter implements Submitter {
 
   private static final int requestTimeoutMs = 2000;
   private static final int DEFAULT_STATUS_CODE = HttpStatus.SC_BAD_GATEWAY;
-
+  private final String customerId;
   private final String endpointHTTP;
   private final String endpointHTTPS;
 
@@ -44,7 +46,7 @@ public class ConfluentSubmitter implements Submitter {
    * @param endpointHTTP:  HTTP endpoint for the Confluent support service. Can be null.
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
-  public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
+  public ConfluentSubmitter(String customerId, String endpointHTTP, String endpointHTTPS) {
 
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify endpoints");
@@ -59,9 +61,12 @@ public class ConfluentSubmitter implements Submitter {
         throw new IllegalArgumentException("invalid HTTPS endpoint");
       }
     }
+    if (customerId == null || customerId.isEmpty()) {
+      throw new IllegalArgumentException("invalid customer ID");
+    }
     this.endpointHTTP = endpointHTTP;
     this.endpointHTTPS = endpointHTTPS;
-
+    this.customerId = customerId;
   }
 
   private boolean testEndpointValid(String[] schemes, String endpoint) {
@@ -145,6 +150,7 @@ public class ConfluentSubmitter implements Submitter {
       // add the body to the request
       MultipartEntityBuilder builder = MultipartEntityBuilder.create();
       builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+      builder.addTextBody("cid", customerId);
       builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
       httpPost.setEntity(builder.build());
 
