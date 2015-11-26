@@ -53,11 +53,12 @@ public class SupportedServerStartable {
 
     try {
       if (SupportConfig.isProactiveSupportEnabled(props)) {
+        log.info("Confluent Proactive Support is enabled");
         Runtime serverRuntime = Runtime.getRuntime();
         metricsReporter = new MetricsReporter(server, props, serverRuntime);
         metricsThread = Utils.daemonThread("BrokerMetricsReporter", metricsReporter);
       } else {
-        log.warn("Proactive Support is disabled");
+        log.warn("Confluent Proactive Support is disabled");
       }
     } catch (Exception e) {
       // We catch any exceptions to prevent collateral damage to the more important broker
