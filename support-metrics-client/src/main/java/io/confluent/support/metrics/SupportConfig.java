@@ -72,11 +72,11 @@ public class SupportConfig {
   private static final Pattern customerPattern = Pattern.compile("c\\d{1,30}");
 
   /**
-   * A check on whether Proactive Support (PS) is enabled or not. PS is disabled when
-   * none of the parameters CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG,
-   * CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG are specified. Otherwise, if even one of them is specified,
-   * PS is on
-   * @param serverConfiguration
+   * A check on whether Proactive Support (PS) is enabled or not. PS is disabled when none of the
+   * parameters CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG,
+   * CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG are specified. Otherwise, if even one of them
+   * is specified, PS is on
+   *
    * @return false if PS is not enabled, true if PS is enabled
    */
   public static boolean isProactiveSupportEnabled(Properties serverConfiguration) {
@@ -86,16 +86,7 @@ public class SupportConfig {
     String supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
     String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
     String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
-
-    if (!supportTopic.isEmpty()) {
-      return true;
-    }
-
-    if (!endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty()) {
-      return true;
-    }
-
-    return false;
+    return !supportTopic.isEmpty() || !endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty();
   }
 
   /**
