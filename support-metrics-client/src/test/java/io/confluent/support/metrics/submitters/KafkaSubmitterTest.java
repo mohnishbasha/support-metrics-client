@@ -103,13 +103,29 @@ public class KafkaSubmitterTest {
   }
 
   @Test
+  public void testSubmitIgnoresEmptyInput() {
+    // Given
+    String anyBootstrapServers = "localhost:1234";
+    String anyTopic = "valueNotRelevant";
+    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    Producer<byte[], byte[]> producer = mock(Producer.class);
+    byte[] emptyData = new byte[0];
+
+    // When
+    k.submit(emptyData, producer);
+
+    // Then
+    verifyZeroInteractions(producer);
+  }
+
+  @Test
   public void testSubmit() {
     // Given
     String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
     KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
-    byte[] anyData = new byte[10];
+    byte[] anyData = "anyData".getBytes();
 
     // When
     k.submit(anyData, producer);

@@ -14,13 +14,11 @@
 package io.confluent.support.metrics;
 
 import org.apache.avro.generic.GenericContainer;
-import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Random;
 
 import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
@@ -30,6 +28,7 @@ import io.confluent.support.metrics.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
+import io.confluent.support.metrics.utils.Jitter;
 import kafka.server.KafkaServer;
 
 /**
@@ -71,8 +70,7 @@ public class MetricsReporter implements Runnable {
   private final String customerId;
   private final long reportIntervalMs;
   private final String supportTopic;
-  private final Random random = new Random();
-  private final KafkaSubmitter kafkaSubmitter;
+  private KafkaSubmitter kafkaSubmitter;
   private final ConfluentSubmitter confluentSubmitter;
   private final Collector metricsCollector;
   private final AvroSerializer encoder = new AvroSerializer();
@@ -97,7 +95,12 @@ public class MetricsReporter implements Runnable {
                          Runtime serverRuntime,
                          KafkaUtilities kafkaUtilities) {
     this.kafkaUtilities = kafkaUtilities;
-    customerId = getCustomerId(serverConfiguration);
+
+    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
+      throw new IllegalArgumentException("some arguments are null");
+    }
+
+    customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
       metricsCollector = new BasicCollector(time);
@@ -106,17 +109,17 @@ public class MetricsReporter implements Runnable {
     }
     metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 
-    reportIntervalMs = getReportIntervalMs(serverConfiguration);
+    reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
-    supportTopic = getKafkaTopic(serverConfiguration);
+    supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
     if (!supportTopic.isEmpty()) {
-      kafkaSubmitter = new KafkaSubmitter(getKafkaBootstrapServers(server), supportTopic);
+      kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
     }
 
-    String endpointHTTP = getEndpointHTTP(serverConfiguration);
-    String endpointHTTPS = getEndpointHTTPS(serverConfiguration);
+    String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
+    String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
     if (!endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty()) {
       confluentSubmitter = new ConfluentSubmitter(endpointHTTP, endpointHTTPS);
     } else {
@@ -129,135 +132,80 @@ public class MetricsReporter implements Runnable {
     this.server = server;
   }
 
-  private String getCustomerId(Properties serverConfiguration) {
-    String fallbackId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
-    String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
-    if (id == null || id.isEmpty()) {
-      id = fallbackId;
-    }
-    if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {
-      log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
-      id = fallbackId;
-    }
-    return id;
-  }
-
-  private long getReportIntervalMs(Properties serverConfiguration) {
-    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG);
-    if (intervalString == null || intervalString.isEmpty()) {
-      intervalString = SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT;
-    }
-    try {
-      long intervalHours = Long.parseLong(intervalString);
-      if (intervalHours < 1) {
-        throw new ConfigException(
-            SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
-            intervalString,
-            "Interval must be >= 1");
-      }
-      return intervalHours * 60 * 60 * 1000;
-    } catch (NumberFormatException e) {
-      throw new ConfigException(
-          SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
-          intervalString,
-          "Interval is not an integer number");
-    }
-  }
-
-  private String getKafkaTopic(Properties serverConfiguration) {
-    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    if (topic == null) {
-      return "";
-    } else {
-      return topic;
-    }
-  }
-
-  private String getKafkaBootstrapServers(KafkaServer server) {
-    String hostname = server.config().advertisedHostName();
-    Integer port = server.config().advertisedPort();
-    return hostname + ":" + port.toString();
-  }
-
-  private String getEndpointHTTP(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
-  }
-
-  private String getEndpointHTTPS(Properties serverConfiguration) {
-    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
-  }
-
-  private boolean reportingEnabled() {
+  protected boolean reportingEnabled() {
     return sendToKafkaEnabled() || sendToConfluentEnabled();
   }
 
-  private boolean sendToKafkaEnabled() {
+  protected boolean sendToKafkaEnabled() {
     return kafkaSubmitter != null;
   }
 
-  private boolean sendToConfluentEnabled() {
+  protected boolean sendToConfluentEnabled() {
     return confluentSubmitter != null;
   }
 
+  @Override
   public void run() {
-    if (reportingEnabled()) {
-      boolean keepWaitingForServerToStartup = true;
-      boolean terminateEarly = false;
-      while (keepWaitingForServerToStartup) {
-        try {
-          long waitTimeMs = addOnePercentJitter(SETTLING_TIME_MS);
-          Thread.sleep(addOnePercentJitter(SETTLING_TIME_MS));
-          log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
-
-          if (kafkaUtilities.isShuttingDown(server)) {
-            keepWaitingForServerToStartup = false;
-            terminateEarly = true;
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            log.info("Stopping metrics collection prematurely because broker is shutting down");
-          } else {
-            if (kafkaUtilities.isReadyForMetricsCollection(server)) {
-              log.info("Monitored broker is now ready");
-              keepWaitingForServerToStartup = false;
-            }
-          }
-        } catch (InterruptedException i) {
-          terminateEarly = true;
-          metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-          Thread.currentThread().interrupt();
-        }
-      }
-
-      if (terminateEarly) {
-        log.info("Metrics collection stopped before it even started");
-      } else {
-        kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
-            SUPPORT_TOPIC_REPLICATION, RETENTION_MS);
-
-        log.info("Starting metrics collection from monitored broker...");
-        boolean keepRunning = true;
-        while (keepRunning) {
-          try {
-            Thread.sleep(addOnePercentJitter(reportIntervalMs));
+    try {
+      if (reportingEnabled()) {
+        boolean terminateEarly = waitForServer();
+        if (terminateEarly) {
+          log.info("Metrics collection stopped before it even started");
+        } else {
+          log.info("Starting metrics collection from monitored broker...");
+          while (!Thread.currentThread().isInterrupted()) {
+            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
             submitMetrics();
-          } catch (InterruptedException i) {
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            submitMetrics();
-            log.info("Stopping metrics collection because the monitored broker is shutting down...");
-            keepRunning = false;
-            Thread.currentThread().interrupt();
-          } catch (Exception e) {
-            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
-            keepRunning = false;
           }
         }
       }
+    } catch (InterruptedException i) {
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      submitMetrics();
+      log.info("Graceful terminating metrics collection because the monitored broker is shutting down...");
+      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      log.error("Terminating metrics collection from monitored broker because: {}", e.getMessage());
+    } finally {
+      log.info("Metrics collection stopped");
     }
-
-    log.info("Metrics collection stopped");
   }
 
-  private long addOnePercentJitter(long reportIntervalMs) {
-    return reportIntervalMs + random.nextInt((int) reportIntervalMs / 100);
+  /**
+   * Waits for the monitored Kafka server to fully start up.
+   *
+   * This is a blocking call.  This method will return if and only if:
+   *
+   * <ul> <li>The server has successfully started.  The return value will be false.</li> <li>The
+   * server is shutting down.  The return value will be true.</li> <li>The current thread was
+   * interrupted.  The return value will be true.</li> </ul>
+   */
+  private boolean waitForServer() {
+    boolean terminateEarly = false;
+    try {
+      boolean keepWaitingForServerToStartup = true;
+      while (keepWaitingForServerToStartup && !Thread.currentThread().isInterrupted()) {
+        long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
+        log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
+        Thread.sleep(waitTimeMs);
+        if (kafkaUtilities.isShuttingDown(server)) {
+          keepWaitingForServerToStartup = false;
+          terminateEarly = true;
+          metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+          log.info("Stopping metrics collection prematurely because broker is shutting down");
+        } else {
+          if (kafkaUtilities.isReadyForMetricsCollection(server)) {
+            log.info("Monitored broker is now ready");
+            keepWaitingForServerToStartup = false;
+          }
+        }
+      }
+    } catch (InterruptedException i) {
+      terminateEarly = true;
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      Thread.currentThread().interrupt();
+    }
+    return terminateEarly;
   }
 
   private void submitMetrics() {
@@ -270,19 +218,24 @@ public class MetricsReporter implements Runnable {
     }
 
     try {
-      if (sendToKafkaEnabled()) {
-        kafkaSubmitter.submit(encodedMetricsRecord);
+      if (sendToKafkaEnabled() && encodedMetricsRecord != null) {
+        // attempt to create the topic. If failures occur, try again in the next round, however
+        // the current batch of metrics will be lost.
+        if (kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+            SUPPORT_TOPIC_REPLICATION, RETENTION_MS)) {
+          kafkaSubmitter.submit(encodedMetricsRecord);
+        }
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.toString());
+      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.getMessage());
     }
 
     try {
-      if (sendToConfluentEnabled()) {
+      if (sendToConfluentEnabled() && encodedMetricsRecord != null) {
         confluentSubmitter.submit(encodedMetricsRecord);
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Confluent: {}", e.toString());
+      log.error("Could not submit metrics to Confluent: {}", e.getMessage());
     }
   }
 

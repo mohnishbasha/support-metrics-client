@@ -13,7 +13,14 @@
  */
 package io.confluent.support.metrics;
 
+import org.apache.kafka.common.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
 import java.util.regex.Pattern;
+
+import kafka.server.KafkaServer;
 
 // TODO: Document these settings.
 
@@ -27,6 +34,8 @@ import java.util.regex.Pattern;
  * then make sure to also update the patch file accordingly.
  */
 public class SupportConfig {
+
+  private static final Logger log = LoggerFactory.getLogger(SupportConfig.class);
 
   /**
    * <code>confluent.support.customer.id</code>
@@ -63,6 +72,24 @@ public class SupportConfig {
   private static final Pattern customerPattern = Pattern.compile("c\\d{1,30}");
 
   /**
+   * A check on whether Proactive Support (PS) is enabled or not. PS is disabled when none of the
+   * parameters CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG,
+   * CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG are specified. Otherwise, if even one of them
+   * is specified, PS is on
+   *
+   * @return false if PS is not enabled, true if PS is enabled
+   */
+  public static boolean isProactiveSupportEnabled(Properties serverConfiguration) {
+    if (serverConfiguration == null) {
+      return false;
+    }
+    String supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
+    String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
+    String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
+    return !supportTopic.isEmpty() || !endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty();
+  }
+
+  /**
    * @param customerId The value of "confluent.support.customer.id".
    * @return True if the value matches the setting we use to denote anonymous users.
    */
@@ -75,11 +102,7 @@ public class SupportConfig {
    * @return True if the value matches the pattern of Confluent's internal customer ids.
    */
   public static boolean isConfluentCustomer(String customerId) {
-    if (customerId != null) {
-      return customerPattern.matcher(customerId.toLowerCase()).matches();
-    } else {
-      return false;
-    }
+    return customerId != null && customerPattern.matcher(customerId.toLowerCase()).matches();
   }
 
   /**
@@ -90,4 +113,56 @@ public class SupportConfig {
     return isAnonymousUser(customerId) || isConfluentCustomer(customerId);
   }
 
+  public static String getCustomerId(Properties serverConfiguration) {
+    String fallbackId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
+    String id = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
+    if (id == null || id.isEmpty()) {
+      id = fallbackId;
+    }
+    if (!SupportConfig.isSyntacticallyCorrectCustomerId(id)) {
+      log.error("'{}' is not a valid Confluent customer ID -- falling back to id '{}'", id, fallbackId);
+      id = fallbackId;
+    }
+    return id;
+  }
+
+  public static long getReportIntervalMs(Properties serverConfiguration) {
+    String intervalString = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG);
+    if (intervalString == null || intervalString.isEmpty()) {
+      intervalString = SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT;
+    }
+    try {
+      long intervalHours = Long.parseLong(intervalString);
+      if (intervalHours < 1) {
+        throw new ConfigException(
+            SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
+            intervalString,
+            "Interval must be >= 1");
+      }
+      return intervalHours * 60 * 60 * 1000;
+    } catch (NumberFormatException e) {
+      throw new ConfigException(
+          SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
+          intervalString,
+          "Interval is not an integer number");
+    }
+  }
+
+  public static String getKafkaTopic(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "");
+  }
+
+  public static String getKafkaBootstrapServers(KafkaServer server) {
+    String hostname = server.config().advertisedHostName();
+    Integer port = server.config().advertisedPort();
+    return hostname + ":" + port.toString();
+  }
+
+  public static String getEndpointHTTP(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
+  }
+
+  public static String getEndpointHTTPS(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
+  }
 }

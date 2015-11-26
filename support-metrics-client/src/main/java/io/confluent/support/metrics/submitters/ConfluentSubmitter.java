@@ -13,7 +13,7 @@
  */
 package io.confluent.support.metrics.submitters;
 
-import org.apache.commons.collections.functors.ExceptionClosure;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -23,13 +23,12 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class ConfluentSubmitter {
+public class ConfluentSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(ConfluentSubmitter.class);
 
@@ -46,15 +45,16 @@ public class ConfluentSubmitter {
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
   public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
+
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify endpoints");
     }
-    if (endpointHTTP != null) {
+    if (endpointHTTP != null && !endpointHTTP.isEmpty()) {
       if (!testEndpointValid(new String[]{"http"}, endpointHTTP)) {
         throw new IllegalArgumentException("invalid HTTP endpoint");
       }
     }
-    if (endpointHTTPS != null) {
+    if (endpointHTTPS != null && !endpointHTTPS.isEmpty()) {
       if (!testEndpointValid(new String[]{"https"}, endpointHTTPS)) {
         throw new IllegalArgumentException("invalid HTTPS endpoint");
       }
@@ -74,26 +74,27 @@ public class ConfluentSubmitter {
   }
 
   /**
-   * Submits metrics to Confluent via the Internet.  Ignores null inputs.
+   * Submits metrics to Confluent via the Internet.  Ignores null or empty inputs.
    */
-  public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord != null) {
+  @Override
+  public void submit(byte[] bytes) {
+    if (bytes != null && bytes.length > 0) {
       int statusCode = DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
-        statusCode = sendSecurely(encodedMetricsRecord);
+        statusCode = sendSecurely(bytes);
         if (!submittedSuccessfully(statusCode)) {
           if (isInsecureEndpointEnabled()) {
-            log.warn("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
-            submitToInsecureEndpoint(encodedMetricsRecord);
+            log.error("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
+            submitToInsecureEndpoint(bytes);
           } else {
-            log.warn("Failed to submit metrics via secure endpoint -- giving up");
+            log.error("Failed to submit metrics via secure endpoint -- giving up");
           }
         } else {
           log.info("Successfully submitted metrics to Confluent via secure endpoint");
         }
       } else {
         if (isInsecureEndpointEnabled()) {
-          submitToInsecureEndpoint(encodedMetricsRecord);
+          submitToInsecureEndpoint(bytes);
         } else {
           log.error("Metrics will not be submitted because all endpoints are disabled");
         }
@@ -108,7 +109,7 @@ public class ConfluentSubmitter {
     if (submittedSuccessfully(statusCode)) {
       log.info("Successfully submitted metrics to Confluent via insecure endpoint");
     } else {
-      log.warn("Failed to submit metrics to Confluent via insecure endpoint -- giving up");
+      log.error("Failed to submit metrics to Confluent via insecure endpoint -- giving up");
     }
   }
 
@@ -133,31 +134,33 @@ public class ConfluentSubmitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
-    return submit(encodedMetricsRecord, new HttpPost(endpoint));
+    return send(encodedMetricsRecord, new HttpPost(endpoint));
   }
 
   // This method is `protected` instead of `private` to be visible for testing.
-  protected int submit(byte[] bytes, HttpPost httpPost) {
+  protected int send(byte[] bytes, HttpPost httpPost) {
     int statusCode = DEFAULT_STATUS_CODE;
-    if (bytes != null && httpPost != null) {
-      try {
-        final RequestConfig config = RequestConfig.custom().
-                setConnectTimeout(requestTimeoutMs).
-                setConnectionRequestTimeout(requestTimeoutMs).
-                setSocketTimeout(requestTimeoutMs).
-                build();
-        CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-        builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
-        httpPost.setEntity(builder.build());
-        log.debug("Executing POST request with data length {} bytes", bytes.length);
-        CloseableHttpResponse response = httpclient.execute(httpPost);
+    if (bytes != null && bytes.length > 0 && httpPost != null) {
+
+      // add the body to the request
+      MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+      builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
+      httpPost.setEntity(builder.build());
+
+      // set the HTTP config
+      final RequestConfig config = RequestConfig.custom().
+          setConnectTimeout(requestTimeoutMs).
+          setConnectionRequestTimeout(requestTimeoutMs).
+          setSocketTimeout(requestTimeoutMs).
+          build();
+
+      // send request
+      try (CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+           CloseableHttpResponse response = httpclient.execute(httpPost)) {
         log.debug("POST request returned {}", response.getStatusLine().toString());
         statusCode = response.getStatusLine().getStatusCode();
-        response.close();
-        httpclient.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
         log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
       }
     }

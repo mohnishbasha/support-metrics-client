@@ -38,15 +38,24 @@ public class KafkaUtilities {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaUtilities.class);
 
-  public void createTopicIfMissing(ZkUtils zkUtils,
+  /**
+   * Creates a topic in Kafka, if it is not already there
+   * @param zkUtils
+   * @param topic
+   * @param partitions
+   * @param replication
+   * @param retentionMs
+   * @return true if method succeeded in creating topic, false otherwise
+   */
+  public boolean createTopicIfMissing(ZkUtils zkUtils,
                                    String topic,
                                    int partitions,
                                    int replication,
                                    long retentionMs) {
 
+    boolean topicCreated = true;
     if (AdminUtils.topicExists(zkUtils, topic)) {
-      verifySupportTopic(zkUtils, topic, partitions, replication);
-      return;
+      return verifySupportTopic(zkUtils, topic, partitions, replication);
     }
 
     Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
@@ -68,15 +77,28 @@ public class KafkaUtilities {
       AdminUtils.createTopic(zkUtils, topic, partitions, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
       log.info("Topic {} already exists", topic);
+      topicCreated = false;
     } catch (AdminOperationException e) {
+      topicCreated = false;
       log.error("Could not create topic {}: {}", topic, e.getMessage());
     }
+
+    return topicCreated;
   }
 
-  private void verifySupportTopic(ZkUtils zkUtils,
-                                  String supportTopic,
-                                  int partitions,
-                                  int replication) {
+  /**
+   * Verifies that the Kafka topic exists and is healthy.
+   * @param zkUtils
+   * @param supportTopic
+   * @param partitions
+   * @param replication
+   * @return true if topic exists and is healthy, false otherwise
+   */
+  public boolean verifySupportTopic(ZkUtils zkUtils,
+                                     String supportTopic,
+                                     int partitions,
+                                     int replication) {
+    boolean topicExistsAndIsHealthy = true;
     Set<String> topics = new HashSet<>();
     topics.add(supportTopic);
     scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
@@ -104,10 +126,14 @@ public class KafkaUtilities {
         }
       } else {
         log.error("No replicas known for partition 0 of support metrics topic {}", supportTopic);
+        topicExistsAndIsHealthy = false;
       }
     } else {
       log.error("No partitions are assigned to support metrics topic {}", supportTopic);
+      topicExistsAndIsHealthy = false;
     }
+
+    return topicExistsAndIsHealthy;
   }
 
   public boolean isReadyForMetricsCollection(KafkaServer server) {
