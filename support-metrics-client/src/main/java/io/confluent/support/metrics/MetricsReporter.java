@@ -180,7 +180,7 @@ public class MetricsReporter implements Runnable {
     boolean terminateEarly = false;
 
     try {
-      while (keepWaitingForServerToStartup) {
+      while (keepWaitingForServerToStartup && !Thread.currentThread().isInterrupted()) {
         long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
         log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
         Thread.sleep(waitTimeMs);
