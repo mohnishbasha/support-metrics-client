@@ -146,40 +146,44 @@ public class MetricsReporter implements Runnable {
 
   @Override
   public void run() {
-    if (reportingEnabled()) {
-      boolean terminateEarly = waitForServer();
-      if (terminateEarly) {
-        log.info("Metrics collection stopped before it even started");
-      } else {
-        log.info("Starting metrics collection from monitored broker...");
-        try {
+    try {
+      if (reportingEnabled()) {
+        boolean terminateEarly = waitForServer();
+        if (terminateEarly) {
+          log.info("Metrics collection stopped before it even started");
+        } else {
+          log.info("Starting metrics collection from monitored broker...");
           while (!Thread.currentThread().isInterrupted()) {
             Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
             submitMetrics();
           }
-        } catch (InterruptedException i) {
-          metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-          submitMetrics();
-          log.info("Stopping metrics collection because the monitored broker is shutting down...");
-          Thread.currentThread().interrupt();
-        } catch (Exception e) {
-          log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
         }
       }
+    } catch (InterruptedException i) {
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      submitMetrics();
+      log.info("Graceful terminating metrics collection because the monitored broker is shutting down...");
+      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      log.error("Terminating metrics collection from monitored broker because: {}", e.getMessage());
+    } finally {
+      log.info("Metrics collection stopped");
     }
-    log.info("Metrics collection stopped");
   }
 
   /**
-   * Waits for the kafka server to start. If the server fails to start this method will return
+   * Waits for the monitored Kafka server to fully start up.
    *
-   * @return true if server has started, false for any other server failures to start
+   * This is a blocking call.  This method will return if and only if:
+   *
+   * <ul> <li>The server has successfully started.  The return value will be false.</li> <li>The
+   * server is shutting down.  The return value will be true.</li> <li>The current thread was
+   * interrupted.  The return value will be true.</li> </ul>
    */
   private boolean waitForServer() {
-    boolean keepWaitingForServerToStartup = true;
     boolean terminateEarly = false;
-
     try {
+      boolean keepWaitingForServerToStartup = true;
       while (keepWaitingForServerToStartup && !Thread.currentThread().isInterrupted()) {
         long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
         log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
