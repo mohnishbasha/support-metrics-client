@@ -77,12 +77,12 @@ public class MetricsReporterTest {
   @Test
   public void testInvalidArgumentsForConstructorNullRuntime() {
     // Given
-    Properties props = new Properties();
+    Properties emptyProperties = new Properties();
     Runtime nullRuntime = null;
 
     // When/Then
     try {
-      new MetricsReporter(server, props, nullRuntime);
+      new MetricsReporter(server, emptyProperties, nullRuntime);
       fail("IllegalArgumentException expected because serverRuntime is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -93,11 +93,12 @@ public class MetricsReporterTest {
   public void testValidConstructor() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
 
-    // When/Then
+    // When
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+
+    // Then
     assertThat(reporter.reportingEnabled()).isEqualTo(true);
     assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
     assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
@@ -107,13 +108,14 @@ public class MetricsReporterTest {
   public void testValidConstructorTopicOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
-    // When/Then
+    // When
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+
+    // Then
     assertThat(reporter.reportingEnabled()).isEqualTo(true);
     assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
     assertThat(reporter.sendToConfluentEnabled()).isEqualTo(false);
@@ -123,13 +125,14 @@ public class MetricsReporterTest {
   public void testValidConstructorHTTPOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
-    // When/Then
+    // When
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+
+    // Then
     assertThat(reporter.reportingEnabled()).isEqualTo(true);
     assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
     assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
@@ -139,13 +142,14 @@ public class MetricsReporterTest {
   public void testValidConstructorHTTPSOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
 
-    // When/Then
+    // When
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+
+    // Then
     assertThat(reporter.reportingEnabled()).isEqualTo(true);
     assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
     assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
@@ -155,8 +159,7 @@ public class MetricsReporterTest {
   public void testValidConstructorInvalidHTTPSOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
@@ -175,8 +178,7 @@ public class MetricsReporterTest {
   public void testValidConstructorInvalidHTTPOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
