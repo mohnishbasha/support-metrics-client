@@ -146,33 +146,24 @@ public class MetricsReporter implements Runnable {
 
   @Override
   public void run() {
-    boolean terminateEarly = false;
     if (reportingEnabled()) {
-      terminateEarly = waitForServer();
-
+      boolean terminateEarly = waitForServer();
       if (terminateEarly) {
         log.info("Metrics collection stopped before it even started");
       } else {
         log.info("Starting metrics collection from monitored broker...");
-        boolean keepRunning = true;
-        while (keepRunning) {
-          try {
-            // it is possible that the thread was interrupted during the createTopicIfMissing call
-            if (Thread.currentThread().isInterrupted()) {
-              throw new InterruptedException();
-            }
+        try {
+          while (!Thread.currentThread().isInterrupted()) {
             Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
             submitMetrics();
-          } catch (InterruptedException i) {
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            submitMetrics();
-            log.info("Stopping metrics collection because the monitored broker is shutting down...");
-            keepRunning = false;
-            Thread.currentThread().interrupt();
-          } catch (Exception e) {
-            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
-            keepRunning = false;
           }
+        } catch (InterruptedException i) {
+          metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+          submitMetrics();
+          log.info("Stopping metrics collection because the monitored broker is shutting down...");
+          Thread.currentThread().interrupt();
+        } catch (Exception e) {
+          log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
         }
       }
     }
@@ -188,8 +179,8 @@ public class MetricsReporter implements Runnable {
     boolean keepWaitingForServerToStartup = true;
     boolean terminateEarly = false;
 
-    while (keepWaitingForServerToStartup) {
-      try {
+    try {
+      while (keepWaitingForServerToStartup) {
         long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
         log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
         Thread.sleep(waitTimeMs);
@@ -204,12 +195,11 @@ public class MetricsReporter implements Runnable {
             keepWaitingForServerToStartup = false;
           }
         }
-      } catch (InterruptedException i) {
-        terminateEarly = true;
-        keepWaitingForServerToStartup = false;
-        metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-        Thread.currentThread().interrupt();
       }
+    } catch (InterruptedException i) {
+      terminateEarly = true;
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      Thread.currentThread().interrupt();
     }
     return terminateEarly;
   }
