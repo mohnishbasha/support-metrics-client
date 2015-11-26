@@ -13,8 +13,17 @@
  */
 package io.confluent.support.metrics.submitters;
 
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Properties;
+
+import io.confluent.support.metrics.SupportConfig;
+import io.confluent.support.metrics.utils.CustomerIdExamples;
+import io.confluent.support.metrics.utils.KafkaServerUtils;
+import kafka.Kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -22,6 +31,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class ConfluentSubmitterTest {
+
+  private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
+
 
   @Test
   public void testInvalidArgumentsForConstructorNullEndpoints() {
@@ -31,7 +43,7 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify endpoints");
@@ -46,7 +58,7 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are empty");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify endpoints");
@@ -61,7 +73,7 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are null/empty");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify endpoints");
@@ -76,7 +88,7 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are empty/null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify endpoints");
@@ -90,7 +102,7 @@ public class ConfluentSubmitterTest {
     String httpsEndpoint = "https://example.com";
 
     // When/Then
-    new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+    new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
   }
 
   @Test
@@ -101,9 +113,9 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are invalid");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
@@ -116,9 +128,9 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
+      new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are invalid");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
@@ -131,42 +143,44 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     try {
-      new ConfluentSubmitter(httpsEndpoint, httpEndpoint);
+      new ConfluentSubmitter(customerId, httpsEndpoint, httpEndpoint);
       fail("IllegalArgumentException expected because endpoints were provided in the wrong order");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
 
   @Test
-  public void testSubmitIgnoresNullInput() {
+  public void testInvalidArgumentsForConstructorCustomerIdInvalid() {
     // Given
     String httpEndpoint = "http://example.com";
     String httpsEndpoint = "https://example.com";
-    HttpPost p = mock(HttpPost.class);
-    ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-    byte[] nullData = null;
 
-    // When
-    c.send(nullData, p);
-
-    // Then
-    verifyZeroInteractions(p);
+    // When/Then
+    for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
+      try {
+        new ConfluentSubmitter(invalidCustomerId, httpEndpoint, httpsEndpoint);
+        fail("IllegalArgumentException expected because customer ID is invalid");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
+    }
   }
 
   @Test
-  public void testSubmitIgnoresEmptyInput() {
+  public void testInvalidArgumentsForConstructorAnonymousIdInvalid() {
     // Given
     String httpEndpoint = "http://example.com";
     String httpsEndpoint = "https://example.com";
-    HttpPost p = mock(HttpPost.class);
-    ConfluentSubmitter c = new ConfluentSubmitter(httpEndpoint, httpsEndpoint);
-    byte[] emptyData = new byte[0];
 
-    // When
-    c.send(emptyData, p);
-
-    // Then
-    verifyZeroInteractions(p);
+    // When/Then
+    for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
+      try {
+        new ConfluentSubmitter(invalidCustomerId, httpEndpoint, httpsEndpoint);
+        fail("IllegalArgumentException expected because customer ID is invalid");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
+    }
   }
 }

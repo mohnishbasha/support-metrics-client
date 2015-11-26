@@ -15,26 +15,18 @@ package io.confluent.support.metrics.submitters;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import io.confluent.support.metrics.utils.WebServer;
+import io.confluent.support.metrics.SupportConfig;
+
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 public class ConfluentSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(ConfluentSubmitter.class);
 
-  private static final int requestTimeoutMs = 2000;
-  private static final int DEFAULT_STATUS_CODE = HttpStatus.SC_BAD_GATEWAY;
-
+  private final String customerId;
   private final String endpointHTTP;
   private final String endpointHTTPS;
 
@@ -44,7 +36,7 @@ public class ConfluentSubmitter implements Submitter {
    * @param endpointHTTP:  HTTP endpoint for the Confluent support service. Can be null.
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
-  public ConfluentSubmitter(String endpointHTTP, String endpointHTTPS) {
+  public ConfluentSubmitter(String customerId, String endpointHTTP, String endpointHTTPS) {
 
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify endpoints");
@@ -59,9 +51,12 @@ public class ConfluentSubmitter implements Submitter {
         throw new IllegalArgumentException("invalid HTTPS endpoint");
       }
     }
+    if (!SupportConfig.isSyntacticallyCorrectCustomerId(customerId)) {
+      throw new IllegalArgumentException("invalid customer ID");
+    }
     this.endpointHTTP = endpointHTTP;
     this.endpointHTTPS = endpointHTTPS;
-
+    this.customerId = customerId;
   }
 
   private boolean testEndpointValid(String[] schemes, String endpoint) {
@@ -79,7 +74,7 @@ public class ConfluentSubmitter implements Submitter {
   @Override
   public void submit(byte[] bytes) {
     if (bytes != null && bytes.length > 0) {
-      int statusCode = DEFAULT_STATUS_CODE;
+      int statusCode = WebServer.DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
         statusCode = sendSecurely(bytes);
         if (!submittedSuccessfully(statusCode)) {
@@ -134,36 +129,6 @@ public class ConfluentSubmitter implements Submitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
-    return send(encodedMetricsRecord, new HttpPost(endpoint));
-  }
-
-  // This method is `protected` instead of `private` to be visible for testing.
-  protected int send(byte[] bytes, HttpPost httpPost) {
-    int statusCode = DEFAULT_STATUS_CODE;
-    if (bytes != null && bytes.length > 0 && httpPost != null) {
-
-      // add the body to the request
-      MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-      builder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, "filename");
-      httpPost.setEntity(builder.build());
-
-      // set the HTTP config
-      final RequestConfig config = RequestConfig.custom().
-          setConnectTimeout(requestTimeoutMs).
-          setConnectionRequestTimeout(requestTimeoutMs).
-          setSocketTimeout(requestTimeoutMs).
-          build();
-
-      // send request
-      try (CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-           CloseableHttpResponse response = httpclient.execute(httpPost)) {
-        log.debug("POST request returned {}", response.getStatusLine().toString());
-        statusCode = response.getStatusLine().getStatusCode();
-      } catch (IOException e) {
-        log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
-      }
-    }
-    return statusCode;
+    return WebServer.send(customerId, encodedMetricsRecord, new HttpPost(endpoint));
   }
 }

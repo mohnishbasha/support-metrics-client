@@ -158,7 +158,7 @@ public class MetricsReporterTest {
     try {
       new MetricsReporter(mockServer, serverProperties, serverRuntime);
       fail("IllegalArgumentException expected because secure endpoint was of wrong type");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
@@ -174,7 +174,7 @@ public class MetricsReporterTest {
     try {
       new MetricsReporter(mockServer, serverProperties, serverRuntime);
       fail("IllegalArgumentException expected because insecure endpoint was of wrong type");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
