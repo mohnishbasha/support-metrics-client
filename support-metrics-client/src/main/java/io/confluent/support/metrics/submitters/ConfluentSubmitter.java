@@ -18,7 +18,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.content.StringBody;
+import io.confluent.support.metrics.SupportConfig;
 
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -61,7 +61,7 @@ public class ConfluentSubmitter implements Submitter {
         throw new IllegalArgumentException("invalid HTTPS endpoint");
       }
     }
-    if (customerId == null || customerId.isEmpty()) {
+    if (!SupportConfig.isSyntacticallyCorrectCustomerId(customerId)) {
       throw new IllegalArgumentException("invalid customer ID");
     }
     this.endpointHTTP = endpointHTTP;

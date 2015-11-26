@@ -212,7 +212,6 @@ public class ConfluentSubmitterTest {
 
     // When/Then
     for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
-      System.out.println("CUSTOMER:" + invalidCustomerId);
       try {
         ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
         assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
