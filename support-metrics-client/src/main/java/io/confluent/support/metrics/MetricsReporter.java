@@ -112,7 +112,7 @@ public class MetricsReporter implements Runnable {
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
-    if (supportTopic != null && !supportTopic.isEmpty()) {
+    if (!supportTopic.isEmpty()) {
       kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
@@ -144,17 +144,47 @@ public class MetricsReporter implements Runnable {
     return confluentSubmitter != null;
   }
 
+  @Override
+  public void run() {
+    try {
+      if (reportingEnabled()) {
+        boolean terminateEarly = waitForServer();
+        if (terminateEarly) {
+          log.info("Metrics collection stopped before it even started");
+        } else {
+          log.info("Starting metrics collection from monitored broker...");
+          while (!Thread.currentThread().isInterrupted()) {
+            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
+            submitMetrics();
+          }
+        }
+      }
+    } catch (InterruptedException i) {
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      submitMetrics();
+      log.info("Graceful terminating metrics collection because the monitored broker is shutting down...");
+      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      log.error("Terminating metrics collection from monitored broker because: {}", e.getMessage());
+    } finally {
+      log.info("Metrics collection stopped");
+    }
+  }
+
   /**
-   * Waits for the kafka server to start. If the server fails to start this method will return
+   * Waits for the monitored Kafka server to fully start up.
    *
-   * @return true if server has started, false for any other server failures to start
+   * This is a blocking call.  This method will return if and only if:
+   *
+   * <ul> <li>The server has successfully started.  The return value will be false.</li> <li>The
+   * server is shutting down.  The return value will be true.</li> <li>The current thread was
+   * interrupted.  The return value will be true.</li> </ul>
    */
   private boolean waitForServer() {
-    boolean keepWaitingForServerToStartup = true;
     boolean terminateEarly = false;
-
-    while (keepWaitingForServerToStartup) {
-      try {
+    try {
+      boolean keepWaitingForServerToStartup = true;
+      while (keepWaitingForServerToStartup && !Thread.currentThread().isInterrupted()) {
         long waitTimeMs = Jitter.addOnePercentJitter(SETTLING_TIME_MS);
         log.info("Waiting {} ms for the monitored broker to finish starting up...", waitTimeMs);
         Thread.sleep(waitTimeMs);
@@ -169,49 +199,13 @@ public class MetricsReporter implements Runnable {
             keepWaitingForServerToStartup = false;
           }
         }
-      } catch (InterruptedException i) {
-        terminateEarly = true;
-        keepWaitingForServerToStartup = false;
-        metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-        Thread.currentThread().interrupt();
       }
+    } catch (InterruptedException i) {
+      terminateEarly = true;
+      metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+      Thread.currentThread().interrupt();
     }
     return terminateEarly;
-  }
-
-
-  public void run() {
-    boolean terminateEarly = false;
-    if (reportingEnabled()) {
-      terminateEarly = waitForServer();
-
-      if (terminateEarly) {
-        log.info("Metrics collection stopped before it even started");
-      } else {
-        log.info("Starting metrics collection from monitored broker...");
-        boolean keepRunning = true;
-        while (keepRunning) {
-          try {
-            // it is possible that the thread was interrupted during the createTopicIfMissing call
-            if (Thread.currentThread().isInterrupted()) {
-              throw new InterruptedException();
-            }
-            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
-            submitMetrics();
-          } catch (InterruptedException i) {
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            submitMetrics();
-            log.info("Stopping metrics collection because the monitored broker is shutting down...");
-            keepRunning = false;
-            Thread.currentThread().interrupt();
-          } catch (Exception e) {
-            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
-            keepRunning = false;
-          }
-        }
-      }
-    }
-    log.info("Metrics collection stopped");
   }
 
   private void submitMetrics() {
@@ -224,7 +218,7 @@ public class MetricsReporter implements Runnable {
     }
 
     try {
-      if (sendToKafkaEnabled()) {
+      if (sendToKafkaEnabled() && encodedMetricsRecord != null) {
         // attempt to create the topic. If failures occur, try again in the next round, however
         // the current batch of metrics will be lost.
         if (kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
@@ -233,15 +227,15 @@ public class MetricsReporter implements Runnable {
         }
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.toString());
+      log.error("Could not submit metrics to Kafka topic {}: {}", supportTopic, e.getMessage());
     }
 
     try {
-      if (sendToConfluentEnabled()) {
+      if (sendToConfluentEnabled() && encodedMetricsRecord != null) {
         confluentSubmitter.submit(encodedMetricsRecord);
       }
     } catch (RuntimeException e) {
-      log.error("Could not submit metrics to Confluent: {}", e.toString());
+      log.error("Could not submit metrics to Confluent: {}", e.getMessage());
     }
   }
 
