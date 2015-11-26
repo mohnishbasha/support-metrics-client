@@ -62,12 +62,12 @@ public class MetricsReporterTest {
   @Test
   public void testInvalidArgumentsForConstructorNullProps() {
     // Given
-    Properties props = null;
+    Properties nullProperties = null;
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When/Then
     try {
-      new MetricsReporter(server, props, serverRuntime);
+      new MetricsReporter(server, nullProperties, serverRuntime);
       fail("IllegalArgumentException expected because props is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -78,11 +78,11 @@ public class MetricsReporterTest {
   public void testInvalidArgumentsForConstructorNullRuntime() {
     // Given
     Properties props = new Properties();
-    Runtime serverRuntime = null;
+    Runtime nullRuntime = null;
 
     // When/Then
     try {
-      new MetricsReporter(server, props, serverRuntime);
+      new MetricsReporter(server, props, nullRuntime);
       fail("IllegalArgumentException expected because serverRuntime is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -164,7 +164,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+      new MetricsReporter(server, serverProps, serverRuntime);
       fail("IllegalArgumentException expected because endpoints was of wrong type");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
@@ -184,7 +184,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+      new MetricsReporter(server, serverProps, serverRuntime);
       fail("IllegalArgumentException expected because endpoints was of wrong type");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
