@@ -112,7 +112,7 @@ public class MetricsReporter implements Runnable {
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
-    if (supportTopic != null && !supportTopic.isEmpty()) {
+    if (!supportTopic.isEmpty()) {
       kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
     } else {
       kafkaSubmitter = null;
