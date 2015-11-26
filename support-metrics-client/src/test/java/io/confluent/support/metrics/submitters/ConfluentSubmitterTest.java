@@ -122,7 +122,7 @@ public class ConfluentSubmitterTest {
     try {
       new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are invalid");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
@@ -137,7 +137,7 @@ public class ConfluentSubmitterTest {
     try {
       new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint);
       fail("IllegalArgumentException expected because endpoints are invalid");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
@@ -152,23 +152,42 @@ public class ConfluentSubmitterTest {
     try {
       new ConfluentSubmitter(customerId, httpsEndpoint, httpEndpoint);
       fail("IllegalArgumentException expected because endpoints were provided in the wrong order");
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorCustomerIdNull() {
+  public void testInvalidArgumentsForConstructorCustomerIdInvalid() {
     // Given
     String httpEndpoint = "http://example.com";
     String httpsEndpoint = "https://example.com";
 
     // When/Then
-    try {
-      new ConfluentSubmitter(null, httpEndpoint, httpsEndpoint);
-      fail("IllegalArgumentException expected because customer ID is null");
-    } catch (Exception e) {
-      assertThat(e).hasMessageStartingWith("invalid customer ID");
+    for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
+      try {
+        new ConfluentSubmitter(invalidCustomerId, httpEndpoint, httpsEndpoint);
+        fail("IllegalArgumentException expected because customer ID is invalid");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
+    }
+  }
+
+  @Test
+  public void testInvalidArgumentsForConstructorAnonymousIdInvalid() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
+
+    // When/Then
+    for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
+      try {
+        new ConfluentSubmitter(invalidCustomerId, httpEndpoint, httpsEndpoint);
+        fail("IllegalArgumentException expected because customer ID is invalid");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageStartingWith("invalid customer ID");
+      }
     }
   }
 
@@ -202,41 +221,6 @@ public class ConfluentSubmitterTest {
 
     // Then
     verifyZeroInteractions(p);
-  }
-
-  @Test
-  public void testSubmitInvalidCustomer() {
-    // Given
-    HttpPost p = new HttpPost(testEndpoint);
-    byte[] anyData = "anyData".getBytes();
-
-    // When/Then
-    for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
-      try {
-        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
-        assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
-      } catch (Exception e){
-        assertThat(e).hasMessageStartingWith("invalid customer ID");
-      }
-    }
-  }
-
-  @Test
-  public void testSubmitInvalidAnonymousUser() {
-    // Given
-    HttpPost p = new HttpPost(testEndpoint);
-    byte[] anyData = "anyData".getBytes();
-
-    // When/Then
-    for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
-      try {
-        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
-        assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
-      } catch (Exception e){
-        assertThat(e).hasMessageStartingWith("invalid customer ID");
-      }
-
-    }
   }
 
   @Test
