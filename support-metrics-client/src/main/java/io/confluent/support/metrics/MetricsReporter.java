@@ -144,6 +144,41 @@ public class MetricsReporter implements Runnable {
     return confluentSubmitter != null;
   }
 
+  @Override
+  public void run() {
+    boolean terminateEarly = false;
+    if (reportingEnabled()) {
+      terminateEarly = waitForServer();
+
+      if (terminateEarly) {
+        log.info("Metrics collection stopped before it even started");
+      } else {
+        log.info("Starting metrics collection from monitored broker...");
+        boolean keepRunning = true;
+        while (keepRunning) {
+          try {
+            // it is possible that the thread was interrupted during the createTopicIfMissing call
+            if (Thread.currentThread().isInterrupted()) {
+              throw new InterruptedException();
+            }
+            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
+            submitMetrics();
+          } catch (InterruptedException i) {
+            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
+            submitMetrics();
+            log.info("Stopping metrics collection because the monitored broker is shutting down...");
+            keepRunning = false;
+            Thread.currentThread().interrupt();
+          } catch (Exception e) {
+            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
+            keepRunning = false;
+          }
+        }
+      }
+    }
+    log.info("Metrics collection stopped");
+  }
+
   /**
    * Waits for the kafka server to start. If the server fails to start this method will return
    *
@@ -177,41 +212,6 @@ public class MetricsReporter implements Runnable {
       }
     }
     return terminateEarly;
-  }
-
-
-  public void run() {
-    boolean terminateEarly = false;
-    if (reportingEnabled()) {
-      terminateEarly = waitForServer();
-
-      if (terminateEarly) {
-        log.info("Metrics collection stopped before it even started");
-      } else {
-        log.info("Starting metrics collection from monitored broker...");
-        boolean keepRunning = true;
-        while (keepRunning) {
-          try {
-            // it is possible that the thread was interrupted during the createTopicIfMissing call
-            if (Thread.currentThread().isInterrupted()) {
-              throw new InterruptedException();
-            }
-            Thread.sleep(Jitter.addOnePercentJitter(reportIntervalMs));
-            submitMetrics();
-          } catch (InterruptedException i) {
-            metricsCollector.setRuntimeState(Collector.RuntimeState.ShuttingDown);
-            submitMetrics();
-            log.info("Stopping metrics collection because the monitored broker is shutting down...");
-            keepRunning = false;
-            Thread.currentThread().interrupt();
-          } catch (Exception e) {
-            log.error("Stopping metrics collection from monitored broker: {}", e.getMessage());
-            keepRunning = false;
-          }
-        }
-      }
-    }
-    log.info("Metrics collection stopped");
   }
 
   private void submitMetrics() {
