@@ -20,7 +20,7 @@ import org.junit.Test;
 import java.util.Properties;
 
 import io.confluent.support.metrics.utils.KafkaServerUtils;
-import io.confluent.support.metrics.utils.cIdUtils;
+import io.confluent.support.metrics.utils.CustomerIdExamples;
 import kafka.Kafka;
 import kafka.server.KafkaConfig;
 
@@ -33,7 +33,7 @@ public class SupportConfigTest {
 
   @Test
   public void testValidCustomer() {
-    for (String validId : cIdUtils.validCustomerIds) {
+    for (String validId : CustomerIdExamples.validCustomerIds) {
       assertThat(validId + " is an invalid customer identifier",
           SupportConfig.isConfluentCustomer(validId), is(true));
     }
@@ -41,7 +41,7 @@ public class SupportConfigTest {
 
   @Test
   public void testInvalidCustomer() {
-    String[] invalidIds = ObjectArrays.concat(cIdUtils.invalidCustomerIds, cIdUtils.validAnonymousIds, String.class);
+    String[] invalidIds = ObjectArrays.concat(CustomerIdExamples.invalidCustomerIds, CustomerIdExamples.validAnonymousIds, String.class);
     for (String invalidCustomerId : invalidIds) {
       assertThat(invalidCustomerId + " is a valid customer identifier",
           SupportConfig.isConfluentCustomer(invalidCustomerId), is(false));
@@ -50,7 +50,7 @@ public class SupportConfigTest {
 
   @Test
   public void testValidAnonymousUser() {
-    for (String validId : cIdUtils.validAnonymousIds) {
+    for (String validId : CustomerIdExamples.validAnonymousIds) {
       assertThat(validId + " is an invalid anonymous user identifier",
           SupportConfig.isAnonymousUser(validId), is(true));
     }
@@ -58,7 +58,7 @@ public class SupportConfigTest {
 
   @Test
   public void testInvalidAnonymousUser() {
-    String[] invalidIds = ObjectArrays.concat(cIdUtils.invalidAnonymousIds, cIdUtils.validCustomerIds, String.class);
+    String[] invalidIds = ObjectArrays.concat(CustomerIdExamples.invalidAnonymousIds, CustomerIdExamples.validCustomerIds, String.class);
     for (String invalidId : invalidIds) {
       assertThat(invalidId + " is a valid anonymous user identifier",
           SupportConfig.isAnonymousUser(invalidId), is(false));
@@ -67,7 +67,7 @@ public class SupportConfigTest {
 
   @Test
   public void testCustomerIdValidSettings() {
-    String[] validValues = ObjectArrays.concat(cIdUtils.validAnonymousIds, cIdUtils.validCustomerIds, String.class);
+    String[] validValues = ObjectArrays.concat(CustomerIdExamples.validAnonymousIds, CustomerIdExamples.validCustomerIds, String.class);
     for (String validValue : validValues) {
       assertThat(validValue + " is an invalid value for " + SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
           SupportConfig.isSyntacticallyCorrectCustomerId(validValue), is(true));
@@ -76,7 +76,7 @@ public class SupportConfigTest {
 
   @Test
   public void testCustomerIdInvalidSettings() {
-    String[] invalidValues = ObjectArrays.concat(cIdUtils.invalidAnonymousIds, cIdUtils.invalidCustomerIds, String.class);
+    String[] invalidValues = ObjectArrays.concat(CustomerIdExamples.invalidAnonymousIds, CustomerIdExamples.invalidCustomerIds, String.class);
     for (String invalidValue : invalidValues) {
       assertThat(invalidValue + " is a valid value for " + SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
           SupportConfig.isSyntacticallyCorrectCustomerId(invalidValue), is(false));
@@ -104,8 +104,8 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
     assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
     assertThat(SupportConfig.getKafkaTopic(serverProps)).isEqualTo("__sample_topic");
-    assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://example.com");
-    assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
+    assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://support-metrics.confluent.io/test");
+    assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://support-metrics.confluent.io/test");
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
 
   }

@@ -13,9 +13,8 @@
  */
 package io.confluent.support.metrics.utils;
 
-public class cIdUtils {
+public class CustomerIdExamples {
 
-  public static final String testHttpEndpoint = "http://support-metrics.confluent.io/test";
   public static final String[] validCustomerIds = {
       "C0", "c1", "C1", "c12", "C22", "c123", "C333", "c1234", "C4444",
       "C00000", "C12345", "C99999", "C123456789", "C123456789012345678901234567890",

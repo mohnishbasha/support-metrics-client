@@ -15,11 +15,15 @@ package io.confluent.support.metrics.submitters;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Properties;
+
 import io.confluent.support.metrics.SupportConfig;
-import io.confluent.support.metrics.SupportConfigTest;
-import io.confluent.support.metrics.utils.cIdUtils;
+import io.confluent.support.metrics.utils.CustomerIdExamples;
+import io.confluent.support.metrics.utils.KafkaServerUtils;
+import kafka.Kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -29,23 +33,14 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 public class ConfluentSubmitterTest {
 
   private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
+  private static Properties serverProps;
+  private static String testEndpoint;
 
-  private final String[] validCustomerIds = {
-      "C0", "c1", "C1", "c12", "C22", "c123", "C333", "c1234", "C4444",
-      "C00000", "C12345", "C99999", "C123456789", "C123456789012345678901234567890",
-      "c00000", "c12345", "c99999", "c123456789", "c123456789012345678901234567890",
-  };
-
-  // These invalid customer ids should not include valid anonymous user IDs.
-  private final String[] invalidCustomerIds = {
-      "0c000", "0000C", null, "", "c", "C", "Hello", "World", "1", "12", "123", "1234", "12345"
-  };
-
-  private final String[] validAnonymousIds = {"anonymous", "ANONYMOUS", "anonyMOUS"};
-
-  // These invalid anonymous user IDs should not include valid customer IDs.
-  private final String[] invalidAnonymousIds = {null, "", "anon", "anonymou", "ANONYMOU"};
-
+  @BeforeClass
+  public static void startPrep() {
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    testEndpoint = serverProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+  }
 
   @Test
   public void testInvalidArgumentsForConstructorNullEndpoints() {
@@ -212,15 +207,14 @@ public class ConfluentSubmitterTest {
   @Test
   public void testSubmitInvalidCustomer() {
     // Given
-    String httpEndpoint = cIdUtils.testHttpEndpoint;
-    HttpPost p = new HttpPost(httpEndpoint);
+    HttpPost p = new HttpPost(testEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
-    for (String invalidCustomerId : cIdUtils.invalidCustomerIds) {
+    for (String invalidCustomerId : CustomerIdExamples.invalidCustomerIds) {
       System.out.println("CUSTOMER:" + invalidCustomerId);
       try {
-        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, httpEndpoint, null);
+        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
         assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
       } catch (Exception e){
         assertThat(e).hasMessageStartingWith("invalid customer ID");
@@ -231,14 +225,13 @@ public class ConfluentSubmitterTest {
   @Test
   public void testSubmitInvalidAnonymousUser() {
     // Given
-    String httpEndpoint = cIdUtils.testHttpEndpoint;
-    HttpPost p = new HttpPost(httpEndpoint);
+    HttpPost p = new HttpPost(testEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
-    for (String invalidCustomerId : cIdUtils.invalidAnonymousIds) {
+    for (String invalidCustomerId : CustomerIdExamples.invalidAnonymousIds) {
       try {
-        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, httpEndpoint, null);
+        ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
         assertThat(c.send(anyData, p)).isNotEqualTo(HttpStatus.SC_OK);
       } catch (Exception e){
         assertThat(e).hasMessageStartingWith("invalid customer ID");
@@ -250,13 +243,12 @@ public class ConfluentSubmitterTest {
   @Test
   public void testSubmitValidCustomer() {
     // Given
-    String httpEndpoint = cIdUtils.testHttpEndpoint;
-    HttpPost p = new HttpPost(httpEndpoint);
+    HttpPost p = new HttpPost(testEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
-    for (String invalidCustomerId : cIdUtils.validCustomerIds) {
-      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, httpEndpoint, null);
+    for (String invalidCustomerId : CustomerIdExamples.validCustomerIds) {
+      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
       int status = c.send(anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
@@ -266,13 +258,12 @@ public class ConfluentSubmitterTest {
   @Test
   public void testSubmitValidAnonymousUser() {
     // Given
-    String httpEndpoint = cIdUtils.testHttpEndpoint;
-    HttpPost p = new HttpPost(httpEndpoint);
+    HttpPost p = new HttpPost(testEndpoint);
     byte[] anyData = "anyData".getBytes();
 
     // When/Then
-    for (String invalidCustomerId : cIdUtils.validAnonymousIds) {
-      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, httpEndpoint, null);
+    for (String invalidCustomerId : CustomerIdExamples.validAnonymousIds) {
+      ConfluentSubmitter c = new ConfluentSubmitter(invalidCustomerId, null, testEndpoint);
       int status = c.send(anyData, p);
       // if we are not connected to the internet this test should still pass
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
