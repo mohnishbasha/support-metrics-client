@@ -5,6 +5,9 @@ import org.apache.kafka.common.protocol.SecurityProtocol;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import io.confluent.support.metrics.SupportConfig;
@@ -53,28 +56,8 @@ public class KafkaServerUtils {
     CoreUtils.rm(server.config().logDirs());
   }
 
-  public static String prepareDefaultConfig() throws IOException {
-    String[] lines = {
-        "broker.id=1", "zookeeper.connect=localhost:2181",
-        SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG + "=anonymous",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG + "=http://example.com",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG + "=https://example.com",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG + "=__sample_topic",
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG + "=24"
-    };
-    return prepareConfig(lines);
+  public static String pathToDefaultBrokerConfiguration() {
+    return KafkaServerUtils.class.getResource("/test-server.properties").getFile();
   }
 
-  public static String prepareConfig(String[] lines) throws IOException {
-    File file = File.createTempFile("supportedkafkatest", ".properties");
-    file.deleteOnExit();
-
-    FileOutputStream out = new FileOutputStream(file);
-    for (String line : lines) {
-      out.write(line.getBytes());
-      out.write("\n".getBytes());
-    }
-    out.close();
-    return file.getAbsolutePath();
-  }
 }

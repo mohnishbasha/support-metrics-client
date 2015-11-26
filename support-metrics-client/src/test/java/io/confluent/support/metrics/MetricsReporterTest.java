@@ -13,24 +13,21 @@
  */
 package io.confluent.support.metrics;
 
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.io.IOException;
 import java.util.Properties;
+
 import io.confluent.support.metrics.utils.KafkaServerUtils;
 import kafka.Kafka;
 import kafka.server.KafkaServer;
 import kafka.zk.EmbeddedZookeeper;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class MetricsReporterTest  {
+public class MetricsReporterTest {
 
   private static EmbeddedZookeeper zookeeper = null;
   private static KafkaServer server = null;
@@ -93,11 +90,11 @@ public class MetricsReporterTest  {
   }
 
   @Test
-  public void testValidConstructor() throws IOException {
+  public void testValidConstructor() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
 
     // When/Then
     MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
@@ -107,11 +104,11 @@ public class MetricsReporterTest  {
   }
 
   @Test
-  public void testValidConstructorTopicOnly() throws IOException {
+  public void testValidConstructorTopicOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
@@ -123,11 +120,11 @@ public class MetricsReporterTest  {
   }
 
   @Test
-  public void testValidConstructorHTTPOnly() throws IOException {
+  public void testValidConstructorHTTPOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
@@ -139,11 +136,11 @@ public class MetricsReporterTest  {
   }
 
   @Test
-  public void testValidConstructorHTTPSOnly() throws IOException {
+  public void testValidConstructorHTTPSOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
 
@@ -155,11 +152,11 @@ public class MetricsReporterTest  {
   }
 
   @Test
-  public void testValidConstructorInvalidHTTPSOnly() throws IOException {
+  public void testValidConstructorInvalidHTTPSOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
@@ -169,17 +166,17 @@ public class MetricsReporterTest  {
     try {
       MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
       fail("IllegalArgumentException expected because endpoints was of wrong type");
-    } catch (Exception e){
+    } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
 
   @Test
-  public void testValidConstructorInvalidHTTPOnly() throws IOException {
+  public void testValidConstructorInvalidHTTPOnly() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps;
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.prepareDefaultConfig()});
+    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
     serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
@@ -189,7 +186,7 @@ public class MetricsReporterTest  {
     try {
       MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
       fail("IllegalArgumentException expected because endpoints was of wrong type");
-    } catch (Exception e){
+    } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
   }
