@@ -87,7 +87,7 @@ public class SupportConfig {
     String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
     String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
 
-    if (supportTopic != null && !supportTopic.isEmpty()) {
+    if (!supportTopic.isEmpty()) {
       return true;
     }
 
