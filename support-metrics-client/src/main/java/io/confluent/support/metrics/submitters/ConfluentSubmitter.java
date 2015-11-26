@@ -77,15 +77,15 @@ public class ConfluentSubmitter implements Submitter {
    * Submits metrics to Confluent via the Internet.  Ignores null or empty inputs.
    */
   @Override
-  public void submit(byte[] encodedMetricsRecord) {
-    if (encodedMetricsRecord != null && encodedMetricsRecord.length > 0) {
+  public void submit(byte[] bytes) {
+    if (bytes != null && bytes.length > 0) {
       int statusCode = DEFAULT_STATUS_CODE;
       if (isSecureEndpointEnabled()) {
-        statusCode = sendSecurely(encodedMetricsRecord);
+        statusCode = sendSecurely(bytes);
         if (!submittedSuccessfully(statusCode)) {
           if (isInsecureEndpointEnabled()) {
             log.error("Failed to submit metrics via secure endpoint, falling back to insecure endpoint");
-            submitToInsecureEndpoint(encodedMetricsRecord);
+            submitToInsecureEndpoint(bytes);
           } else {
             log.error("Failed to submit metrics via secure endpoint -- giving up");
           }
@@ -94,7 +94,7 @@ public class ConfluentSubmitter implements Submitter {
         }
       } else {
         if (isInsecureEndpointEnabled()) {
-          submitToInsecureEndpoint(encodedMetricsRecord);
+          submitToInsecureEndpoint(bytes);
         } else {
           log.error("Metrics will not be submitted because all endpoints are disabled");
         }
