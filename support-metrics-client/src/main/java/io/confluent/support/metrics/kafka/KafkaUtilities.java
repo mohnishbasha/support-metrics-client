@@ -87,18 +87,18 @@ public class KafkaUtilities {
   }
 
   /**
-   * Verifies that the kafka topic exists and is healthy.
+   * Verifies that the Kafka topic exists and is healthy.
    * @param zkUtils
    * @param supportTopic
    * @param partitions
    * @param replication
-   * @return true if kafka topic exists and is healthy, false otherwise
+   * @return true if topic exists and is healthy, false otherwise
    */
   public boolean verifySupportTopic(ZkUtils zkUtils,
                                      String supportTopic,
                                      int partitions,
                                      int replication) {
-    boolean ret = true;
+    boolean topicExistsAndIsHealthy = true;
     Set<String> topics = new HashSet<>();
     topics.add(supportTopic);
     scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
@@ -126,14 +126,14 @@ public class KafkaUtilities {
         }
       } else {
         log.error("No replicas known for partition 0 of support metrics topic {}", supportTopic);
-        ret = false;
+        topicExistsAndIsHealthy = false;
       }
     } else {
       log.error("No partitions are assigned to support metrics topic {}", supportTopic);
-      ret = false;
+      topicExistsAndIsHealthy = false;
     }
 
-    return ret;
+    return topicExistsAndIsHealthy;
   }
 
   public boolean isReadyForMetricsCollection(KafkaServer server) {
