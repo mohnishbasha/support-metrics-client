@@ -91,8 +91,7 @@ public class SupportConfig {
       return true;
     }
 
-    if ((endpointHTTP != null && !endpointHTTP.isEmpty()) ||
-        (endpointHTTPS != null && !endpointHTTPS.isEmpty())) {
+    if (!endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty()) {
       return true;
     }
 
