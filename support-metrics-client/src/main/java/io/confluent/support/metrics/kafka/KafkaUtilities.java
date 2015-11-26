@@ -53,7 +53,7 @@ public class KafkaUtilities {
                                    int replication,
                                    long retentionMs) {
 
-    boolean ret = true;
+    boolean topicCreated = true;
     if (AdminUtils.topicExists(zkUtils, topic)) {
       return verifySupportTopic(zkUtils, topic, partitions, replication);
     }
@@ -77,13 +77,13 @@ public class KafkaUtilities {
       AdminUtils.createTopic(zkUtils, topic, partitions, actualReplication, metricsTopicProps);
     } catch (TopicExistsException te) {
       log.info("Topic {} already exists", topic);
-      ret = false;
+      topicCreated = false;
     } catch (AdminOperationException e) {
-      ret = false;
+      topicCreated = false;
       log.error("Could not create topic {}: {}", topic, e.getMessage());
     }
 
-    return ret;
+    return topicCreated;
   }
 
   /**
