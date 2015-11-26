@@ -13,7 +13,6 @@
  */
 package io.confluent.support.metrics;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,38 +20,36 @@ import java.util.Properties;
 
 import io.confluent.support.metrics.utils.KafkaServerUtils;
 import kafka.Kafka;
+import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
-import kafka.zk.EmbeddedZookeeper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MetricsReporterTest {
 
-  private static EmbeddedZookeeper zookeeper = null;
-  private static KafkaServer server = null;
+  private static KafkaServer mockServer;
 
   @BeforeClass
   public static void startCluster() {
-    zookeeper = KafkaServerUtils.startZookeeper();
-    server = KafkaServerUtils.startServer(zookeeper);
-  }
-
-  @AfterClass
-  public static void stopCluster() {
-    KafkaServerUtils.stopServer(server);
-    KafkaServerUtils.stopZookeeper(zookeeper);
+    KafkaConfig mockConfig = mock(KafkaConfig.class);
+    when(mockConfig.advertisedHostName()).thenReturn("anyHostname");
+    when(mockConfig.advertisedPort()).thenReturn(12345);
+    mockServer = mock(KafkaServer.class);
+    when(mockServer.config()).thenReturn(mockConfig);
   }
 
   @Test
   public void testInvalidArgumentsForConstructorNullServer() {
     // Given
-    Properties props = new Properties();
+    Properties emptyProperties = new Properties();
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When/Then
     try {
-      new MetricsReporter(null, props, serverRuntime);
+      new MetricsReporter(null, emptyProperties, serverRuntime);
       fail("IllegalArgumentException expected because server is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -60,14 +57,13 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorNullProps() {
+  public void testInvalidArgumentsForConstructorNullProperties() {
     // Given
-    Properties nullProperties = null;
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When/Then
     try {
-      new MetricsReporter(server, nullProperties, serverRuntime);
+      new MetricsReporter(mockServer, null, serverRuntime);
       fail("IllegalArgumentException expected because props is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -78,11 +74,10 @@ public class MetricsReporterTest {
   public void testInvalidArgumentsForConstructorNullRuntime() {
     // Given
     Properties emptyProperties = new Properties();
-    Runtime nullRuntime = null;
 
     // When/Then
     try {
-      new MetricsReporter(server, emptyProperties, nullRuntime);
+      new MetricsReporter(mockServer, emptyProperties, null);
       fail("IllegalArgumentException expected because serverRuntime is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -90,104 +85,95 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testValidConstructor() {
+  public void testValidConstructorFromConfigFile() {
     // Given
-    Runtime serverRuntime = Runtime.getRuntime();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    Runtime serverRuntime = Runtime.getRuntime();
 
     // When
-    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProps, serverRuntime);
 
     // Then
-    assertThat(reporter.reportingEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+    assertThat(reporter.reportingEnabled()).isTrue();
+    assertThat(reporter.sendToKafkaEnabled()).isTrue();
+    assertThat(reporter.sendToConfluentEnabled()).isTrue();
   }
 
   @Test
   public void testValidConstructorTopicOnly() {
     // Given
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
     // When
-    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
 
     // Then
-    assertThat(reporter.reportingEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(false);
+    assertThat(reporter.reportingEnabled()).isTrue();
+    assertThat(reporter.sendToKafkaEnabled()).isTrue();
+    assertThat(reporter.sendToConfluentEnabled()).isFalse();
   }
 
   @Test
   public void testValidConstructorHTTPOnly() {
     // Given
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com/");
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
 
     // When
-    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
 
     // Then
-    assertThat(reporter.reportingEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
-    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+    assertThat(reporter.reportingEnabled()).isTrue();
+    assertThat(reporter.sendToKafkaEnabled()).isFalse();
+    assertThat(reporter.sendToConfluentEnabled()).isTrue();
   }
 
   @Test
   public void testValidConstructorHTTPSOnly() {
     // Given
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com/");
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
 
     // When
-    MetricsReporter reporter = new MetricsReporter(server, serverProps, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
 
     // Then
-    assertThat(reporter.reportingEnabled()).isEqualTo(true);
-    assertThat(reporter.sendToKafkaEnabled()).isEqualTo(false);
-    assertThat(reporter.sendToConfluentEnabled()).isEqualTo(true);
+    assertThat(reporter.reportingEnabled()).isTrue();
+    assertThat(reporter.sendToKafkaEnabled()).isFalse();
+    assertThat(reporter.sendToConfluentEnabled()).isTrue();
   }
 
   @Test
-  public void testValidConstructorInvalidHTTPSOnly() {
+  public void testInvalidConstructorInvalidHTTPSOnly() {
     // Given
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "http://example.com/");
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "http://example.com");
 
     // When/Then
     try {
-      new MetricsReporter(server, serverProps, serverRuntime);
-      fail("IllegalArgumentException expected because endpoints was of wrong type");
+      new MetricsReporter(mockServer, serverProperties, serverRuntime);
+      fail("IllegalArgumentException expected because secure endpoint was of wrong type");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
     }
   }
 
   @Test
-  public void testValidConstructorInvalidHTTPOnly() {
+  public void testInvalidConstructorInvalidHTTPOnly() {
     // Given
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "https://example.com/");
     Runtime serverRuntime = Runtime.getRuntime();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "https://example.com");
 
     // When/Then
     try {
-      new MetricsReporter(server, serverProps, serverRuntime);
-      fail("IllegalArgumentException expected because endpoints was of wrong type");
+      new MetricsReporter(mockServer, serverProperties, serverRuntime);
+      fail("IllegalArgumentException expected because insecure endpoint was of wrong type");
     } catch (Exception e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
     }
