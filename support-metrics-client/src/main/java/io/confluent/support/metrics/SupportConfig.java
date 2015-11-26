@@ -162,12 +162,7 @@ public class SupportConfig {
   }
 
   public static String getKafkaTopic(Properties serverConfiguration) {
-    String topic = serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    if (topic == null) {
-      return "";
-    } else {
-      return topic;
-    }
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "");
   }
 
   public static String getKafkaBootstrapServers(KafkaServer server) {
