@@ -54,7 +54,7 @@ public class SupportedServerStartable {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
         metricsReporter = new MetricsReporter(server, props, serverRuntime);
-        metricsThread = Utils.daemonThread("BrokerMetricsReporter", metricsReporter);
+        metricsThread = Utils.daemonThread("ConfluentProactiveSupportBrokerMetricsReporter", metricsReporter);
       } catch (Exception e) {
         // We catch any exceptions to prevent collateral damage to the more important broker
         // threads that are running in the same JVM.
