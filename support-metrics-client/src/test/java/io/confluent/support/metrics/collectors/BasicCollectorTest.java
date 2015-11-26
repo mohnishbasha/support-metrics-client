@@ -36,7 +36,7 @@ public class BasicCollectorTest {
   public void testCollectMetrics() {
     TimeUtils time = new TimeUtils();
     Uuid uuid = new Uuid();
-    long now = time.nowInUnixTime();
+    long unixTimeAtTestStart = time.nowInUnixTime();
     Collector metricsCollector = new BasicCollector(time, uuid);
     GenericContainer metricsRecord = metricsCollector.collectMetrics();
 
@@ -46,7 +46,7 @@ public class BasicCollectorTest {
 
     // check each field
     SupportKafkaMetricsBasic mB = (SupportKafkaMetricsBasic)metricsRecord;
-    assertThat(mB.getTimestamp()).isBetween(now, time.nowInUnixTime());
+    assertThat(mB.getTimestamp()).isBetween(unixTimeAtTestStart, time.nowInUnixTime());
     assertThat(mB.getKafkaVersion()).isEqualTo(AppInfoParser.getVersion());
     assertThat(mB.getConfluentPlatformVersion()).isEqualTo(Version.getVersion());
     assertThat(mB.getCollectorState()).isEqualTo(metricsCollector.getRuntimeState().stateId());
