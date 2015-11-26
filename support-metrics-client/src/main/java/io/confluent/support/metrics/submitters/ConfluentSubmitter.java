@@ -134,11 +134,11 @@ public class ConfluentSubmitter implements Submitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
-    return submit(encodedMetricsRecord, new HttpPost(endpoint));
+    return send(encodedMetricsRecord, new HttpPost(endpoint));
   }
 
   // This method is `protected` instead of `private` to be visible for testing.
-  protected int submit(byte[] bytes, HttpPost httpPost) {
+  protected int send(byte[] bytes, HttpPost httpPost) {
     int statusCode = DEFAULT_STATUS_CODE;
     if (bytes != null && bytes.length > 0 && httpPost != null) {
 

@@ -148,7 +148,7 @@ public class ConfluentSubmitterTest {
     byte[] nullData = null;
 
     // When
-    c.submit(nullData, p);
+    c.send(nullData, p);
 
     // Then
     verifyZeroInteractions(p);
@@ -164,7 +164,7 @@ public class ConfluentSubmitterTest {
     byte[] emptyData = new byte[0];
 
     // When
-    c.submit(emptyData, p);
+    c.send(emptyData, p);
 
     // Then
     verifyZeroInteractions(p);
