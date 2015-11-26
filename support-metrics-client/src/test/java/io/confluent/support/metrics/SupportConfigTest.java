@@ -110,78 +110,60 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void testProactiveSupportConfigFromArgs() {
+  public void canParseProactiveSupportConfiguration() {
+    // Given
     String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
     Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
 
-    assertThat(serverProps.get("broker.id")).isEqualTo("1");
-    assertThat(serverProps.get("zookeeper.connect")).isEqualTo("localhost:2181");
-    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG)).isEqualTo("anonymous");
-    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG)).isEqualTo("http://example.com");
-    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG)).isEqualTo("https://example.com");
-    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG)).isEqualTo("__sample_topic");
-    assertThat(serverProps.get(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG)).isEqualTo("24");
-  }
-
-  @Test
-  public void testValidProactiveSupportConfig() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
-
+    // When/Then
     assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
     assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
     assertThat(SupportConfig.getKafkaTopic(serverProps)).isEqualTo("__sample_topic");
     assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://example.com");
     assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://example.com");
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+
   }
 
   @Test
   public void isProactiveSupportEnabledFull() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com");
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com");
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isTrue();
   }
 
   @Test
   public void isProactiveSupportEnabledTopicOnly() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isTrue();
   }
 
   @Test
   public void isProactiveSupportEnabledHTTPOnly() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com");
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isTrue();
   }
 
   @Test
   public void isProactiveSupportEnabledHTTPSOnly() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com");
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isTrue();
   }
 
   @Test
   public void isProactiveSupportDisabled() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    Properties serverProperties = new Properties();
 
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isFalse();
+    assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
 
 }
