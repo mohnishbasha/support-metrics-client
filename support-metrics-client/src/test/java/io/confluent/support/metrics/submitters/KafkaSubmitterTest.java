@@ -125,7 +125,7 @@ public class KafkaSubmitterTest {
     String anyTopic = "valueNotRelevant";
     KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
-    byte[] anyData = new byte[10];
+    byte[] anyData = "anyData".getBytes();
 
     // When
     k.submit(anyData, producer);
