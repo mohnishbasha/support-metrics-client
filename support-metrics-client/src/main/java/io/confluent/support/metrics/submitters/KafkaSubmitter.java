@@ -38,7 +38,8 @@ public class KafkaSubmitter implements Submitter {
   private static final Integer requiredNumAcks = 1;
   private static final int maxBlockMs = 10 * 1000;
   private final String topic;
-  private final ZkUtils zkUtils;
+  private KafkaServer server;
+
   /**
    * Ideal number of boostrap servers for the kafka producer.
    */
@@ -47,16 +48,15 @@ public class KafkaSubmitter implements Submitter {
   /**
    */
   /**
-   * @param zkUtils          A handle to zookeeper utilities
    * @param topic            The Kafka topic to which data is being sent.
    */
-  public KafkaSubmitter(ZkUtils zkUtils, String topic) {
-
-    if (zkUtils == null) {
-      throw new IllegalArgumentException("must specify ZkUtils");
+  public KafkaSubmitter(KafkaServer server, String topic) {
+    if (server == null) {
+      throw new IllegalArgumentException("must specify server");
     } else {
-      this.zkUtils = zkUtils;
+      this.server = server;
     }
+
     if (topic == null || topic.isEmpty()) {
       throw new IllegalArgumentException("must specify topic");
     } else {
@@ -106,7 +106,7 @@ public class KafkaSubmitter implements Submitter {
 
   private Producer<byte[], byte[]> createProducer() {
     Properties props = new Properties();
-    String[] bootstrapServers = new KafkaUtilities().getBootstrapServer(zkUtils, BOOTSTRAP_SERVERS);
+    String[] bootstrapServers = new KafkaUtilities().getBootstrapServer(server.zkUtils(), BOOTSTRAP_SERVERS);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, StringUtils.join(bootstrapServers, ","));
     props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);

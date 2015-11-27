@@ -114,7 +114,7 @@ public class MetricsReporter implements Runnable {
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
 
     if (!supportTopic.isEmpty()) {
-      kafkaSubmitter = new KafkaSubmitter(server.zkUtils(), supportTopic);
+      kafkaSubmitter = new KafkaSubmitter(server, supportTopic);
     } else {
       kafkaSubmitter = null;
     }
