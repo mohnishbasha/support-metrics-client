@@ -15,7 +15,11 @@ package io.confluent.support.metrics.submitters;
 
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+
+import kafka.utils.ZkUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -24,47 +28,40 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+
 public class KafkaSubmitterTest {
 
+  private static ZkUtils mockZkUtils;
+
+  @BeforeClass
+  public static void startCluster() {
+    mockZkUtils = mock(ZkUtils.class);
+  }
+
   @Test
-  public void testInvalidArgumentsForConstructorNullBootstrapServers() {
+  public void testInvalidArgumentsForConstructorNullZkUtils() {
     // Given
-    String nullBootstrapServers = null;
+    ZkUtils nullZkUtils = null;
     String anyTopic = "valueNotRelevant";
 
     // When/Then
     try {
-      new KafkaSubmitter(nullBootstrapServers, anyTopic);
-      fail("IllegalArgumentException expected because topic is null");
+      new KafkaSubmitter(nullZkUtils, anyTopic);
+      fail("IllegalArgumentException expected because zkUtils is null");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify bootstrap servers");
+      assertThat(e).hasMessage("must specify ZkUtils");
     }
   }
 
-  @Test
-  public void testInvalidArgumentsForConstructorEmptyBootstrapServers() {
-    // Given
-    String emptyBootstrapServers = "";
-    String anyTopic = "valueNotRelevant";
-
-    // When/Then
-    try {
-      new KafkaSubmitter(emptyBootstrapServers, anyTopic);
-      fail("IllegalArgumentException expected because topic is null");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify bootstrap servers");
-    }
-  }
 
   @Test
   public void testInvalidArgumentsForConstructorNullTopic() {
     // Given
-    String anyBootstrapServers = "valueNotRelevant";
     String nullTopic = null;
 
     // When/Then
     try {
-      new KafkaSubmitter(anyBootstrapServers, nullTopic);
+      new KafkaSubmitter(mockZkUtils, nullTopic);
       fail("IllegalArgumentException expected because topic is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify topic");
@@ -74,12 +71,11 @@ public class KafkaSubmitterTest {
   @Test
   public void testInvalidArgumentsForConstructorEmptyTopic() {
     // Given
-    String anyBootstrapServers = "valueNotRelevant";
     String emptyTopic = "";
 
     // When/Then
     try {
-      new KafkaSubmitter(anyBootstrapServers, emptyTopic);
+      new KafkaSubmitter(mockZkUtils, emptyTopic);
       fail("IllegalArgumentException expected because topic is the empty string");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify topic");
@@ -89,9 +85,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmitIgnoresNullInput() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockZkUtils, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] nullData = null;
 
@@ -105,9 +100,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmitIgnoresEmptyInput() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockZkUtils, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] emptyData = new byte[0];
 
@@ -121,9 +115,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmit() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockZkUtils, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] anyData = "anyData".getBytes();
 

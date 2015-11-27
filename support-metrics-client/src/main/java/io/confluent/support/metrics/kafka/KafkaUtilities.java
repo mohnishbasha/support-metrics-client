@@ -13,9 +13,11 @@
  */
 package io.confluent.support.metrics.kafka;
 
+import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -23,6 +25,11 @@ import java.util.Set;
 import kafka.admin.AdminOperationException;
 import kafka.admin.AdminUtils;
 import kafka.cluster.Broker;
+import kafka.cluster.BrokerEndPoint;
+import kafka.common.BrokerEndPointNotAvailableException;
+import kafka.cluster.EndPoint;
+import java.util.List;
+import scala.collection.Iterator;
 import kafka.common.TopicExistsException;
 import kafka.log.LogConfig;
 import kafka.server.BrokerShuttingDown;
@@ -39,21 +46,62 @@ public class KafkaUtilities {
   private static final Logger log = LoggerFactory.getLogger(KafkaUtilities.class);
 
   /**
-   * Creates a topic in Kafka, if it is not already there
+   * Gets a list of servers that are up in the cluster
    * @param zkUtils
-   * @param topic
-   * @param partitions
-   * @param replication
-   * @param retentionMs
+   * @param numServers Maximum number of bootstrap servers needed. Note that what is returned could be less.
+   * @return Number of bootstrap servers or null if none
+   * Note that only servers with PLAINTEXT ports are enabled
+   */
+  public String[] getBootstrapServer(ZkUtils zkUtils, int numServers) {
+    Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
+    if (brokerList == null || brokerList.size() == 0 || numServers <= 0) {
+      return null;
+    }
+    int actualServers = Math.min(numServers, brokerList.size());
+    List<String> bootstrapServers = new ArrayList<>();
+    Iterator<Broker> it = brokerList.iterator();
+    int i = 0;
+    while (it.hasNext() && i < actualServers) {
+      Broker broker = it.next();
+      // Note that we only support PLAINTEXT ports for this version
+      BrokerEndPoint brokerEndPoint = null;
+      try {
+        brokerEndPoint = broker.getBrokerEndPoint(SecurityProtocol.PLAINTEXT);
+      } catch (BrokerEndPointNotAvailableException e) {
+        // try next one
+        continue;
+      }
+      bootstrapServers.add(brokerEndPoint.connectionString());
+      i++;
+    }
+
+    if (bootstrapServers.size() == 0) {
+      return null;
+    } else {
+      return bootstrapServers.toArray(new String[bootstrapServers.size()]);
+    }
+  }
+
+  /**
+   * Creates a topic in Kafka, if it is not already there
+   *
+   * @param partitions  Desired number of partitions
+   * @param replication Desired number of replicas
+   * @param retentionMs Desired retention time in milliseconds
    * @return true if method succeeded in creating topic, false otherwise
    */
   public boolean createTopicIfMissing(ZkUtils zkUtils,
-                                   String topic,
-                                   int partitions,
-                                   int replication,
-                                   long retentionMs) {
+                                      String topic,
+                                      int partitions,
+                                      int replication,
+                                      long retentionMs) {
 
     boolean topicCreated = true;
+    if (zkUtils == null || topic == null || topic.isEmpty() || partitions <= 0 || replication <= 0 || retentionMs <= 0) {
+      log.error("Could not create topic. Invalid arguments.");
+      return false;
+    }
+
     if (AdminUtils.topicExists(zkUtils, topic)) {
       return verifySupportTopic(zkUtils, topic, partitions, replication);
     }
@@ -88,29 +136,34 @@ public class KafkaUtilities {
 
   /**
    * Verifies that the Kafka topic exists and is healthy.
-   * @param zkUtils
-   * @param supportTopic
-   * @param partitions
-   * @param replication
+   *
+   * @param topic       Topic to be validated
+   * @param partitions  Expected number of partitions
+   * @param replication Expected number of replicas
    * @return true if topic exists and is healthy, false otherwise
    */
   public boolean verifySupportTopic(ZkUtils zkUtils,
-                                     String supportTopic,
-                                     int partitions,
-                                     int replication) {
+                                    String topic,
+                                    int partitions,
+                                    int replication) {
     boolean topicExistsAndIsHealthy = true;
+    if (zkUtils == null || topic == null || topic.isEmpty() || partitions <= 0 || replication <= 0) {
+      log.error("Could not create topic. Invalid arguments.");
+      return false;
+    }
+
     Set<String> topics = new HashSet<>();
-    topics.add(supportTopic);
+    topics.add(topic);
     scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
         zkUtils.getPartitionAssignmentForTopics(JavaConversions.asScalaSet(topics).
-            toSeq()).get(supportTopic);
+            toSeq()).get(topic);
     if (!partitionAssignmentOption.isEmpty()) {
       scala.collection.Map partitionAssignment = partitionAssignmentOption.get();
       int actualNumPartitions = partitionAssignment.size();
       if (actualNumPartitions != partitions) {
         log.warn("The topic {} should have only {} partitions.  Having more " +
                 "partitions should not hurt but it is only needed under special circumstances.",
-            supportTopic, partitions);
+            topic, partitions);
       }
       int firstPartitionId = 0;
       scala.Option<Seq<Object>> replicasOfFirstPartitionOption =
@@ -122,14 +175,14 @@ public class KafkaUtilities {
                   "the desired replication factor of {}.  If you happen to add more brokers to this " +
                   "cluster, then it is important to increase the replication factor of the topic to " +
                   "eventually {} to ensure reliable and durable metrics collection.",
-              supportTopic, actualReplication, replication, replication);
+              topic, actualReplication, replication, replication);
         }
       } else {
-        log.error("No replicas known for partition 0 of support metrics topic {}", supportTopic);
+        log.error("No replicas known for partition 0 of support metrics topic {}", topic);
         topicExistsAndIsHealthy = false;
       }
     } else {
-      log.error("No partitions are assigned to support metrics topic {}", supportTopic);
+      log.error("No partitions are assigned to support metrics topic {}", topic);
       topicExistsAndIsHealthy = false;
     }
 

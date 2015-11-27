@@ -112,8 +112,9 @@ public class MetricsReporter implements Runnable {
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
+
     if (!supportTopic.isEmpty()) {
-      kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
+      kafkaSubmitter = new KafkaSubmitter(server.zkUtils(), supportTopic);
     } else {
       kafkaSubmitter = null;
     }
@@ -208,7 +209,8 @@ public class MetricsReporter implements Runnable {
     return terminateEarly;
   }
 
-  private void submitMetrics() {
+  // this is a protected method to enable testing
+  protected void submitMetrics() {
     byte[] encodedMetricsRecord = null;
     GenericContainer metricsRecord = metricsCollector.collectMetrics();
     try {

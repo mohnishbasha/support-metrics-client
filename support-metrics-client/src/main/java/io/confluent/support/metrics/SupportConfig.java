@@ -153,12 +153,6 @@ public class SupportConfig {
     return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "");
   }
 
-  public static String getKafkaBootstrapServers(KafkaServer server) {
-    String hostname = server.config().advertisedHostName();
-    Integer port = server.config().advertisedPort();
-    return hostname + ":" + port.toString();
-  }
-
   public static String getEndpointHTTP(Properties serverConfiguration) {
     return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
   }

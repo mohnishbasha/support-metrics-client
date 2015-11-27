@@ -16,6 +16,7 @@ package io.confluent.support.metrics.utils;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
+import io.confluent.support.metrics.common.KafkaServerUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,10 +33,11 @@ public class WebClientTest {
   private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
   private static Properties serverProps;
   private static String secureLiveTestEndpoint;
+  private static KafkaServerUtils kafkaServerUtils = new KafkaServerUtils();
 
   @BeforeClass
   public static void startPrep() {
-    serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
+    serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
     secureLiveTestEndpoint = serverProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
   }
 

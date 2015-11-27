@@ -21,51 +21,54 @@ import java.util.Properties;
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 
 public class KafkaMetricsToFile {
   private final ConsumerConnector consumer;
-  private static String topic;
-  private static String zookeeper;
-  private static String outputPath;
-  private final Integer timeoutMs = new Integer(15000);
+  private static final int timeoutMs = 15000;
 
 
-  public KafkaMetricsToFile(String groupId) {
+  public KafkaMetricsToFile(String zookeeper) {
     Properties props = new Properties();
     props.put("zookeeper.connect", zookeeper);
-    props.put("group.id", groupId);
+    props.put("group.id", "KafkaSupportGroup" + new Random().nextInt(100000));
     props.put("zookeeper.session.timeout.ms", "1000");
     props.put("zookeeper.sync.time.ms", "250");
     props.put("auto.commit.interval.ms", "1000");
-    props.put("consumer.timeout.ms", timeoutMs.toString());
+    props.put("consumer.timeout.ms", new Integer(timeoutMs).toString());
     props.put("auto.offset.reset", "smallest");
 
     consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
   }
 
+  public ConsumerConnector getConsumer() {
+    return consumer;
+  }
 
-  public void collectMetrics() throws IOException {
+  /**
+   * Collects the metrics and puts them in a compressed file
+   * @param topic Topic of interest, cannot be null or empty
+   * @return Number of metric records collected
+   * @throws IOException
+   */
+  public int collectMetrics(String topic, String outputPath){
     int numMessages = 0;
     Map<String, Integer> topicCount = new HashMap<>();
     FileOutputStream out;
-    FileOutputStream fOut = null;
-    BufferedOutputStream bOut = null;
-    ZipArchiveOutputStream zOut = null;
 
-    try {
-      fOut = new FileOutputStream(new File(outputPath));
-      bOut = new BufferedOutputStream(fOut);
-      zOut = new ZipArchiveOutputStream(bOut);
-    } catch (java.io.FileNotFoundException e) {
-      System.err.println("File not found: " + e.toString());
-      return;
+    if (topic == null || topic.isEmpty() || outputPath == null || outputPath.isEmpty()) {
+      System.err.println("Invalid parameters");
+      return 0;
     }
 
-    topicCount.put(topic, 1);
-    Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
-    List<KafkaStream<byte[], byte[]>> streams = consumerStreams.get(topic);
-    for (final KafkaStream stream : streams) {
-      try {
+    try (FileOutputStream fOut = new FileOutputStream(new File(outputPath));
+         BufferedOutputStream bOut = new BufferedOutputStream(fOut);
+         ZipArchiveOutputStream zOut = new ZipArchiveOutputStream(bOut)) {
+
+      topicCount.put(topic, 1);
+      Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
+      List<KafkaStream<byte[], byte[]>> streams = consumerStreams.get(topic);
+      for (final KafkaStream stream : streams) {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
         while (it.hasNext()) {
           // keep the data dump in a temporary file initially
@@ -85,20 +88,20 @@ public class KafkaMetricsToFile {
           System.out.println("Collecting metric batch #" + numMessages);
           numMessages++;
         }
-      } catch (ConsumerTimeoutException e) {
-        System.err.println("Collection completed in " + timeoutMs + " ms");
-        break;
       }
+    } catch (FileNotFoundException e) {
+      System.err.println("File not found: " + e.toString());
+      return 0;
+    } catch (IOException e) {
+      System.err.println("IOException: " + e.toString());
+      return 0;
+    } catch (ConsumerTimeoutException e) {
+      System.err.println("Collection completed in " + timeoutMs + " ms");
+    }
 
-    }
-    zOut.finish();
-    zOut.close();
-    bOut.close();
-    fOut.close();
-    System.out.println("File created is " + outputPath);
-    if (consumer != null) {
-      consumer.shutdown();
-    }
+    System.out.println("File name with " + numMessages + " records is " + outputPath);
+
+    return numMessages;
   }
 
   public static void main(String[] args) {
@@ -106,14 +109,16 @@ public class KafkaMetricsToFile {
       System.err.println("Usage: zookeeperServer topic outputFile");
       return;
     }
-    zookeeper = args[0];
-    topic = args[1];
-    outputPath = args[2];
+    System.out.print("Collecting metrics. This might take up to " + timeoutMs/1000 + " seconds.");
+    String zookeeper = args[0];
+    String topic = args[1];
+    String outputPath = args[2];
 
 
-    KafkaMetricsToFile consumer = new KafkaMetricsToFile("KafkaSupportGroup" + new Random().nextInt(100000));
+    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zookeeper);
     try {
-      consumer.collectMetrics();
+      kafkaMetricsToFile.collectMetrics(topic, outputPath);
+      kafkaMetricsToFile.getConsumer().shutdown();
     } catch (Exception e) {
       System.err.println("Exception in collectMetrics: " + e.getMessage());
     }

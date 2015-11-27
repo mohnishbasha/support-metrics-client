@@ -19,9 +19,8 @@ import org.junit.Test;
 
 import java.util.Properties;
 
-import io.confluent.support.metrics.utils.KafkaServerUtils;
+import io.confluent.support.metrics.common.KafkaServerUtils;
 import io.confluent.support.metrics.utils.CustomerIdExamples;
-import kafka.Kafka;
 import kafka.server.KafkaConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +29,7 @@ import static org.junit.Assert.assertThat;
 
 public class SupportConfigTest {
 
+  private static KafkaServerUtils kafkaServerUtils = new KafkaServerUtils();
 
   @Test
   public void testValidCustomer() {
@@ -86,19 +86,17 @@ public class SupportConfigTest {
 
   @Test
   public void proactiveSupportConfigIsValidKafkaConfig() {
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    Properties serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
     KafkaConfig cfg = KafkaConfig.fromProps(serverProps);
 
     assertThat(cfg.brokerId()).isEqualTo(1);
-    assertThat(cfg.zkConnect()).isEqualTo("localhost:2181");
+    assertThat(cfg.zkConnect()).startsWith("localhost:");
   }
 
   @Test
   public void canParseProactiveSupportConfiguration() {
     // Given
-    String filePath = KafkaServerUtils.pathToDefaultBrokerConfiguration();
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{filePath});
+    Properties serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
 
     // When/Then
     assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
