@@ -46,6 +46,20 @@ public class KafkaUtilities {
   private static final Logger log = LoggerFactory.getLogger(KafkaUtilities.class);
 
   /**
+   * When we verify if a topic is created, this enum keeps track
+   * of whether the desired #replicas and #partitions match exactly what we asked for,
+   * or are less than what we asked for, or have an unacceptable value (i.e., 0).
+   */
+  public enum VerifyTopicState {
+
+    Exactly(0), Less(1), Greater(2), Inadequate(3);
+    private final int stateId;
+    VerifyTopicState(int stateId) {
+      this.stateId = stateId;
+    }
+  }
+
+  /**
    * Gets a list of servers that are up in the cluster
    * @param zkUtils
    * @param numServers Maximum number of bootstrap servers needed. Note that what is returned could be less.
@@ -88,7 +102,7 @@ public class KafkaUtilities {
    * @param partitions  Desired number of partitions
    * @param replication Desired number of replicas
    * @param retentionMs Desired retention time in milliseconds
-   * @return true if method succeeded in creating topic, false otherwise
+   * @return True if topic was created, false otherwise
    */
   public boolean createTopicIfMissing(ZkUtils zkUtils,
                                       String topic,
@@ -102,22 +116,22 @@ public class KafkaUtilities {
       return false;
     }
 
-    if (AdminUtils.topicExists(zkUtils, topic)) {
-      return verifySupportTopic(zkUtils, topic, partitions, replication);
-    }
-
-    Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
-    int actualReplication = Math.min(replication, brokerList.size());
-    if (actualReplication < replication) {
-      log.warn("The replication factor of topic {} will be set to {}, which is less than the " +
-              "desired replication factor of {} (reason: this cluster contains only {} brokers).  " +
-              "If you happen to add more brokers to this cluster, then it is important to increase " +
-              "the replication factor of the topic to eventually {} to ensure reliable and  durable " +
-              "metrics collection.",
-          topic, actualReplication, replication, brokerList.size(),
-          replication);
-    }
     try {
+      if (AdminUtils.topicExists(zkUtils, topic)) {
+        return (verifySupportTopic(zkUtils, topic, partitions, replication) != VerifyTopicState.Inadequate);
+      }
+      Seq<Broker> brokerList = zkUtils.getAllBrokersInCluster();
+      int actualReplication = Math.min(replication, brokerList.size());
+      if (actualReplication < replication) {
+        log.warn("The replication factor of topic {} will be set to {}, which is less than the " +
+                "desired replication factor of {} (reason: this cluster contains only {} brokers).  " +
+                "If you happen to add more brokers to this cluster, then it is important to increase " +
+                "the replication factor of the topic to eventually {} to ensure reliable and  durable " +
+                "metrics collection.",
+            topic, actualReplication, replication, brokerList.size(),
+            replication);
+      }
+
       Properties metricsTopicProps = new Properties();
       metricsTopicProps.put(LogConfig.RetentionMsProp(), String.valueOf(retentionMs));
       log.info("Attempting to create topic {} with {} replicas, assuming {} total brokers",
@@ -129,6 +143,10 @@ public class KafkaUtilities {
     } catch (AdminOperationException e) {
       topicCreated = false;
       log.error("Could not create topic {}: {}", topic, e.getMessage());
+    } catch (Exception e) {
+      // there are several other Zookeeper exceptions possible deep in Zookeeper
+      topicCreated = false;
+      log.error("Zookeeper is unavailable. Could not create topic {}: {}", topic, e.getMessage());
     }
 
     return topicCreated;
@@ -140,53 +158,61 @@ public class KafkaUtilities {
    * @param topic       Topic to be validated
    * @param partitions  Expected number of partitions
    * @param replication Expected number of replicas
-   * @return true if topic exists and is healthy, false otherwise
+   * @return an enum describing the topic state
    */
-  public boolean verifySupportTopic(ZkUtils zkUtils,
-                                    String topic,
-                                    int partitions,
-                                    int replication) {
-    boolean topicExistsAndIsHealthy = true;
+  public VerifyTopicState verifySupportTopic(ZkUtils zkUtils,
+                                             String topic,
+                                             int partitions,
+                                             int replication) {
+    VerifyTopicState verifyTopicState = VerifyTopicState.Exactly;
     if (zkUtils == null || topic == null || topic.isEmpty() || partitions <= 0 || replication <= 0) {
-      log.error("Could not create topic. Invalid arguments.");
-      return false;
+      log.error("Could not verify topic. Invalid arguments.");
+      return VerifyTopicState.Inadequate;
     }
 
-    Set<String> topics = new HashSet<>();
-    topics.add(topic);
-    scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
-        zkUtils.getPartitionAssignmentForTopics(JavaConversions.asScalaSet(topics).
-            toSeq()).get(topic);
-    if (!partitionAssignmentOption.isEmpty()) {
-      scala.collection.Map partitionAssignment = partitionAssignmentOption.get();
-      int actualNumPartitions = partitionAssignment.size();
-      if (actualNumPartitions != partitions) {
-        log.warn("The topic {} should have only {} partitions.  Having more " +
-                "partitions should not hurt but it is only needed under special circumstances.",
-            topic, partitions);
-      }
-      int firstPartitionId = 0;
-      scala.Option<Seq<Object>> replicasOfFirstPartitionOption =
-          partitionAssignment.get(firstPartitionId);
-      if (!replicasOfFirstPartitionOption.isEmpty()) {
-        int actualReplication = replicasOfFirstPartitionOption.get().size();
-        if (actualReplication < replication) {
-          log.warn("The replication factor of topic {} is {}, which is less than " +
-                  "the desired replication factor of {}.  If you happen to add more brokers to this " +
-                  "cluster, then it is important to increase the replication factor of the topic to " +
-                  "eventually {} to ensure reliable and durable metrics collection.",
-              topic, actualReplication, replication, replication);
+    try {
+      Set<String> topics = new HashSet<>();
+      topics.add(topic);
+      scala.Option<scala.collection.Map<Object, Seq<Object>>> partitionAssignmentOption =
+          zkUtils.getPartitionAssignmentForTopics(JavaConversions.asScalaSet(topics).
+              toSeq()).get(topic);
+      if (!partitionAssignmentOption.isEmpty()) {
+        scala.collection.Map partitionAssignment = partitionAssignmentOption.get();
+        int actualNumPartitions = partitionAssignment.size();
+        if (actualNumPartitions != partitions) {
+          log.warn("The topic {} should have only {} partitions.  Having more " +
+                  "partitions should not hurt but it is only needed under special circumstances.",
+              topic, partitions);
+          verifyTopicState = VerifyTopicState.Less;
+        }
+        int firstPartitionId = 0;
+        scala.Option<Seq<Object>> replicasOfFirstPartitionOption =
+            partitionAssignment.get(firstPartitionId);
+        if (!replicasOfFirstPartitionOption.isEmpty()) {
+          int actualReplication = replicasOfFirstPartitionOption.get().size();
+          if (actualReplication < replication) {
+            log.warn("The replication factor of topic {} is {}, which is less than " +
+                    "the desired replication factor of {}.  If you happen to add more brokers to this " +
+                    "cluster, then it is important to increase the replication factor of the topic to " +
+                    "eventually {} to ensure reliable and durable metrics collection.",
+                topic, actualReplication, replication, replication);
+            verifyTopicState = VerifyTopicState.Less;
+          }
+        } else {
+          log.error("No replicas known for partition 0 of support metrics topic {}", topic);
+          verifyTopicState = VerifyTopicState.Inadequate;
         }
       } else {
-        log.error("No replicas known for partition 0 of support metrics topic {}", topic);
-        topicExistsAndIsHealthy = false;
+        log.error("No partitions are assigned to support metrics topic {}", topic);
+        verifyTopicState = VerifyTopicState.Inadequate;
       }
-    } else {
-      log.error("No partitions are assigned to support metrics topic {}", topic);
-      topicExistsAndIsHealthy = false;
+    } catch (Exception e) {
+      // there are several Zookeeper exceptions possible deep in Zookeeper
+      log.error("Zookeeper is unavailable. Could not verify topic {}", topic);
+      verifyTopicState = VerifyTopicState.Inadequate;
     }
 
-    return topicExistsAndIsHealthy;
+    return verifyTopicState;
   }
 
   public boolean isReadyForMetricsCollection(KafkaServer server) {
