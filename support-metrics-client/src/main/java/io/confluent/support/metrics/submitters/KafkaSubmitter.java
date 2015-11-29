@@ -20,7 +20,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import io.confluent.support.metrics.kafka.KafkaUtilities;
+import io.confluent.support.metrics.common.KafkaUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

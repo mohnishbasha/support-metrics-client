@@ -24,7 +24,7 @@ import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.time.TimeUtils;
-import io.confluent.support.metrics.kafka.KafkaUtilities;
+import io.confluent.support.metrics.common.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
@@ -53,7 +53,7 @@ public class MetricsReporter implements Runnable {
    * Default replication factor of the support metrics topic. Used when creating the topic in case
    * it doesn't exist yet.
    */
-  private static final int SUPPORT_TOPIC_REPLICATION = 3;
+  public static final int SUPPORT_TOPIC_REPLICATION = 3;
 
   /**
    * Default number of partitions of the support metrics topic. Used when creating the topic in case

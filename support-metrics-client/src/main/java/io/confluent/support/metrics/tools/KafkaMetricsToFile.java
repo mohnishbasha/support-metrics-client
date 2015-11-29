@@ -46,6 +46,18 @@ public class KafkaMetricsToFile {
   }
 
   /**
+   * Returns the collected messages to a stream
+   * @param topic Desired topic
+   * @return
+   */
+  public final List<KafkaStream<byte[], byte[]>> getStreams(String topic) {
+    Map<String, Integer> topicCount = new HashMap<>();
+    topicCount.put(topic, 1);
+    Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
+    return consumerStreams.get(topic);
+  }
+
+  /**
    * Collects the metrics and puts them in a compressed file
    * @param topic Topic of interest, cannot be null or empty
    * @return Number of metric records collected
