@@ -16,10 +16,12 @@ package io.confluent.support.metrics;
 import com.google.common.collect.ObjectArrays;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Properties;
 
-import io.confluent.support.metrics.common.KafkaServerUtils;
 import io.confluent.support.metrics.utils.CustomerIdExamples;
 import kafka.server.KafkaConfig;
 
@@ -28,8 +30,18 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class SupportConfigTest {
+  private static final Logger log = LoggerFactory.getLogger(SupportConfigTest.class);
+  private static Properties supportProperties = null;
 
-  private static KafkaServerUtils kafkaServerUtils = new KafkaServerUtils();
+  static {
+    try {
+      Properties props = new Properties();
+      props.load(MetricsToKafkaTest.class.getResourceAsStream("/default-server.properties"));
+      supportProperties = props;
+    } catch (IOException e) {
+      log.warn("Error while loading default properties:", e.getMessage());
+    }
+  }
 
   @Test
   public void testValidCustomer() {
@@ -86,25 +98,21 @@ public class SupportConfigTest {
 
   @Test
   public void proactiveSupportConfigIsValidKafkaConfig() {
-    Properties serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
-    KafkaConfig cfg = KafkaConfig.fromProps(serverProps);
+    KafkaConfig cfg = KafkaConfig.fromProps(supportProperties);
 
-    assertThat(cfg.brokerId()).isEqualTo(1);
+    assertThat(cfg.brokerId()).isEqualTo(0);
     assertThat(cfg.zkConnect()).startsWith("localhost:");
   }
 
   @Test
   public void canParseProactiveSupportConfiguration() {
-    // Given
-    Properties serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
-
     // When/Then
-    assertThat(SupportConfig.getCustomerId(serverProps)).isEqualTo("anonymous");
-    assertThat(SupportConfig.getReportIntervalMs(serverProps)).isEqualTo(24 * 60 * 60 * 1000);
-    assertThat(SupportConfig.getKafkaTopic(serverProps)).isEqualTo("__sample_topic");
-    assertThat(SupportConfig.getEndpointHTTP(serverProps)).isEqualTo("http://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.getEndpointHTTPS(serverProps)).isEqualTo("https://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.isProactiveSupportEnabled(serverProps)).isTrue();
+    assertThat(SupportConfig.getCustomerId(supportProperties)).isEqualTo("anonymous");
+    assertThat(SupportConfig.getReportIntervalMs(supportProperties)).isEqualTo(24 * 60 * 60 * 1000);
+    assertThat(SupportConfig.getKafkaTopic(supportProperties)).isEqualTo("__sample_topic");
+    assertThat(SupportConfig.getEndpointHTTP(supportProperties)).isEqualTo("http://support-metrics.confluent.io/test");
+    assertThat(SupportConfig.getEndpointHTTPS(supportProperties)).isEqualTo("https://support-metrics.confluent.io/test");
+    assertThat(SupportConfig.isProactiveSupportEnabled(supportProperties)).isTrue();
 
   }
 

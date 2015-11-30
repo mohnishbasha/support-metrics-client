@@ -1,15 +1,16 @@
 package io.confluent.support.metrics;
 
-
-
 import org.apache.kafka.common.utils.AppInfoParser;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
-import io.confluent.support.metrics.common.Collector;
-import io.confluent.support.metrics.common.KafkaServerUtils;
+
+import io.confluent.support.metrics.common.kafka.EmbeddedKafkaCluster;
 import io.confluent.support.metrics.common.Version;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.serde.AvroDeserializer;
@@ -20,6 +21,7 @@ import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
 import io.confluent.support.metrics.tools.KafkaMetricsToFile;
 import kafka.utils.CoreUtils;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -27,12 +29,23 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration test. Verifies that metrics collected are successfully submitted to a Kafka topic
  */
 public class MetricsToKafkaTest {
-  private static KafkaServer server = null;
-  private static KafkaServerUtils kafkaServerUtils = new KafkaServerUtils();
+  private static final Logger log = LoggerFactory.getLogger(MetricsToKafkaTest.class);
   private final Runtime serverRuntime = Runtime.getRuntime();
+  private static Properties supportProperties = null;
+
+  static {
+    try {
+      Properties props = new Properties();
+      props.load(MetricsToKafkaTest.class.getResourceAsStream("/default-server.properties"));
+      supportProperties = props;
+    } catch (IOException e) {
+      log.warn("Error while loading default properties:", e.getMessage());
+    }
+  }
 
   /**
    * Helper function that verifies most basic metrics
+   *
    * @param basicRecord Record to be verified
    */
   public static void verifyBasicMetrics(SupportKafkaMetricsBasic basicRecord) {
@@ -45,53 +58,53 @@ public class MetricsToKafkaTest {
 
 
   /**
-   * Collects metrics to a Kafka topic and verifies that as many metrics are received as sent
-   * Only one broker is available, thus the support topic is not replicated
+   * Collects metrics to a Kafka topic and verifies that as many metrics are received as sent Only
+   * one broker is used
    */
   @Test
   public void testReceiveMetricsNumCollected() {
-    server = kafkaServerUtils.startServer();
-    Properties serverProperties = kafkaServerUtils.getDefaultBrokerConfiguration();
-    // update it with actual zookeeper values
-    serverProperties.remove(KafkaConfig$.MODULE$.ZkConnectProp());
-    String zkConnect = kafkaServerUtils.getZookeeperConnection();
-    serverProperties.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zkConnect);
-    String topic = serverProperties.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
+    int numBrokers = 1;
+    cluster.startCluster(numBrokers);
+    KafkaServer broker = cluster.getBroker(0);
+    Properties brokerSupportProps = (Properties) supportProperties.clone();
+    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), new Integer(broker.config().brokerId()).toString());
+    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), cluster.zookeeperConnectString());
+    String topic = brokerSupportProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     // disable sending to confluent to focus on just sending to a Kafka topic
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    brokerSupportProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    brokerSupportProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
     String outputFile = "testFile.zip";
     int numMetricSubmissions = 10;
+    int runTimeMs = 10 * 1000;
 
     // Collect metrics to the topic
-    MetricsReporter reporter = new MetricsReporter(server, serverProperties, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(broker, brokerSupportProps, serverRuntime);
     for (int i = 0; i < numMetricSubmissions; i++) {
       reporter.submitMetrics();
     }
 
     // verify that metrics are there
-    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zkConnect);
+    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(cluster.zookeeperConnectString(), runTimeMs);
     assertThat(kafkaMetricsToFile.collectMetrics(topic, outputFile)).isEqualTo(numMetricSubmissions);
 
     // cleanup
     kafkaMetricsToFile.getConsumer().shutdown();
     CoreUtils.rm(outputFile);
-    // stop the cluster so that the topics are deleted and other tests are not impacted
-    kafkaServerUtils.stopServer();
+
+    // Cleanup
+    cluster.stopCluster();
   }
 
   /**
    * Helper function that consumes messages from a topic with a timeout
-   * @param zkConnect
-   * @param topic
-   * @param numMetricSubmissions
-   * @throws IOException
    */
   private static void verifyConsume(String zkConnect, String topic, int numMetricSubmissions) throws IOException {
     AvroDeserializer decoder = new AvroDeserializer();
     int numBasicRecords = 0;
+    int runTimeMs = 10 * 1000;
     // verify that metrics are there and deserialize them
-    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zkConnect);
+    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zkConnect, runTimeMs);
     final List<KafkaStream<byte[], byte[]>> streams = kafkaMetricsToFile.getStreams(topic);
 
     try {
@@ -115,143 +128,36 @@ public class MetricsToKafkaTest {
   }
 
   /**
-   * Collects metrics to a Kafka topic and verifies the topic structure received matches what was sent.
-   * Several brokers are available and the support topic is fully replicated
-   * @throws IOException
+   * Collects metrics to a Kafka topic and verifies the topic structure received matches what was
+   * sent. Several brokers are available and the support topic is fully replicated
    */
   @Test
   public void testReceiveBasicMetricsEndtoEnd() throws IOException {
-    // start three brokers so that support topic is fully replicated
-    KafkaServer[] servers = new KafkaServer[MetricsReporter.SUPPORT_TOPIC_REPLICATION];
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      servers[i] = kafkaServerUtils.startServer(i);
-    }
-    AvroDeserializer decoder = new AvroDeserializer();
-    Properties serverProperties = kafkaServerUtils.getDefaultBrokerConfiguration();
-    // update it with actual zookeeper values
-    serverProperties.remove(KafkaConfig$.MODULE$.ZkConnectProp());
-    String zkConnect = kafkaServerUtils.getZookeeperConnection();
-    serverProperties.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zkConnect);
-    // update record to collect basic metrics
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
-    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "anonymous");
-    String topic = serverProperties.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    int numMetricSubmissions = 10;
+    EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
+    int numBrokers = 3;
+    cluster.startCluster(numBrokers);
+    KafkaServer broker = cluster.getBroker(0);
+    Properties brokerSupportProps = (Properties) supportProperties.clone();
+    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), new Integer(broker.config().brokerId()).toString());
+    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), cluster.zookeeperConnectString());
+    String topic = brokerSupportProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     // disable sending to confluent to focus on just sending to a Kafka topic
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-
+    brokerSupportProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    brokerSupportProps.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+    int numMetricSubmissions = 10;
 
     // Collect metrics to the topic from one broker server
-    MetricsReporter reporter = new MetricsReporter(servers[0], serverProperties, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(broker, brokerSupportProps, serverRuntime);
     for (int i = 0; i < numMetricSubmissions; i++) {
       reporter.submitMetrics();
     }
 
-    verifyConsume(zkConnect, topic, numMetricSubmissions);
+    verifyConsume(cluster.zookeeperConnectString(), topic, numMetricSubmissions);
 
-    // stop the cluster so that the topics are deleted and other tests are not impacted
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      kafkaServerUtils.stopServer(i);
-    }
-  }
-
-
-
-  /**
-   * Collects metrics to a Kafka topic and verifies the topic structure received matches what was sent.
-   * Several brokers are available and the support topic is fully replicated, but N-1 brokers fail after
-   * data is produced
-   * @throws IOException
-   */
-  @Test
-  public void testReceiveBasicMetricsEndtoEndBrokerFailureAfterProduction() throws IOException {
-    // start three brokers so that support topic is fully replicated
-    KafkaServer[] servers = new KafkaServer[MetricsReporter.SUPPORT_TOPIC_REPLICATION];
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      servers[i] = kafkaServerUtils.startServer(i);
-    }
-    Properties serverProperties = kafkaServerUtils.getDefaultBrokerConfiguration();
-    // update it with actual zookeeper values
-    serverProperties.remove(KafkaConfig$.MODULE$.ZkConnectProp());
-    String zkConnect = kafkaServerUtils.getZookeeperConnection();
-    serverProperties.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zkConnect);
-    // update record to collect basic metrics
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
-    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "anonymous");
-    String topic = serverProperties.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    int numMetricSubmissions = 10;
-    // disable sending to confluent to focus on just sending to a Kafka topic
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-
-
-    // Collect metrics to the topic from one broker server
-    MetricsReporter reporter = new MetricsReporter(servers[0], serverProperties, serverRuntime);
-    for (int i = 0; i < numMetricSubmissions; i++) {
-      reporter.submitMetrics();
-    }
-
-    //
-    // brokers fail
-    //
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION - 1; i++) {
-      kafkaServerUtils.stopServer(i);
-    }
-
-    verifyConsume(zkConnect, topic, numMetricSubmissions);
-
-    // stop the cluster so that the topics are deleted and other tests are not impacted
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      kafkaServerUtils.stopServer(i);
-    }
-  }
-
-  /**
-   * Collects metrics to a Kafka topic and verifies the topic structure received matches what was sent.
-   * Several brokers are available and the support topic is fully replicated, but N-1 brokers fail before
-   * data is produced
-   * @throws IOException
-   */
-  @Test
-  public void testReceiveBasicMetricsEndtoEndBrokerFailureBeforeProduction() throws IOException {
-    // start three brokers so that support topic is fully replicated
-    KafkaServer[] servers = new KafkaServer[MetricsReporter.SUPPORT_TOPIC_REPLICATION];
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      servers[i] = kafkaServerUtils.startServer(i);
-    }
-    Properties serverProperties = kafkaServerUtils.getDefaultBrokerConfiguration();
-    // update it with actual zookeeper values
-    serverProperties.remove(KafkaConfig$.MODULE$.ZkConnectProp());
-    String zkConnect = kafkaServerUtils.getZookeeperConnection();
-    serverProperties.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zkConnect);
-    // update record to collect basic metrics
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG);
-    serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "anonymous");
-    String topic = serverProperties.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-    int numMetricSubmissions = 10;
-    // disable sending to confluent to focus on just sending to a Kafka topic
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    serverProperties.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-
-    //
-    // brokers fail
-    //
-    for (int i = 1; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      kafkaServerUtils.stopServer(i);
-    }
-
-    // Collect metrics to the topic from one broker server
-    MetricsReporter reporter = new MetricsReporter(servers[0], serverProperties, serverRuntime);
-    for (int i = 0; i < numMetricSubmissions; i++) {
-      reporter.submitMetrics();
-    }
-
-    verifyConsume(zkConnect, topic, numMetricSubmissions);
-
-    // stop the cluster so that the topics are deleted and other tests are not impacted
-    for (int i = 0; i < MetricsReporter.SUPPORT_TOPIC_REPLICATION; i++) {
-      kafkaServerUtils.stopServer(i);
-    }
+    // Cleanup
+    cluster.stopCluster();
   }
 }
+
+
+

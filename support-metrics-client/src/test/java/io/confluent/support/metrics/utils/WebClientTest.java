@@ -16,30 +16,20 @@ package io.confluent.support.metrics.utils;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
-import io.confluent.support.metrics.common.KafkaServerUtils;
-import org.junit.BeforeClass;
+
+
 import org.junit.Test;
 
-import java.util.Properties;
-
 import io.confluent.support.metrics.SupportConfig;
-import kafka.Kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class WebClientTest {
-  private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT;
-  private static Properties serverProps;
-  private static String secureLiveTestEndpoint;
-  private static KafkaServerUtils kafkaServerUtils = new KafkaServerUtils();
+  private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG;
+  private static String secureLiveTestEndpoint = "https://support-metrics.confluent.io/test";
 
-  @BeforeClass
-  public static void startPrep() {
-    serverProps = kafkaServerUtils.getDefaultBrokerConfiguration();
-    secureLiveTestEndpoint = serverProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
-  }
 
   @Test
   public void testSubmitIgnoresNullInput() {

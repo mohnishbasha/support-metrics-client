@@ -24,7 +24,7 @@ import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.time.TimeUtils;
-import io.confluent.support.metrics.common.KafkaUtilities;
+import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
