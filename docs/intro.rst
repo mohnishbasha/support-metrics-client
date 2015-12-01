@@ -3,7 +3,7 @@
 Proactive Support
 ================
 
-Proactive Support is a module that ships with the Confluent Platform. It collects information from a running cluster and periodically sends that information to Confluent. Confluent uses the data to diagnose customers problems and to build better products by identifying problems in the field early on. Proactive Support provides two levels of data collection: basic and enhanced. Basic data collection is performed for any customer of the platform. Enhanced data collection is performed for licenced customers.
+Proactive Support is a module that ships with the Confluent Platform. It collects information from a running cluster and periodically sends that information to Confluent. Confluent uses the data to diagnose customers problems and to build better products by identifying problems in the field early on. Proactive Support provides two levels of data collection: basic and enhanced. Basic data collection is performed for any customer of the platform. Enhanced data collection is performed for licensed customers.
 
 Basic anonymous data collection
 ----------
@@ -16,7 +16,7 @@ Each broker in the cluster collects the following metrics:
 
 * **Timestamp** - Time when this data record was created on the broker.
 * **Kafka version** - Apache Kafka version this broker is running.
-* **Confluent Platform version** - Confluent Platform version this broker is runing.
+* **Confluent Platform version** - Confluent Platform version this broker is running.
 * **Broker ID** - A unique identifier that is valid for the runtime of a broker.  The identifier is generated at broker startup and lost at shutdown.
 
 Configuration: enabling or disabling
@@ -84,7 +84,7 @@ disable metric collection, comment out the Kafka topic (line 22).
 
 Enhanced data collection
 ----------
-For licenced customers, Confluent collects additional metrics that help proactively identify issues in the field.
+For licensed customers, Confluent collects additional metrics that help proactively identify issues in the field.
 
 What metrics are collected?
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -111,12 +111,12 @@ The default broker configuration file that comes with the Confluent Platform ena
             
 Manually sending data to Confluent
 ----------
-If your organization does not allow direct HTTPS or HTTP communication with an external service, you can still send data to Confluent manually using a script provided with the Confluent Platform called KafkaMetricsToFile.java as shown below:
+If your organization does not allow direct HTTPS or HTTP communication with an external service, you can still send data to Confluent manually using a script provided with the Confluent Platform called "support-metrics-bundle" as shown below:
 
 .. sourcecode:: bash
     :linenos:
 
-            # e.g., usage java io.confluent.support.metrics.tools.KafkaMetricsToFile localhost:2181 __confluent.support.metrics file.zip
-            $ java io.confluent.support.metrics.tools.KafkaMetricsToFile <zookeeperServer> <topic> <outputFile>
+            # e.g., usage /usr/bin/support-metrics-bundle localhost:2181
+            $ /usr/bin/support-metrics-bundle <zookeeperServer>
 
 The script will collect any metrics sent to an internal Kafka topic and place them in a compressed file. You can then include this file as part of your support ticket.
