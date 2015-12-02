@@ -1,7 +1,6 @@
 package io.confluent.support.metrics;
 
 import org.apache.kafka.common.utils.AppInfoParser;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,16 +9,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
-import io.confluent.support.metrics.common.kafka.EmbeddedKafkaCluster;
 import io.confluent.support.metrics.common.Version;
+import io.confluent.support.metrics.common.kafka.EmbeddedKafkaCluster;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.serde.AvroDeserializer;
-import kafka.consumer.ConsumerIterator;
+import io.confluent.support.metrics.tools.KafkaMetricsToFile;
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.consumer.KafkaStream;
+import kafka.message.MessageAndMetadata;
 import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
-import io.confluent.support.metrics.tools.KafkaMetricsToFile;
 import kafka.utils.CoreUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,10 +108,9 @@ public class MetricsToKafkaTest {
 
     try {
       for (final KafkaStream<byte[], byte[]> stream : streams) {
-        ConsumerIterator<byte[], byte[]> it = stream.iterator();
-        while (it.hasNext()) {
-
-          SupportKafkaMetricsBasic[] container = decoder.deserialize(SupportKafkaMetricsBasic.class, it.next().message());
+        for (MessageAndMetadata<byte[], byte[]> messageAndMetadata : stream) {
+          SupportKafkaMetricsBasic[] container = decoder.deserialize(SupportKafkaMetricsBasic.class,
+              messageAndMetadata.message());
           assertThat(container.length).isEqualTo(1);
           verifyBasicMetrics(container[0]);
           numBasicRecords++;
