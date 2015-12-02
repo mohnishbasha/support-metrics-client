@@ -108,7 +108,7 @@ public class MetricsToKafkaTest {
     final List<KafkaStream<byte[], byte[]>> streams = kafkaMetricsToFile.getStreams(topic);
 
     try {
-      for (final KafkaStream stream : streams) {
+      for (final KafkaStream<byte[], byte[]> stream : streams) {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
         while (it.hasNext()) {
 
