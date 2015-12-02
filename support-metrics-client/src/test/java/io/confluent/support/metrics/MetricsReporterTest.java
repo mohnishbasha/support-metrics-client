@@ -18,10 +18,9 @@ import org.junit.Test;
 
 import java.util.Properties;
 
-import io.confluent.support.metrics.utils.KafkaServerUtils;
-import kafka.Kafka;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
+import kafka.utils.ZkUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -34,10 +33,12 @@ public class MetricsReporterTest {
 
   @BeforeClass
   public static void startCluster() {
+    ZkUtils mockZkUtils = mock(ZkUtils.class);
     KafkaConfig mockConfig = mock(KafkaConfig.class);
     when(mockConfig.advertisedHostName()).thenReturn("anyHostname");
     when(mockConfig.advertisedPort()).thenReturn(12345);
     mockServer = mock(KafkaServer.class);
+    when(mockServer.zkUtils()).thenReturn(mockZkUtils);
     when(mockServer.config()).thenReturn(mockConfig);
   }
 
@@ -82,21 +83,6 @@ public class MetricsReporterTest {
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
     }
-  }
-
-  @Test
-  public void testValidConstructorFromConfigFile() {
-    // Given
-    Properties serverProps = Kafka.getPropsFromArgs(new String[]{KafkaServerUtils.pathToDefaultBrokerConfiguration()});
-    Runtime serverRuntime = Runtime.getRuntime();
-
-    // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, serverProps, serverRuntime);
-
-    // Then
-    assertThat(reporter.reportingEnabled()).isTrue();
-    assertThat(reporter.sendToKafkaEnabled()).isTrue();
-    assertThat(reporter.sendToConfluentEnabled()).isTrue();
   }
 
   @Test

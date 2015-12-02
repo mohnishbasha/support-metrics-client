@@ -13,42 +13,50 @@
  */
 package io.confluent.support.metrics.submitters;
 
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.List;
+import kafka.server.KafkaServer;
+
 
 public class KafkaSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaSubmitter.class);
 
-  private static final Integer requiredNumAcks = 0;
-  private static final int retries = 0;
-  private static final int retryBackoffMs = 1 * 1000;
+  private static final Integer requiredNumAcks = 1;
   private static final int maxBlockMs = 10 * 1000;
-  private final String bootstrapServers;
   private final String topic;
+  private KafkaServer server;
+
+  /**
+   * Ideal number of boostrap servers for the kafka producer.
+   */
+  private static final int BOOTSTRAP_SERVERS = 3;
 
   /**
    */
   /**
-   * @param bootstrapServers The bootstrap brokers via which we connect to the Kafka cluster to
-   *                         which we submit data.  Example: "localhost:9092".
    * @param topic            The Kafka topic to which data is being sent.
    */
-  public KafkaSubmitter(String bootstrapServers, String topic) {
-    if (bootstrapServers == null || bootstrapServers.isEmpty()) {
-      throw new IllegalArgumentException("must specify bootstrap servers");
+  public KafkaSubmitter(KafkaServer server, String topic) {
+    if (server == null) {
+      throw new IllegalArgumentException("must specify server");
     } else {
-      this.bootstrapServers = bootstrapServers;
+      this.server = server;
     }
+
     if (topic == null || topic.isEmpty()) {
       throw new IllegalArgumentException("must specify topic");
     } else {
@@ -74,6 +82,7 @@ public class KafkaSubmitter implements Submitter {
     if (bytes != null && bytes.length > 0) {
       Future<RecordMetadata> response =
           producer.send(new ProducerRecord<byte[], byte[]>(topic, bytes));
+      producer.flush();
       producer.close();
       // Block until Kafka acknowledged the receipt of the message
       try {
@@ -97,10 +106,10 @@ public class KafkaSubmitter implements Submitter {
 
   private Producer<byte[], byte[]> createProducer() {
     Properties props = new Properties();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    props.put(ProducerConfig.RETRIES_CONFIG, retries);
+    List<String> bootstrapServerList = new KafkaUtilities().getBootstrapServers(server.zkUtils(), BOOTSTRAP_SERVERS);
+    String[] bootstrapServers = bootstrapServerList.toArray(new String[bootstrapServerList.size()]);
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, StringUtils.join(bootstrapServers, ","));
     props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
-    props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
         "org.apache.kafka.common.serialization.ByteArraySerializer");
