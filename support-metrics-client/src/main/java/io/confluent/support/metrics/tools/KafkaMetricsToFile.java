@@ -137,8 +137,9 @@ public class KafkaMetricsToFile {
     String zookeeper = args[0];
     String topic = args[1];
     String outputPath = args[2];
-    int runTimeMs = Integer.parseInt(args[3]) * 1000;
-    System.out.print("Collecting metrics. This might take up to " + args[3] + " seconds.");
+    int runtimeSeconds = Integer.parseInt(args[3]);
+    int runTimeMs = runtimeSeconds * 1000;
+    System.out.print("Collecting metrics. This might take up to " + runtimeSeconds + " seconds.");
 
     KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zookeeper, runTimeMs);
     kafkaMetricsToFile.collectMetrics(topic, outputPath);
