@@ -117,4 +117,12 @@ public class SupportedServerStartable {
     server.awaitShutdown();
   }
 
+  /**
+   * This method is protected for unit testing
+   * @return
+   */
+  protected final MetricsReporter getMetricsReporter() {
+    return metricsReporter;
+  }
+
 }
