@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
+import java.util.List;
 import kafka.server.KafkaServer;
-import kafka.utils.ZkUtils;
+
 
 public class KafkaSubmitter implements Submitter {
 
@@ -106,7 +106,8 @@ public class KafkaSubmitter implements Submitter {
 
   private Producer<byte[], byte[]> createProducer() {
     Properties props = new Properties();
-    String[] bootstrapServers = new KafkaUtilities().getBootstrapServer(server.zkUtils(), BOOTSTRAP_SERVERS);
+    List<String> bootstrapServerList = new KafkaUtilities().getBootstrapServers(server.zkUtils(), BOOTSTRAP_SERVERS);
+    String[] bootstrapServers = bootstrapServerList.toArray(new String[bootstrapServerList.size()]);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, StringUtils.join(bootstrapServers, ","));
     props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(requiredNumAcks));
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);

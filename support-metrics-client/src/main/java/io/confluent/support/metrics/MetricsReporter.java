@@ -223,7 +223,7 @@ public class MetricsReporter implements Runnable {
       if (sendToKafkaEnabled() && encodedMetricsRecord != null) {
         // attempt to create the topic. If failures occur, try again in the next round, however
         // the current batch of metrics will be lost.
-        if (kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+        if (kafkaUtilities.createAndVerifyTopic(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
             SUPPORT_TOPIC_REPLICATION, RETENTION_MS)) {
           kafkaSubmitter.submit(encodedMetricsRecord);
         }
