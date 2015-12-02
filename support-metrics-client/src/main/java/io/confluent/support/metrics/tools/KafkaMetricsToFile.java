@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 
 public class KafkaMetricsToFile {
+
   private final ConsumerConnector consumer;
 
   /**
@@ -50,12 +51,7 @@ public class KafkaMetricsToFile {
     return consumer;
   }
 
-  /**
-   * Returns the collected messages to a stream
-   * @param topic Desired topic
-   * @return
-   */
-  public final List<KafkaStream<byte[], byte[]>> getStreams(String topic) {
+  public List<KafkaStream<byte[], byte[]>> getStreams(String topic) {
     Map<String, Integer> topicCount = new HashMap<>();
     topicCount.put(topic, 1);
     Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
@@ -63,11 +59,13 @@ public class KafkaMetricsToFile {
   }
 
   /**
-   * Collects the metrics and puts them in a compressed file
-   * @param topic Topic of interest, cannot be null or empty
-   * @return Number of metric records collected
+   * Retrieves the metrics from the provided topic and stores them in a compressed local file.
+   *
+   * @param topic Kafka topic to read from.  Must not be null or empty.
+   * @param outputPath  Path to the output file.  Must not be null or empty.
+   * @return the number of retrieved metrics submissions.
    */
-  public int collectMetrics(String topic, String outputPath) {
+  public int saveMetricsToFile(String topic, String outputPath) {
     int numMessages = 0;
     Map<String, Integer> topicCount = new HashMap<>();
     FileOutputStream out;
@@ -129,6 +127,10 @@ public class KafkaMetricsToFile {
     return numMessages;
   }
 
+  public void shutdown() {
+    consumer.shutdown();
+  }
+
   public static void main(String[] args) {
     if (args.length != 4) {
       System.err.println("Usage: zookeeperServer topic outputFile runtimeSecs");
@@ -142,7 +144,7 @@ public class KafkaMetricsToFile {
     System.out.print("Collecting metrics. This might take up to " + runtimeSeconds + " seconds.");
 
     KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zookeeper, runTimeMs);
-    kafkaMetricsToFile.collectMetrics(topic, outputPath);
+    kafkaMetricsToFile.saveMetricsToFile(topic, outputPath);
     kafkaMetricsToFile.getConsumer().shutdown();
   }
 }
