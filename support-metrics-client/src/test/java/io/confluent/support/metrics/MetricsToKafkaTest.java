@@ -68,7 +68,7 @@ public class MetricsToKafkaTest {
     cluster.startCluster(numBrokers);
     KafkaServer broker = cluster.getBroker(0);
     Properties brokerSupportProps = (Properties) supportProperties.clone();
-    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), new Integer(broker.config().brokerId()).toString());
+    brokerSupportProps.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), Integer.toString(broker.config().brokerId()));
     brokerSupportProps.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), cluster.zookeeperConnectString());
     String topic = brokerSupportProps.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     // disable sending to confluent to focus on just sending to a Kafka topic
