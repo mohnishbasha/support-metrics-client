@@ -161,8 +161,10 @@ For these situations we include a tool called ``support-metrics-bundle`` in the 
 
 .. sourcecode:: bash
 
-    # The `support-metrics-bundle` requires the Kafka package of
-    # Confluent Platform being installed.
+    ###
+    ### IMPORTANT: The `support-metrics-bundle` tool requires that the Kafka package of
+    ###            Confluent Platform is installed.
+    ###
 
     # Example
     # -------
