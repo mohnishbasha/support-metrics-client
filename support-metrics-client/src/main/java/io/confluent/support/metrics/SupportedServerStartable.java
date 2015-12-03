@@ -82,10 +82,12 @@ public class SupportedServerStartable {
         "hours.  This Metadata may be transferred to any country in which Confluent maintains " +
         "facilities.  For a more in depth discussion of how Confluent processes such information, " +
         "please read our Privacy Policy located at http://www.confluent.io/privacy. " +
-        "By proceeding with `confluent.support.metrics.enable=true`, you agree to all such " +
-        "collection, transfer, storage and use of Metadata by Confluent.  You can turn Metrics " +
-        "off by setting `confluent.support.metrics.enable=false` in the broker configuration and " +
-        "restarting the broker.  See the Confluent Platform documentation for further information.";
+        "By proceeding with `" + SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=true`, " +
+        "you agree to all such collection, transfer, storage and use of Metadata by Confluent.  " +
+        "You can turn the Metrics feature off by setting `" +
+        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=false` in the broker " +
+        "configuration and restarting the broker.  See the Confluent Platform documentation for " +
+        "further information.";
   }
 
   private String legalDisclaimerProactiveSupportDisabled() {
