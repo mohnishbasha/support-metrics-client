@@ -59,6 +59,7 @@ public class SupportedServerStartable {
         metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);
         long reportIntervalMs = SupportConfig.getReportIntervalMs(brokerConfigurationPlusMissingPSSettings);
         long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);
+        // We log at WARN level to increase the visibility of this information.
         log.warn(legalDisclaimerProactiveSupportEnabled(reportIntervalHours));
       } catch (Exception e) {
         // We catch any exceptions to prevent collateral damage to the more important broker
@@ -66,6 +67,7 @@ public class SupportedServerStartable {
         log.error("Failed to start Proactive Support Metrics agent: {}", e.getMessage());
       }
     } else {
+      // We log at WARN level to increase the visibility of this information.
       log.warn(legalDisclaimerProactiveSupportDisabled());
     }
   }
