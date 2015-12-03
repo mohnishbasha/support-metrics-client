@@ -149,6 +149,12 @@ This section documents all available Proactive Support settings that can be defi
     #
     confluent.support.metrics.report.interval.hours=24
 
+    # Proactive Support attempts to automatically sent to Confluent over HTTPS
+    # (default) or HTTP. To disable sending metics data over the internet
+    # when `confluent.support.metrics.enable=true` set these variables to false
+    #
+    confluent.support.metrics.endpoint.insecure.enable=false
+    confluent.support.metrics.endpoint.secure.enable=false
 
 .. _ps-sharing-metadata-manually:
 
