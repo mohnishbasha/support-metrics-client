@@ -151,4 +151,11 @@ public class SupportedServerStartable {
     return metricsReporter;
   }
 
+  /**
+   * This method is protected for unit testing
+   */
+  protected final boolean isProactiveSupportActiveAtRuntime() {
+    return getMetricsReporter() != null;
+  }
+
 }
