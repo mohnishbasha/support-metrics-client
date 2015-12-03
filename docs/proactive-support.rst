@@ -28,7 +28,7 @@ With the Metrics feature enabled, a Kafka broker will collect and report certain
 
 The main reason of reporting to the first destination (to a Kafka topic) is that there are certain situations when reporting the metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  The drawback of this approach is that the collected metadata is not being shared automatically and requires manual operator intervention as described in section :ref:`ps-sharing-metadata-manually`.  The second destination (to Confluent via the Internet) is therefore the most convenient option for customers.
 
-The volume of the metadata that is being collected (see :ref:`ps-which-metadata-is-being-collected`) is small and the default report interval is once every 24 hours (see :ref:`ps-configuration-settings`), which means running your Kafka infrastructure with the Metrics feature enabled is very safe.
+The actual agent that collects and reports the metadata is collocated with the broker process and runs within the same JVM.  The volume of the metadata that is being collected (see :ref:`ps-which-metadata-is-being-collected`) is small and the default report interval is once every 24 hours (see :ref:`ps-configuration-settings`), which means running your Kafka infrastructure with the Metrics feature enabled is very safe.
 
 The following sections describe in more detail which metadata is being collected, how to enable or disable the Metrics feature, how to configure the feature if you are a licensed Confluent customer, and how to tune its configuration settings when needed.
 
@@ -82,6 +82,10 @@ The relevant setting for the broker configuration (typically at ``/etc/kafka/ser
 
     # If set to true, then the feature to collect and report support metrics
     # ("Metrics") is enabled.  If set to false, the feature is disabled.
+    #
+    # Note: If the feature is disabled, then the agent that is collocated with
+    # the broker process and that collects and reports the support metrics
+    # will also not be started.
     confluent.support.metrics.enable=true
 
 
