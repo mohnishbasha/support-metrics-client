@@ -108,7 +108,7 @@ The default broker configuration file that comes with the Confluent Platform ena
             confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/submit
             confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/submit
 
-            
+
 Manually sending data to Confluent
 ----------
 If your organization does not allow direct HTTPS or HTTP communication with an external service, you can still send data to Confluent manually using a script provided with the Confluent Platform called "support-metrics-bundle" as shown below:
