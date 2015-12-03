@@ -115,19 +115,15 @@ public class SupportConfig {
    * Takes default properties from getDefaultProps() and a set of override properties and
    * returns a merged properties object, where the defaults are overridden.
    * Sanitizes and validates the returned properties
-   * @param defaults
-   * @param overrides
+   * @param overrides Parameters that override the default properties
    * @return
    */
-  public static Properties mergeAndValidateProperties(Properties defaults, Properties overrides) {
+  public static Properties mergeAndValidateWithDefaultProperties(Properties overrides) {
+    Properties defaults = getDefaultProps();
     Properties props;
-    if (defaults == null && overrides == null) {
-      return null;
-    }
+
     if (overrides == null) {
-      props = (Properties) defaults.clone();
-    } else if (defaults == null) {
-      props = (Properties) overrides.clone();
+      props = defaults;
     } else {
       props = new Properties();
       props.putAll(defaults);

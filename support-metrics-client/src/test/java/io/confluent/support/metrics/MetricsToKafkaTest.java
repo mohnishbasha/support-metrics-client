@@ -35,7 +35,9 @@ public class MetricsToKafkaTest {
     int numBrokers = 1;
     cluster.startCluster(numBrokers);
     KafkaServer broker = cluster.getBroker(0);
-    Properties brokerConfiguration = brokerConfigurationWithEndpointsRemovedFrom(broker, cluster.zookeeperConnectString());
+    Properties brokerConfiguration = SupportConfig.mergeAndValidateWithDefaultProperties(defaultBrokerConfiguration(broker, cluster.zookeeperConnectString()));
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
     String topic = brokerConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     int timeoutMs = 10 * 1000;
     KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(cluster.zookeeperConnectString(), timeoutMs);
@@ -57,13 +59,12 @@ public class MetricsToKafkaTest {
     cluster.stopCluster();
   }
 
-  private Properties brokerConfigurationWithEndpointsRemovedFrom(KafkaServer broker, String zookeeperConnect) throws IOException {
+  private Properties defaultBrokerConfiguration(KafkaServer broker, String zookeeperConnect) throws IOException {
     Properties brokerConfiguration = new Properties();
     brokerConfiguration.load(MetricsToKafkaTest.class.getResourceAsStream("/default-server.properties"));
     brokerConfiguration.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), Integer.toString(broker.config().brokerId()));
     brokerConfiguration.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zookeeperConnect);
-    brokerConfiguration.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
-    brokerConfiguration.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
     return brokerConfiguration;
   }
 
@@ -76,8 +77,10 @@ public class MetricsToKafkaTest {
     cluster.startCluster(numBrokers);
     KafkaServer firstBroker = cluster.getBroker(0);
 
-    Properties brokerConfiguration =
-        brokerConfigurationWithEndpointsRemovedFrom(firstBroker, cluster.zookeeperConnectString());
+    Properties brokerConfiguration = SupportConfig.mergeAndValidateWithDefaultProperties(defaultBrokerConfiguration(firstBroker, cluster.zookeeperConnectString()));
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+
     MetricsReporter reporter = new MetricsReporter(firstBroker, brokerConfiguration, serverRuntime);
     String topic = brokerConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
 

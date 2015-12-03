@@ -53,7 +53,7 @@ public class SupportedServerStartable {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
         Properties brokerConfigurationPlusMissingPSSettings =
-            SupportConfig.mergeAndValidateProperties(SupportConfig.getDefaultProps(), brokerConfiguration);
+            SupportConfig.mergeAndValidateWithDefaultProperties(brokerConfiguration);
         metricsReporter =
             new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
         metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);

@@ -110,10 +110,6 @@ public class SupportConfigTest {
     // When/Then
     assertThat(SupportConfig.getMetricsEnabled(brokerConfiguration)).isEqualTo(true);
     assertThat(SupportConfig.getCustomerId(brokerConfiguration)).isEqualTo("c0");
-    assertThat(SupportConfig.getReportIntervalMs(brokerConfiguration)).isEqualTo(24 * 60 * 60 * 1000);
-    assertThat(SupportConfig.getKafkaTopic(brokerConfiguration)).isEqualTo("__sample_topic");
-    assertThat(SupportConfig.getEndpointHTTPEnabled(brokerConfiguration)).isEqualTo(true);
-    assertThat(SupportConfig.getEndpointHTTPSEnabled(brokerConfiguration)).isEqualTo(true);
     assertThat(SupportConfig.isProactiveSupportEnabled(brokerConfiguration)).isTrue();
 
   }
@@ -130,35 +126,14 @@ public class SupportConfigTest {
     assertThat(SupportConfig.isProactiveSupportEnabled(props)).isTrue();
   }
 
-  @Test
-  public void testMergeAndValidatePropsDefaultNull() throws IOException {
-    // Given
-    Properties nullDefaultProp = null;
-    Properties overrideProp = defaultBrokerConfiguration();
-
-    // When
-    Properties props = SupportConfig.mergeAndValidateProperties(nullDefaultProp, overrideProp);
-
-    // Then
-    assertThat(SupportConfig.getMetricsEnabled(props)).isEqualTo(true);
-    assertThat(SupportConfig.getCustomerId(props)).isEqualTo("c0");
-    assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(24 * 60 * 60 * 1000);
-    assertThat(SupportConfig.getKafkaTopic(props)).isEqualTo("__sample_topic");
-    assertThat(SupportConfig.getEndpointHTTPEnabled(props)).isEqualTo(true);
-    assertThat(SupportConfig.getEndpointHTTPSEnabled(props)).isEqualTo(true);
-    assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.isProactiveSupportEnabled(props)).isTrue();
-  }
 
   @Test
   public void testMergeAndValidatePropsOverrideNull() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties nullOverrideProp = null;
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, nullOverrideProp);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(nullOverrideProp);
 
     // Then
     assertThat(SupportConfig.getMetricsEnabled(props)).isEqualTo(true);
@@ -175,11 +150,10 @@ public class SupportConfigTest {
   @Test
   public void testMergeAndValidatePropsNoOverride() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/anon");
@@ -189,13 +163,12 @@ public class SupportConfigTest {
   @Test
   public void testMergeAndValidatePropsFilterDisallowedKeys() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "anyValue");
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "anyValue");
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/anon");
@@ -206,12 +179,11 @@ public class SupportConfigTest {
   @Test
   public void testMergeAndValidatePropsCustomerEndpointMismatch() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C1");
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/submit");
@@ -221,12 +193,11 @@ public class SupportConfigTest {
   @Test
   public void testMergeAndValidatePropsConfluentTestEndpointMismatch() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C0");
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/test");
@@ -236,13 +207,12 @@ public class SupportConfigTest {
   @Test
   public void testMergeAndValidatePropsDisableEndpoints() {
     // Given
-    Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
 
     // When
-    Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEmpty();
