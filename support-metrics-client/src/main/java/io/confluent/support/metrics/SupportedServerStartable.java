@@ -43,28 +43,51 @@ public class SupportedServerStartable {
   private MetricsReporter metricsReporter = null;
   private Thread metricsThread = null;
 
-  public SupportedServerStartable(Properties props) {
-    KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(props));
-    KafkaConfig serverConfig = KafkaConfig.fromProps(props);
+  public SupportedServerStartable(Properties brokerConfiguration) {
+    KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
+    KafkaConfig serverConfig = KafkaConfig.fromProps(brokerConfiguration);
     Option<String> noThreadNamePrefix = Option.empty();
     server = new KafkaServer(serverConfig, SystemTime$.MODULE$, noThreadNamePrefix);
 
-    if (SupportConfig.isProactiveSupportEnabled(props)) {
-      log.info("Confluent Proactive Support is enabled");
+    if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
-        Properties newProps = SupportConfig.mergeAndValidateProperties(SupportConfig.getDefaultProps(), props);
-
-        metricsReporter = new MetricsReporter(server, newProps, serverRuntime);
-        metricsThread = Utils.daemonThread("ConfluentProactiveSupportBrokerMetricsReporter", metricsReporter);
+        Properties brokerConfigurationPlusMissingPSSettings =
+            SupportConfig.mergeAndValidateProperties(SupportConfig.getDefaultProps(), brokerConfiguration);
+        metricsReporter =
+            new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
+        metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);
+        long reportIntervalMs = SupportConfig.getReportIntervalMs(brokerConfigurationPlusMissingPSSettings);
+        long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);
+        log.warn(legalDisclaimerProactiveSupportEnabled(reportIntervalHours));
       } catch (Exception e) {
         // We catch any exceptions to prevent collateral damage to the more important broker
         // threads that are running in the same JVM.
-        log.error("Failed to start metrics reporter: {}", e.getMessage());
+        log.error("Failed to start Proactive Support Metrics agent: {}", e.getMessage());
       }
     } else {
-      log.warn("Confluent Proactive Support is disabled");
+      log.warn(legalDisclaimerProactiveSupportDisabled());
     }
+  }
+
+  private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
+    return "Please note that the support metrics collection feature (\"Metrics\") of Proactive Support is enabled.  " +
+        "With Metrics enabled, this broker is configured to collect and report certain broker and " +
+        "cluster metadata (\"Metadata\") about your use of the Confluent Platform 2.0 (including " +
+        "without limitation, your remote internet protocol address) to Confluent, Inc. " +
+        "(\"Confluent\") or its parent, subsidiaries, affiliates or service providers every " +
+        reportIntervalHours +
+        "hours.  This Metadata may be transferred to any country in which Confluent maintains " +
+        "facilities.  For a more in depth discussion of how Confluent processes such information, " +
+        "please read our Privacy Policy located at http://www.confluent.io/privacy. " +
+        "By proceeding with `confluent.support.metrics.enable=true`, you agree to all such " +
+        "collection, transfer, storage and use of Metadata by Confluent.  You can turn Metrics " +
+        "off by setting `confluent.support.metrics.enable=false` in the broker configuration and " +
+        "restarting the broker.  See the Confluent Platform documentation for further information.";
+  }
+
+  private String legalDisclaimerProactiveSupportDisabled() {
+    return "The support metrics collection feature (\"Metrics\") of Proactive Support is disabled.";
   }
 
   public void startup() {
@@ -119,7 +142,6 @@ public class SupportedServerStartable {
 
   /**
    * This method is protected for unit testing
-   * @return
    */
   protected final MetricsReporter getMetricsReporter() {
     return metricsReporter;
