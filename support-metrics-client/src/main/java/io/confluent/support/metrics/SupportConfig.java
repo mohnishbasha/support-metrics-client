@@ -113,7 +113,7 @@ public class SupportConfig {
 
   /**
    * Takes default properties from getDefaultProps() and a set of override properties and
-   * returns a merged properties object, where the defaults are overriden.
+   * returns a merged properties object, where the defaults are overridden.
    * Sanitizes and validates the returned properties
    * @param defaults
    * @param overrides
