@@ -21,21 +21,26 @@ Please refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`
 How it works
 ------------
 
-With Metrics enabled, a Kafka broker will collect and report certain broker and cluster metadata every 24 hours to:
+With the Metrics feature enabled, a Kafka broker will collect and report certain broker and cluster metadata every 24 hours to the following two destinations:
 
-1. a Kafka topic within the same cluster and
+1. to a special-purpose Kafka topic within the same cluster, named ``__confluent.support.metrics`` by default;
 2. to Confluent via either HTTPS or HTTP over the Internet (HTTPS preferred).
+
+The main reason of reporting to the first destination (to a Kafka topic) is that there are certain situations when reporting the metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  The drawback of this approach is that the collected metadata is not being shared automatically and requires manual operator intervention as described in section :ref:`ps-sharing-metadata-manually`.  The second destination (to Confluent via the Internet) is therefore the most convenient option for customers.
+
+The volume of the metadata that is being collected (see :ref:`ps-which-metadata-is-being-collected`) is small and the default report interval is once every 24 hours (see :ref:`ps-configuration-settings`), which means running your Kafka infrastructure with the Metrics feature enabled is very safe.
 
 The following sections describe in more detail which metadata is being collected, how to enable or disable the Metrics feature, how to configure the feature if you are a licensed Confluent customer, and how to tune its configuration settings when needed.
 
+.. _ps-which-metadata-is-being-collected:
 
-Which Metadata is being collected?
+Which metadata is being collected?
 ----------------------------------
 
 Anonymous metadata collection (default)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With Metrics enabled, the default Kafka broker configuration that ships with the Confluent Platform collects and reports the following pieces of information anonymously to Confluent:
+With Metrics enabled, the default Kafka broker configuration that ships with the Confluent Platform collects and reports the following pieces of information anonymously:
 
 * **Confluent Platform version** - The Confluent Platform version that the broker is running.
 * **Kafka version** - The Kafka version that the broker is running.
@@ -46,29 +51,38 @@ With Metrics enabled, the default Kafka broker configuration that ships with the
 Metadata collection for licensed Confluent Customers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With Metrics enabled and with a proper Confluent customer ID set in the broker configuration (which is not the case for the default broker configuration that ships with the Confluent Platform) via the setting ``confluent.support.customer.id``, then additional Metadata is being collected and reported to Confluent that e.g. help to proactively identify issues in the field.  Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information.
+With Metrics enabled and with a proper Confluent customer ID set in the broker configuration (which is not the case for the default broker configuration that ships with the Confluent Platform) via the setting ``confluent.support.customer.id``, then additional metadata is being collected and reported to Confluent that e.g. help to proactively identify issues in the field.  This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
+
+Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information.
+
+
+Which (meta)data is not being collected?
+----------------------------------------
+
+We understand that Confluent Platform users often publish private or proprietary data to Kafka clusters, and often run Kafka in sensitive environments.  We have done our best to avoid collecting any proprietary information about customers.  In particular:
+
+* We do not inspect any messages sent through Kafka, and collect no data about what is inside these messages.
+* We do not collect any proprietary network information such as internal host names or IP addresses.
+* We do not collect information about the name of topics.
+
 
 
 Enabling or disabling the Metrics feature
 -----------------------------------------
 
-The Metrics feature can be enabled or disabled at any time by modifying the broker configuration as appropriate, followed by a restart of the broker.
+The Metrics feature can be enabled or disabled at any time by modifying the broker configuration as needed, followed by a restart of the broker.
 
-The relevant broker configuration setting is described below:
+The relevant setting for the broker configuration (typically at ``/etc/kafka/server.properties``) is described below:
 
 .. sourcecode:: bash
     :linenos:
 
-            ##################### Confluent Proactive Support ######################
+    ##################### Confluent Proactive Support:  ######################
+    ##################### broker configuration settings ######################
 
-            # If set to true, then the feature to collect and report support metrics
-            # ("Metrics") is enabled.  If set to false, the feature is disabled.
-            confluent.support.metrics.enable=true
-
-By default metrics are collected every 24 hours and are stored in an internal Kafka topic as well as sent to Confluent over HTTP(S).
-To disable sending the data to Confluent make sure the two endpoints for HTTPS (line 36) and HTTP (line 47) are commented out. In this mode of operation
-metrics are still collected and stored in the internal Kafka topic for your own inspection but never sent to Confluent. To completely
-disable metric collection, comment out the Kafka topic (line 22).
+    # If set to true, then the feature to collect and report support metrics
+    # ("Metrics") is enabled.  If set to false, the feature is disabled.
+    confluent.support.metrics.enable=true
 
 
 Recommended Proactive Support configuration settings for licensed Confluent customers
@@ -79,105 +93,117 @@ Confluent customers must change a few settings in the default broker configurati
 .. sourcecode:: bash
     :linenos:
 
-            ##################### Confluent Proactive Support ######################
+    ##################### Confluent Proactive Support:  ######################
+    ##################### broker configuration settings ######################
 
-            # Recommended settings for licensed Confluent customers
-            confluent.support.metrics.enable=true
-            confluent.support.customer.id=REPLACE_WITH_YOUR_CUSTOMER_ID
-            confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/submit
-            confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/submit
+    # Recommended settings for licensed Confluent customers
+    confluent.support.metrics.enable=true
+    confluent.support.customer.id=REPLACE_WITH_YOUR_CUSTOMER_ID
+    confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/submit
+    confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/submit
 
+.. _ps-configuration-settings:
 
-Available Proactive Support configuration settings
---------------------------------------------------
+Proactive Support configuration settings
+----------------------------------------
 
-This section documents all available Proactive Support settings that can be defined in the broker configuration.  Most users will not need to change these settings.  In fact, we recommend to leave these settings at their default values;  the exception are Confluent customers, which should change a few settings as described in the previous section.
+This section documents all available Proactive Support settings that can be defined in the broker configuration (typically at ``/etc/kafka/server.properties``), including their default values.  Most users will not need to change these settings.  In fact, we recommend to leave these settings at their default values;  the exception are Confluent customers, which should change a few settings as described in the previous section.
 
 .. sourcecode:: bash
-    :linenos:
 
-            ##################### Confluent Proactive Support ######################
+    ##################### Confluent Proactive Support:  ######################
+    ##################### broker configuration settings ######################
 
-            # If set to true, then the feature to collect and report support metrics
-            # ("Metrics") is enabled.  If set to false, the feature is disabled.
-            confluent.support.metrics.enable=true
+    # If set to true, then the feature to collect and report support metrics
+    # ("Metrics") is enabled.  If set to false, the feature is disabled.
+    #
+    confluent.support.metrics.enable=true
 
-            # The customer ID under which support metrics will be collected and
-            # reported.
-            #
-            # When the customer ID is set to "anonymous" (the default), then only
-            # a reduced set of metrics is being collected and reported.
-            #
-            # If you are a Confluent customer, then you should replace the default
-            # value with your actual Confluent customer ID.  Doing so will ensure
-            # that additional support metrics will be collected and reported.
-            confluent.support.customer.id=anonymous
+    # The customer ID under which support metrics will be collected and
+    # reported.
+    #
+    # When the customer ID is set to "anonymous" (the default), then only a
+    # reduced set of metrics is being collected and reported.
+    #
+    # Confluent customers
+    # -------------------
+    # If you are a Confluent customer, then you should replace the default
+    # value with your actual Confluent customer ID.  Doing so will ensure
+    # that additional support metrics will be collected and reported.
+    #
+    confluent.support.customer.id=anonymous
 
-            # The interval at which support metrics will be collected from and reported
-            # by this broker.
-            confluent.support.metrics.report.interval.hours=24
+    # Endpoint for secure reporting of support metrics to Confluent via the Internet.
+    #
+    # The secure endpoint takes precedence over the insecure endpoint, i.e. if the
+    # secure endpoint is enabled, then metrics will not be reported via the insecure
+    # endpoint.  If the secure endpoint is not reachable, metrics reporting falls back
+    # to the insecure endpoint (if enabled).
+    #
+    # To specifically disable reporting metrics over the secure endpoint when
+    # `confluent.support.metrics.enable=true` set this variable to an empty value.
+    #
+    # Confluent customers
+    # -------------------
+    # If you are a Confluent customer, then you should replace the default value with
+    # https://support-metrics.confluent.io/submit
+    #
+    confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/anon
 
-            # The Kafka topic (within the same cluster as this broker) to which support
-            # metrics will be submitted.
-            #
-            # To specifically disable the collection of support metrics to an internal
-            # Kafka topic set this variable to an empty value.  This setting gives you the
-            # flexibility to continue to collect and report Metadata in general
-            # (cf. confluent.support.metrics.enable) but selectively turn off the reporting
-            # to an internal Kafka topic.
-            confluent.support.metrics.topic=__confluent.support.metrics
+    # Endpoint for insecure reporting of support metrics to Confluent via the Internet.
+    #
+    # The insecure endpoint has lower priority than the secure endpoint.
+    #
+    # To specifically disable reporting metrics over the insecure endpoint when
+    # `confluent.support.metrics.enable=true` set this variable to an empty value.
+    #
+    # Confluent customers
+    # -------------------
+    # If you are a Confluent customer, then you should replace the default value with
+    # http://support-metrics.confluent.io/submit
+    #
+    confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/anon
 
-            # Endpoint for secure reporting of support metrics to Confluent via the Internet.
-            #
-            # The secure endpoint takes precedence over the insecure endpoint, i.e. if the
-            # secure endpoint is enabled, then metrics will not be reported via the insecure
-            # endpoint.  If the secure endpoint is not reachable, metrics reporting falls back
-            # to the insecure endpoint (if enabled).
-            #
-            # To disable reporting metrics over the secure endpoint set this variable to an
-            # empty value.
-            confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/anon
+    # The Kafka topic (within the same cluster as this broker) to which support
+    # metrics will be submitted.
+    #
+    # To specifically disable reporting metrics to an internal Kafka topic when
+    # `confluent.support.metrics.enable=true` set this variable to an empty value.
+    #
+    confluent.support.metrics.topic=__confluent.support.metrics
 
-            # Endpoint for insecure reporting of support metrics to Confluent via the Internet.
-            #
-            # The insecure endpoint has lower priority than the secure endpoint.
-            #
-            # To disable reporting metrics over the insecure endpoint set this variable to an
-            # empty value.
-            confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/anon
+    # The interval at which support metrics will be collected from and reported
+    # by this broker.
+    #
+    confluent.support.metrics.report.interval.hours=24
 
 
+.. _ps-sharing-metadata-manually:
 
 Sharing Proactive Support Metadata with Confluent manually
 ----------------------------------------------------------
 
-There are certain situations when reporting the Metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  This is the main reason why the Metrics feature includes the functionality to report the collected metadata to an internal Kafka topic (see section :ref:`ps-how-it-works`).
+There are certain situations when reporting the metadata via the Internet is not possible for our customers.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  This is the main reason why the Metrics feature includes the functionality to report the collected metadata to an internal Kafka topic (see section :ref:`ps-how-it-works`).
 
 For these situations we ship a utility with the Confluent Platform as part of the Kafka installation package that will retrieve any previously reported metadata from the internal Kafka topic and store them in a compressed file.  You can then share this file with our customer support, e.g. by attaching it to a support ticket.
-
-
-.. sourcecode:: bash
-
-    # The `support-metrics-bundle` bequires the Kafka package of
-    $ foo
-
-asdf
 
 .. sourcecode:: bash
 
     # The `support-metrics-bundle` bequires the Kafka package of
     # Confluent Platform being installed.
 
-    # Example:
-    # --------
+    # Example
+    # -------
     # Here we connect to the Kafka cluster backed by the ZooKeeper
     # ensemble reachable at `zookeeper1:2181`.  Retrieved metadata
     # will be stored in a local file (the tool will inform you about
     # the name and location of the file at the end of its run).
+    #
     $ /usr/bin/support-metrics-bundle --zookeeper zookeeper1:2181
 
     # Usage
     # -----
+    #
     $ /usr/bin/support-metrics-bundle --help
     Usage: support-metrics-bundle --zookeeper <server:port> [--topic <Kafka support topic>] [--file <bundle output file>] [--runtime <time in seconds>]
 
@@ -195,12 +221,10 @@ asdf
                  Default: 'support-metrics-__confluent.support.metrics.20151203-115035.zip'
                  Note that, when using the default value, the timestamp is dynamically
                  generated at each run of this tool.
-    --runtime    The time this script will run for in seconds. For a large cluster
-                 the script might need more time to collect all records.
-                 Default: '10' seconds
-
-.. sourcecode:: bash
-
+    --runtime    The time in seconds this tool will run for.  For a large cluster
+                 you may need to increase this setting because the tool might need
+                 more time to collect all the metrics.
+                 Default: 10
     --help       Print this help message.
 
 
