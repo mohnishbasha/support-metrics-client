@@ -46,7 +46,7 @@ print_help() {
   echo "             Note that, when using the default value, the timestamp is dynamically"
   echo "             generated at each run of this tool."
   echo "--runtime    The time this script will run for in seconds. For a large cluster"
-  echo "             the script might need more time to collect all records.'"
+  echo "             the script might need more time to collect all records."
   echo "             Default: '$RUNTIME_SEC' seconds"
   echo "--help       Print this help message."
   echo
