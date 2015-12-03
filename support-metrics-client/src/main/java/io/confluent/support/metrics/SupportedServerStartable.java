@@ -53,7 +53,9 @@ public class SupportedServerStartable {
       log.info("Confluent Proactive Support is enabled");
       try {
         Runtime serverRuntime = Runtime.getRuntime();
-        metricsReporter = new MetricsReporter(server, props, serverRuntime);
+        Properties newProps = SupportConfig.mergeAndValidateProperties(SupportConfig.getDefaultProps(), props);
+
+        metricsReporter = new MetricsReporter(server, newProps, serverRuntime);
         metricsThread = Utils.daemonThread("ConfluentProactiveSupportBrokerMetricsReporter", metricsReporter);
       } catch (Exception e) {
         // We catch any exceptions to prevent collateral damage to the more important broker
@@ -113,6 +115,14 @@ public class SupportedServerStartable {
 
   public void awaitShutdown() {
     server.awaitShutdown();
+  }
+
+  /**
+   * This method is protected for unit testing
+   * @return
+   */
+  protected final MetricsReporter getMetricsReporter() {
+    return metricsReporter;
   }
 
 }

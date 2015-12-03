@@ -13,22 +13,15 @@
  */
 package io.confluent.support.metrics.submitters;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.junit.BeforeClass;
+
 import org.junit.Test;
 
-import java.util.Properties;
 
 import io.confluent.support.metrics.SupportConfig;
 import io.confluent.support.metrics.utils.CustomerIdExamples;
-import io.confluent.support.metrics.utils.KafkaServerUtils;
-import kafka.Kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class ConfluentSubmitterTest {
 

@@ -15,8 +15,10 @@ package io.confluent.support.metrics.submitters;
 
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import kafka.server.KafkaServer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.any;
@@ -24,47 +26,40 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+
 public class KafkaSubmitterTest {
 
+  private static KafkaServer mockServer;
+
+  @BeforeClass
+  public static void startCluster() {
+    mockServer = mock(KafkaServer.class);
+  }
+
   @Test
-  public void testInvalidArgumentsForConstructorNullBootstrapServers() {
+  public void testInvalidArgumentsForConstructorNullServer() {
     // Given
-    String nullBootstrapServers = null;
+    KafkaServer nullServer = null;
     String anyTopic = "valueNotRelevant";
 
     // When/Then
     try {
-      new KafkaSubmitter(nullBootstrapServers, anyTopic);
-      fail("IllegalArgumentException expected because topic is null");
+      new KafkaSubmitter(nullServer, anyTopic);
+      fail("IllegalArgumentException expected because server is null");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify bootstrap servers");
+      assertThat(e).hasMessage("must specify server");
     }
   }
 
-  @Test
-  public void testInvalidArgumentsForConstructorEmptyBootstrapServers() {
-    // Given
-    String emptyBootstrapServers = "";
-    String anyTopic = "valueNotRelevant";
-
-    // When/Then
-    try {
-      new KafkaSubmitter(emptyBootstrapServers, anyTopic);
-      fail("IllegalArgumentException expected because topic is null");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("must specify bootstrap servers");
-    }
-  }
 
   @Test
   public void testInvalidArgumentsForConstructorNullTopic() {
     // Given
-    String anyBootstrapServers = "valueNotRelevant";
     String nullTopic = null;
 
     // When/Then
     try {
-      new KafkaSubmitter(anyBootstrapServers, nullTopic);
+      new KafkaSubmitter(mockServer, nullTopic);
       fail("IllegalArgumentException expected because topic is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify topic");
@@ -74,12 +69,11 @@ public class KafkaSubmitterTest {
   @Test
   public void testInvalidArgumentsForConstructorEmptyTopic() {
     // Given
-    String anyBootstrapServers = "valueNotRelevant";
     String emptyTopic = "";
 
     // When/Then
     try {
-      new KafkaSubmitter(anyBootstrapServers, emptyTopic);
+      new KafkaSubmitter(mockServer, emptyTopic);
       fail("IllegalArgumentException expected because topic is the empty string");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("must specify topic");
@@ -89,9 +83,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmitIgnoresNullInput() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockServer, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] nullData = null;
 
@@ -105,9 +98,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmitIgnoresEmptyInput() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockServer, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] emptyData = new byte[0];
 
@@ -121,9 +113,8 @@ public class KafkaSubmitterTest {
   @Test
   public void testSubmit() {
     // Given
-    String anyBootstrapServers = "localhost:1234";
     String anyTopic = "valueNotRelevant";
-    KafkaSubmitter k = new KafkaSubmitter(anyBootstrapServers, anyTopic);
+    KafkaSubmitter k = new KafkaSubmitter(mockServer, anyTopic);
     Producer<byte[], byte[]> producer = mock(Producer.class);
     byte[] anyData = "anyData".getBytes();
 

@@ -24,7 +24,7 @@ import io.confluent.support.metrics.collectors.BasicCollector;
 import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.time.TimeUtils;
-import io.confluent.support.metrics.kafka.KafkaUtilities;
+import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
 import io.confluent.support.metrics.submitters.ConfluentSubmitter;
 import io.confluent.support.metrics.submitters.KafkaSubmitter;
@@ -53,7 +53,7 @@ public class MetricsReporter implements Runnable {
    * Default replication factor of the support metrics topic. Used when creating the topic in case
    * it doesn't exist yet.
    */
-  private static final int SUPPORT_TOPIC_REPLICATION = 3;
+  public static final int SUPPORT_TOPIC_REPLICATION = 3;
 
   /**
    * Default number of partitions of the support metrics topic. Used when creating the topic in case
@@ -112,8 +112,9 @@ public class MetricsReporter implements Runnable {
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
+
     if (!supportTopic.isEmpty()) {
-      kafkaSubmitter = new KafkaSubmitter(SupportConfig.getKafkaBootstrapServers(server), supportTopic);
+      kafkaSubmitter = new KafkaSubmitter(server, supportTopic);
     } else {
       kafkaSubmitter = null;
     }
@@ -208,7 +209,8 @@ public class MetricsReporter implements Runnable {
     return terminateEarly;
   }
 
-  private void submitMetrics() {
+  // this is a protected method to enable testing
+  protected void submitMetrics() {
     byte[] encodedMetricsRecord = null;
     GenericContainer metricsRecord = metricsCollector.collectMetrics();
     try {
@@ -221,7 +223,7 @@ public class MetricsReporter implements Runnable {
       if (sendToKafkaEnabled() && encodedMetricsRecord != null) {
         // attempt to create the topic. If failures occur, try again in the next round, however
         // the current batch of metrics will be lost.
-        if (kafkaUtilities.createTopicIfMissing(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
+        if (kafkaUtilities.createAndVerifyTopic(server.zkUtils(), supportTopic, SUPPORT_TOPIC_PARTITIONS,
             SUPPORT_TOPIC_REPLICATION, RETENTION_MS)) {
           kafkaSubmitter.submit(encodedMetricsRecord);
         }
