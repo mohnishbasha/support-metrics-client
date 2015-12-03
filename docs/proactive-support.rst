@@ -157,11 +157,11 @@ Sharing Proactive Support Metadata with Confluent manually
 
 There are certain situations when reporting the metadata via the Internet is not possible for our customers.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  This is the main reason why the Metrics feature includes the functionality to report the collected metadata to an internal Kafka topic (see section :ref:`ps-how-it-works`).
 
-For these situations we ship a utility with the Confluent Platform as part of the Kafka installation package that will retrieve any previously reported metadata from the internal Kafka topic and store them in a compressed file.  You can then share this file with our customer support, e.g. by attaching it to a support ticket.
+For these situations we include a tool called ``support-metrics-bundle`` in the Kafka installation package of the Confluent Platform that will retrieve any previously reported metadata from the internal Kafka topic and store them in a compressed file.  You can then share this file with our customer support, e.g. by attaching it to a support ticket.
 
 .. sourcecode:: bash
 
-    # The `support-metrics-bundle` bequires the Kafka package of
+    # The `support-metrics-bundle` requires the Kafka package of
     # Confluent Platform being installed.
 
     # Example
@@ -206,4 +206,4 @@ For these situations we ship a utility with the Confluent Platform as part of th
 
     Copyright 2015 Confluent Inc. <http://confluent.io/>
 
-Should you have any questions about the usage of this tool, then please contact our customer support.
+Should you have any questions about the usage of this tool, then please contact Confluent customer support.
