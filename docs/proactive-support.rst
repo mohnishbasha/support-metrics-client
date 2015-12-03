@@ -92,7 +92,7 @@ The relevant setting for the broker configuration (typically at ``/etc/kafka/ser
 Recommended Proactive Support configuration settings for licensed Confluent customers
 -------------------------------------------------------------------------------------
 
-Confluent customers must change a few settings in the default broker configuration as described below to ensure that additional Metadata is being collected and reported to Confluent.  Notably, you must provide your Confluent customer ID and, for reporting support metrics to Confluent via the Internet, change the default endpoints to customer-only HTTPS/HTTP endpoints.
+Confluent customers must change the `confluent.support.customer.id` setting and provide their respective Confluent customer ID.  Please reach out to our customer support if you have any questions.
 
 .. sourcecode:: bash
     :linenos:
@@ -103,8 +103,7 @@ Confluent customers must change a few settings in the default broker configurati
     # Recommended settings for licensed Confluent customers
     confluent.support.metrics.enable=true
     confluent.support.customer.id=REPLACE_WITH_YOUR_CUSTOMER_ID
-    confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/submit
-    confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/submit
+
 
 .. _ps-configuration-settings:
 
@@ -136,37 +135,6 @@ This section documents all available Proactive Support settings that can be defi
     # that additional support metrics will be collected and reported.
     #
     confluent.support.customer.id=anonymous
-
-    # Endpoint for secure reporting of support metrics to Confluent via the Internet.
-    #
-    # The secure endpoint takes precedence over the insecure endpoint, i.e. if the
-    # secure endpoint is enabled, then metrics will not be reported via the insecure
-    # endpoint.  If the secure endpoint is not reachable, metrics reporting falls back
-    # to the insecure endpoint (if enabled).
-    #
-    # To specifically disable reporting metrics over the secure endpoint when
-    # `confluent.support.metrics.enable=true` set this variable to an empty value.
-    #
-    # Confluent customers
-    # -------------------
-    # If you are a Confluent customer, then you should replace the default value with
-    # https://support-metrics.confluent.io/submit
-    #
-    confluent.support.metrics.endpoint.secure=https://support-metrics.confluent.io/anon
-
-    # Endpoint for insecure reporting of support metrics to Confluent via the Internet.
-    #
-    # The insecure endpoint has lower priority than the secure endpoint.
-    #
-    # To specifically disable reporting metrics over the insecure endpoint when
-    # `confluent.support.metrics.enable=true` set this variable to an empty value.
-    #
-    # Confluent customers
-    # -------------------
-    # If you are a Confluent customer, then you should replace the default value with
-    # http://support-metrics.confluent.io/submit
-    #
-    confluent.support.metrics.endpoint.insecure=http://support-metrics.confluent.io/anon
 
     # The Kafka topic (within the same cluster as this broker) to which support
     # metrics will be submitted.
