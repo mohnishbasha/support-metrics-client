@@ -45,9 +45,10 @@ print_help() {
   echo "             Default: '$BUNDLE_FILE'"
   echo "             Note that, when using the default value, the timestamp is dynamically"
   echo "             generated at each run of this tool."
-  echo "--runtime    The time this script will run for in seconds. For a large cluster"
-  echo "             the script might need more time to collect all records."
-  echo "             Default: '$RUNTIME_SEC' seconds"
+  echo "--runtime    The time in seconds this tool will run for.  For a large cluster"
+  echo "             you may need to increase this setting because the tool might need"
+  echo "             more time to collect all the metrics."
+  echo "             Default: $RUNTIME_SEC"
   echo "--help       Print this help message."
   echo
   echo "Important notes for running this tool:"
