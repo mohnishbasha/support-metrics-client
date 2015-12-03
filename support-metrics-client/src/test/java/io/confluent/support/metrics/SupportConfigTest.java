@@ -30,18 +30,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class SupportConfigTest {
-  private static final Logger log = LoggerFactory.getLogger(SupportConfigTest.class);
-  private static Properties supportProperties = null;
-
-  static {
-    try {
-      Properties props = new Properties();
-      props.load(MetricsToKafkaTest.class.getResourceAsStream("/default-server.properties"));
-      supportProperties = props;
-    } catch (IOException e) {
-      log.warn("Error while loading default properties:", e.getMessage());
-    }
-  }
 
   @Test
   public void testValidCustomer() {
@@ -97,23 +85,37 @@ public class SupportConfigTest {
 
 
   @Test
-  public void proactiveSupportConfigIsValidKafkaConfig() {
-    KafkaConfig cfg = KafkaConfig.fromProps(supportProperties);
+  public void proactiveSupportConfigIsValidKafkaConfig() throws IOException {
+    // Given
+    Properties brokerConfiguration = defaultBrokerConfiguration();
 
+    // When
+    KafkaConfig cfg = KafkaConfig.fromProps(brokerConfiguration);
+
+    // Then
     assertThat(cfg.brokerId()).isEqualTo(0);
     assertThat(cfg.zkConnect()).startsWith("localhost:");
   }
 
+  private Properties defaultBrokerConfiguration() throws IOException {
+    Properties brokerConfiguration = new Properties();
+    brokerConfiguration.load(SupportedServerStartableTest.class.getResourceAsStream("/default-server.properties"));
+    return brokerConfiguration;
+  }
+
   @Test
-  public void canParseProactiveSupportConfiguration() {
+  public void canParseProactiveSupportConfiguration() throws IOException {
+    // Given
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+
     // When/Then
-    assertThat(SupportConfig.getMetricsEnabled(supportProperties)).isEqualTo(true);
-    assertThat(SupportConfig.getCustomerId(supportProperties)).isEqualTo("c0");
-    assertThat(SupportConfig.getReportIntervalMs(supportProperties)).isEqualTo(24 * 60 * 60 * 1000);
-    assertThat(SupportConfig.getKafkaTopic(supportProperties)).isEqualTo("__sample_topic");
-    assertThat(SupportConfig.getEndpointHTTP(supportProperties)).isEqualTo("http://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.getEndpointHTTPS(supportProperties)).isEqualTo("https://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.isProactiveSupportEnabled(supportProperties)).isTrue();
+    assertThat(SupportConfig.getMetricsEnabled(brokerConfiguration)).isEqualTo(true);
+    assertThat(SupportConfig.getCustomerId(brokerConfiguration)).isEqualTo("c0");
+    assertThat(SupportConfig.getReportIntervalMs(brokerConfiguration)).isEqualTo(24 * 60 * 60 * 1000);
+    assertThat(SupportConfig.getKafkaTopic(brokerConfiguration)).isEqualTo("__sample_topic");
+    assertThat(SupportConfig.getEndpointHTTP(brokerConfiguration)).isEqualTo("http://support-metrics.confluent.io/test");
+    assertThat(SupportConfig.getEndpointHTTPS(brokerConfiguration)).isEqualTo("https://support-metrics.confluent.io/test");
+    assertThat(SupportConfig.isProactiveSupportEnabled(brokerConfiguration)).isTrue();
 
   }
 
@@ -130,10 +132,15 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void testMergeAndValidatePropsDefaultNull() {
+  public void testMergeAndValidatePropsDefaultNull() throws IOException {
+    // Given
     Properties nullDefaultProp = null;
-    Properties overrideProp = supportProperties;
+    Properties overrideProp = defaultBrokerConfiguration();
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(nullDefaultProp, overrideProp);
+
+    // Then
     assertThat(SupportConfig.getMetricsEnabled(props)).isEqualTo(true);
     assertThat(SupportConfig.getCustomerId(props)).isEqualTo("c0");
     assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(24 * 60 * 60 * 1000);
@@ -145,9 +152,14 @@ public class SupportConfigTest {
 
   @Test
   public void testMergeAndValidatePropsOverrideNull() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties nullOverrideProp = null;
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, nullOverrideProp);
+
+    // Then
     assertThat(SupportConfig.getMetricsEnabled(props)).isEqualTo(true);
     assertThat(SupportConfig.getCustomerId(props)).isEqualTo("anonymous");
     assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(24 * 60 * 60 * 1000);
@@ -159,105 +171,138 @@ public class SupportConfigTest {
 
   @Test
   public void testMergeAndValidatePropsAnonymousEndpointMismatchHTTP() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT);
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
 
+    // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/anon");
   }
 
   @Test
   public void testMergeAndValidatePropsAnonymousEndpointMismatchHTTPS() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT);
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
 
+    // Then
     assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/anon");
   }
 
   @Test
   public void testMergeAndValidatePropsCustomerEndpointMismatch() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C1");
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
 
+    // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/submit");
     assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/submit");
   }
 
   @Test
   public void testMergeAndValidatePropsConfluentTestEndpointMismatch() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C0");
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
 
+    // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/test");
     assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/test");
   }
 
   @Test
   public void testMergeAndValidatePropsDisableEndpoints() {
+    // Given
     Properties defaultProp = SupportConfig.getDefaultProps();
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
+
+    // When
     Properties props = SupportConfig.mergeAndValidateProperties(defaultProp, overrideProps);
 
+    // Then
     assertThat(SupportConfig.getEndpointHTTP(props)).isEmpty();
     assertThat(SupportConfig.getEndpointHTTPS(props)).isEmpty();
   }
 
   @Test
   public void isProactiveSupportEnabledFull() {
+    // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG, "true");
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isTrue();
   }
 
   @Test
   public void isProactiveSupportDisabledFull() {
+    // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG, "false");
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com");
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com");
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
 
   @Test
   public void isProactiveSupportEnabledTopicOnly() {
+    // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
 
   @Test
   public void isProactiveSupportEnabledHTTPOnly() {
+    // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com");
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
 
   @Test
   public void isProactiveSupportEnabledHTTPSOnly() {
+    // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com");
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
 
   @Test
   public void isProactiveSupportDisabled() {
+    // Given
     Properties serverProperties = new Properties();
 
+    // When/Then
     assertThat(SupportConfig.isProactiveSupportEnabled(serverProperties)).isFalse();
   }
+
 }
