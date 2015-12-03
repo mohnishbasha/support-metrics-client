@@ -92,7 +92,7 @@ The relevant setting for the broker configuration (typically at ``/etc/kafka/ser
 Recommended Proactive Support configuration settings for licensed Confluent customers
 -------------------------------------------------------------------------------------
 
-Confluent customers must change the `confluent.support.customer.id` setting and provide their respective Confluent customer ID.  Please reach out to our customer support if you have any questions.
+Confluent customers must change the ``confluent.support.customer.id`` setting and provide their respective Confluent customer ID.  Please reach out to our customer support if you have any questions.
 
 .. sourcecode:: bash
     :linenos:
