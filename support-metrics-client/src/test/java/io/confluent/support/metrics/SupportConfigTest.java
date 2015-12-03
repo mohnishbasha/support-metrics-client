@@ -297,7 +297,7 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void isProactiveSupportDisabled() {
+  public void proactiveSupportIsDisabledByDefaultWhenBrokerConfigurationIsEmpty() {
     // Given
     Properties serverProperties = new Properties();
 
