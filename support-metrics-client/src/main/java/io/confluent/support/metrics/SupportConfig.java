@@ -13,6 +13,7 @@
  */
 package io.confluent.support.metrics;
 
+import org.apache.avro.SchemaBuilder;
 import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,20 +65,30 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG = "confluent.support.metrics.topic";
   private static final String CONFLUENT_SUPPORT_METRICS_TOPIC_DOC = "Internal topic used for metric collection. If missing, metrics will not be collected in a Kafka topic ";
   public static final String CONFLUENT_SUPPORT_METRICS_TOPIC_DEFAULT = "__confluent.support.metrics";
+
   /**
-   * <code>confluent.support.metrics.endpoint.insecure</code>
+   * <code>confluent.support.metrics.endpoint.insecure.enable</code>
+   */
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG = "confluent.support.metrics.endpoint.insecure.enable";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_DOC = "False to disable reporting over HTTP, true otherwise";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_DEFAULT = "true";
+
+  /**
+   * <code>confluent.support.metrics.endpoint.secure.enable</code>
+   */
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG = "confluent.support.metrics.endpoint.secure.enable";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DOC = "False to disable reporting over HTTPS, true otherwise";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DEFAULT = "true";
+
+  /**
+   * Confluent endpoints. These are internal properties that cannot be set from a config file
+   * but that are added to the original config file at startup time
    */
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG = "confluent.support.metrics.endpoint.insecure";
-  private static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DOC = "Confluent endpoint that receives metrics over HTTP";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT = "http://support-metrics.confluent.io/anon";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT = "http://support-metrics.confluent.io/submit";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_TEST_DEFAULT = "http://support-metrics.confluent.io/test";
-
-  /**
-   * <code>confluent.support.metrics.endpoint.secure</code>
-   */
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG = "confluent.support.metrics.endpoint.secure";
-  private static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DOC = "Confluent endpoint that receives metrics over HTTPS";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT = "https://support-metrics.confluent.io/anon";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT = "https://support-metrics.confluent.io/submit";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT = "https://support-metrics.confluent.io/test";
@@ -94,8 +105,8 @@ public class SupportConfig {
     props.setProperty(CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
     props.setProperty(CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG, CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_DEFAULT);
     props.setProperty(CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_TOPIC_DEFAULT);
-    props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT);
-    props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT);
+    props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_DEFAULT);
+    props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DEFAULT);
 
     return props;
   }
@@ -103,43 +114,53 @@ public class SupportConfig {
   /**
    * Takes default properties from getDefaultProps() and a set of override properties and
    * returns a merged properties object, where the defaults are overriden.
-   * Performs some basic validation on the properties returned
+   * Sanitizes and validates the returned properties
    * @param defaults
    * @param overrides
    * @return
    */
   public static Properties mergeAndValidateProperties(Properties defaults, Properties overrides) {
+    Properties props;
+    if (defaults == null && overrides == null) {
+      return null;
+    }
     if (overrides == null) {
-      return defaults;
+      props = (Properties) defaults.clone();
+    } else if (defaults == null) {
+      props = (Properties) overrides.clone();
+    } else {
+      props = new Properties();
+      props.putAll(defaults);
+      props.putAll(overrides);
     }
-    if (defaults == null) {
-      return overrides;
-    }
-    Properties props = new Properties();
-    props.putAll(defaults);
-    props.putAll(overrides);
+
+    // make sure users are not setting internal properties in the config file
+    // sanitize props just in case
+    props.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG);
+    props.remove(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG);
+
 
     // set the correct customer id/endpoint pair
     if (isAnonymousUser(getCustomerId(props))) {
-      if (!getEndpointHTTP(props).isEmpty()) {
+      if (getEndpointHTTPEnabled(props)) {
         setEndpointHTTP(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT, props);
       }
-      if (!getEndpointHTTPS(props).isEmpty()) {
+      if (getEndpointHTTPSEnabled(props)) {
         setEndpointHTTPS(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT, props);
       }
     } else if (isTestUser(getCustomerId(props))) {
-      if (!getEndpointHTTP(props).isEmpty()) {
+      if (getEndpointHTTPEnabled(props)) {
         setEndpointHTTP(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_TEST_DEFAULT, props);
       }
-      if (!getEndpointHTTPS(props).isEmpty()) {
+      if (getEndpointHTTPSEnabled(props)) {
         setEndpointHTTPS(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT, props);
       }
     }
     else {
-      if (!getEndpointHTTP(props).isEmpty()) {
+      if (getEndpointHTTPEnabled(props)) {
         setEndpointHTTP(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT, props);
       }
-      if (!getEndpointHTTPS(props).isEmpty()) {
+      if (getEndpointHTTPSEnabled(props)) {
         setEndpointHTTPS(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT, props);
       }
     }
@@ -237,12 +258,22 @@ public class SupportConfig {
     return Boolean.parseBoolean(enableString);
   }
 
+  public static boolean getEndpointHTTPEnabled(Properties serverConfiguration) {
+    String enableHTTP =  serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_DEFAULT);
+    return Boolean.parseBoolean(enableHTTP);
+  }
+
   public static String getEndpointHTTP(Properties serverConfiguration) {
     return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
   }
 
   public static void setEndpointHTTP(String endpointHTTP, Properties serverConfiguration) {
      serverConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, endpointHTTP);
+  }
+
+  public static boolean getEndpointHTTPSEnabled(Properties serverConfiguration) {
+    String enableHTTPS =  serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DEFAULT);
+    return Boolean.parseBoolean(enableHTTPS);
   }
 
   public static String getEndpointHTTPS(Properties serverConfiguration) {

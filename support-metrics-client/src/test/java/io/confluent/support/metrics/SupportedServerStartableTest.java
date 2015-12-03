@@ -51,12 +51,34 @@ public class SupportedServerStartableTest {
   @Test
   public void testProactiveSupportEnabledKafkaOnly() throws IOException {
     Properties brokerConfiguration = defaultBrokerConfiguration();
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
     SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
 
     assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isFalse();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
+  }
+
+  @Test
+  public void testProactiveSupportEnabledKafkaAndHTTPOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
+
+    assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
+  }
+
+  @Test
+  public void testProactiveSupportEnabledKafkaAndHTTPSOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
+
+    assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
   }
 
