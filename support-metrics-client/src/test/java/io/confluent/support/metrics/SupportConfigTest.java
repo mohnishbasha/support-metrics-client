@@ -220,6 +220,32 @@ public class SupportConfigTest {
   }
 
   @Test
+  public void testOverrideReportInterval() {
+    // Given
+    Properties overrideProps = new Properties();
+    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG, "1");
+
+    // When
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
+
+    // Then
+    assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(1 * 60 * 60 * 1000);
+  }
+
+  @Test
+  public void testOverrideTopc() {
+    // Given
+    Properties overrideProps = new Properties();
+    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "__another_example_topic");
+
+    // When
+    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
+
+    // Then
+    assertThat(SupportConfig.getKafkaTopic(props)).isEqualTo("__another_example_topic");
+  }
+
+  @Test
   public void isProactiveSupportEnabledFull() {
     // Given
     Properties serverProperties = new Properties();
