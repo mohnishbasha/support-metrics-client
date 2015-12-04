@@ -166,7 +166,7 @@ Network ports used by Proactive Support
 
 When the Metrics feature is enabled (default), brokers will attempt to report metadata via the Internet to Confluent.
 The metadata will be sent via HTTPS (preferred) or HTTP, which means you need to ensure that the brokers are allowed
-to talk to the Internet via ports `443` (HTTPS) and/or `80` (HTTP) if you want to benefit from this functionality.
+to talk to the Internet via destination ports `443` (HTTPS) and/or `80` (HTTP) if you want to benefit from this functionality.
 
 
 .. _ps-sharing-metadata-manually:
