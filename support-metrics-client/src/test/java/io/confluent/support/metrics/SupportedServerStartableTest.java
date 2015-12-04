@@ -14,66 +14,86 @@
 package io.confluent.support.metrics;
 
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SupportedServerStartableTest {
-  private static final Logger log = LoggerFactory.getLogger(SupportedServerStartableTest.class);
-  private static Properties supportProperties = null;
 
-  static {
-    try {
-      Properties props = new Properties();
-      props.load(MetricsToKafkaTest.class.getResourceAsStream("/default-server.properties"));
-      supportProperties = props;
-    } catch (IOException e) {
-      log.warn("Error while loading default properties:", e.getMessage());
-    }
+  private Properties defaultBrokerConfiguration() throws IOException {
+    Properties brokerConfiguration = new Properties();
+    brokerConfiguration.load(SupportedServerStartableTest.class.getResourceAsStream("/default-server.properties"));
+    return brokerConfiguration;
   }
 
   @Test
-  public void testProactiveSupportEnabled() {
-      Properties props = (Properties)supportProperties.clone();
-      SupportedServerStartable supportedServerStartable = new SupportedServerStartable(props);
+  public void testProactiveSupportEnabled() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
 
-      assertThat(supportedServerStartable.getMetricsReporter()).isNotNull();
-      assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
-      assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
-      assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter()).isNotNull();
+    assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
   }
 
   @Test
-  public void testProactiveSupportDisabled() {
-    Properties props = (Properties)supportProperties.clone();
-    props.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG, "false");
-    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(props);
+  public void testProactiveSupportDisabled() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
 
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isFalse();
     assertThat(supportedServerStartable.getMetricsReporter()).isNull();
   }
 
   @Test
-  public void testProactiveSupportEnabledKafkaOnly() {
-    Properties props = (Properties)supportProperties.clone();
-    props.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "");
-    props.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "");
-    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(props);
+  public void testProactiveSupportEnabledKafkaOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
 
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isFalse();
     assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
   }
 
   @Test
-  public void testProactiveSupportEnabledConfluentOnly() {
-    Properties props = (Properties)supportProperties.clone();
-    props.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "");
-    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(props);
+  public void testProactiveSupportEnabledKafkaAndConfluentHTTPOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
 
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
+  }
+
+  @Test
+  public void testProactiveSupportEnabledKafkaAndConfluentHTTPSOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
+
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
+    assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isTrue();
+  }
+
+  @Test
+  public void testProactiveSupportEnabledConfluentHTTPSAndHTTPOnly() throws IOException {
+    Properties brokerConfiguration = defaultBrokerConfiguration();
+    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "");
+    SupportedServerStartable supportedServerStartable = new SupportedServerStartable(brokerConfiguration);
+
+    assertThat(supportedServerStartable.isProactiveSupportActiveAtRuntime()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().reportingEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isFalse();

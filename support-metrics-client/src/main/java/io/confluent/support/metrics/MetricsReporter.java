@@ -85,7 +85,10 @@ public class MetricsReporter implements Runnable {
 
   /**
    * @param server              The Kafka server.
-   * @param serverConfiguration The properties this server was created from.
+   * @param serverConfiguration The properties this server was created from, plus extra Proactive Support (PS) ones
+   *                            Note that Kafka does not understand PS properties,
+   *                            hence server->KafkaConfig() does not contain any of them, necessitating
+   *                            passing this extra argument to the API.
    * @param serverRuntime       The Java runtime of the server that is being monitored.
    * @param kafkaUtilities      An instance of {@link KafkaUtilities} that will be used to perform
    *                            e.g. Kafka topic management if needed.
