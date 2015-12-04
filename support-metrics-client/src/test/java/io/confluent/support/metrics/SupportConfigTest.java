@@ -223,13 +223,15 @@ public class SupportConfigTest {
   public void testOverrideReportInterval() {
     // Given
     Properties overrideProps = new Properties();
-    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG, "1");
+    int reportIntervalHours = 1;
+    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_REPORT_INTERVAL_HOURS_CONFIG,
+        String.valueOf(reportIntervalHours));
 
     // When
     Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
 
     // Then
-    assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(1 * 60 * 60 * 1000);
+    assertThat(SupportConfig.getReportIntervalMs(props)).isEqualTo(reportIntervalHours * 60 * 60 * 1000);
   }
 
   @Test
