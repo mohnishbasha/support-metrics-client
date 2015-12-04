@@ -9,7 +9,7 @@ Confluent Proactive Support
 What is Proactive Support?
 --------------------------
 
-Proactive Support is a component of the Confluent Platform.  It contains a feature that collects and reports support metrics ("Metrics"), which is enabled by default.  We do this primarily to provide proactive support to our customers, to help us build better products, to help customers comply with support contracts, and to help guide our marketing efforts.  With Metrics enabled, a Kafka broker is configured to collect and report certain broker and cluster metadata ("Metadata") every 24 hours about your use of the Confluent Platform 2.0 (including without limitation, your remote internet protocol address) to Confluent, Inc. (“Confluent”) or its parent, subsidiaries, affiliates or service providers.  This Metadata may be transferred to any country in which Confluent maintains facilities.
+Proactive Support is a component of the Confluent Platform.  It collects and reports support metrics ("Metrics") to Confluent. Proactive Support is enabled by default in the Confluent Platform.  We do this to provide proactive support to our customers, to help us build better products, to help customers comply with support contracts, and to help guide our marketing efforts.  With Metrics enabled, a Kafka broker is configured to collect and report certain broker and cluster metadata ("Metadata") every 24 hours about your use of the Confluent Platform 2.0 (including without limitation, your remote internet protocol address) to Confluent, Inc. (“Confluent”) or its parent, subsidiaries, affiliates or service providers.  This Metadata may be transferred to any country in which Confluent maintains facilities.
 
 By proceeding with Metrics enabled, you agree to all such collection, transfer, storage and use of Metadata by Confluent.  You can turn Metrics off at any time by following the instructions described below.
 
@@ -23,24 +23,24 @@ How it works
 
 With the Metrics feature enabled, a Kafka broker will collect and report certain broker and cluster metadata every 24 hours to the following two destinations:
 
-1. to a special-purpose Kafka topic within the same cluster, named ``__confluent.support.metrics`` by default;
+1. to a special-purpose Kafka topic within the same cluster (named ``__confluent.support.metrics`` by default)
 2. to Confluent via either HTTPS or HTTP over the Internet (HTTPS preferred).
 
-The main reason of reporting to the first destination (to a Kafka topic) is that there are certain situations when reporting the metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  The drawback of this approach is that the collected metadata is not being shared automatically and requires manual operator intervention as described in section :ref:`ps-sharing-metadata-manually`.  The second destination (to Confluent via the Internet) is therefore the most convenient option for customers.
+The main reason for reporting to a Kafka topic is that there are certain situations when reporting the metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  The drawback of this approach is that the collected metadata is not being shared automatically and requires manual operator intervention as described in section :ref:`ps-sharing-metadata-manually`.  Reporting data to Confluent via the Internet is the most convenient option for most customers.
 
-The actual agent that collects and reports the metadata is collocated with the broker process and runs within the same JVM.  The volume of the metadata that is being collected (see :ref:`ps-which-metadata-is-being-collected`) is small and the default report interval is once every 24 hours (see :ref:`ps-configuration-settings`), which means running your Kafka infrastructure with the Metrics feature enabled is very safe.
+The agent that collects and reports the metadata is collocated with the broker process and runs within the same JVM.  The volume of the metadata collected by this agent (see :ref:`ps-which-metadata-is-being-collected`) is small and the default report interval is once every 24 hours (see :ref:`ps-configuration-settings`).
 
 The following sections describe in more detail which metadata is being collected, how to enable or disable the Metrics feature, how to configure the feature if you are a licensed Confluent customer, and how to tune its configuration settings when needed.
 
 .. _ps-which-metadata-is-being-collected:
 
-Which metadata is being collected?
-----------------------------------
+Which metadata is  collected?
+-----------------------------
 
 Anonymous metadata collection (default)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With Metrics enabled, the default Kafka broker configuration that ships with the Confluent Platform collects and reports the following pieces of information anonymously:
+With Metrics enabled, the default Kafka broker configuration that ships with the Confluent Platform anonymously collects and reports the following pieces of information:
 
 * **Confluent Platform version** - The Confluent Platform version that the broker is running.
 * **Kafka version** - The Kafka version that the broker is running.
@@ -51,7 +51,7 @@ With Metrics enabled, the default Kafka broker configuration that ships with the
 Metadata collection for licensed Confluent Customers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With Metrics enabled and with a proper Confluent customer ID set in the broker configuration (which is not the case for the default broker configuration that ships with the Confluent Platform) via the setting ``confluent.support.customer.id``, then additional metadata is being collected and reported to Confluent that e.g. help to proactively identify issues in the field.  This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
+If Metrics are enabled and  a proper Confluent customer ID is set in the broker configuration, then additional metadata are  collected and reported to Confluent that help to proactively identify issues in the field. (This only occurs if a user changes the setting ``confluent.support.customer.id``.)  This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
 
 Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information.
 
@@ -110,7 +110,7 @@ Confluent customers must change the ``confluent.support.customer.id`` setting an
 Proactive Support configuration settings
 ----------------------------------------
 
-This section documents all available Proactive Support settings that can be defined in the broker configuration (typically at ``/etc/kafka/server.properties``), including their default values.  Most users will not need to change these settings.  In fact, we recommend to leave these settings at their default values;  the exception are Confluent customers, which should change a few settings as described in the previous section.
+This section documents all available Proactive Support settings that can be defined in the broker configuration (typically at ``/etc/kafka/server.properties``), including their default values.  Most users will not need to change these settings.  In fact, we recommend leaving these settings at their default values;  the exception are Confluent customers, which should change a few settings as described in the previous section.
 
 .. sourcecode:: bash
 
@@ -174,7 +174,7 @@ to talk to the Internet via destination ports `443` (HTTPS) and/or `80` (HTTP) i
 Sharing Proactive Support Metadata with Confluent manually
 ----------------------------------------------------------
 
-There are certain situations when reporting the metadata via the Internet is not possible for our customers.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  This is the main reason why the Metrics feature includes the functionality to report the collected metadata to an internal Kafka topic (see section :ref:`ps-how-it-works`).
+There are certain situations when reporting the metadata via the Internet is not possible.  For example, a company's security policy may mandate that computer infrastructure in production environments must not be able to access the Internet directly.  This is the main reason why the Metrics feature includes the functionality to report the collected metadata to an internal Kafka topic (see section :ref:`ps-how-it-works`).
 
 For these situations we include a tool called ``support-metrics-bundle`` in the Kafka installation package of the Confluent Platform that will retrieve any previously reported metadata from the internal Kafka topic and store them in a compressed file.  You can then share this file with our customer support, e.g. by attaching it to a support ticket.
 
