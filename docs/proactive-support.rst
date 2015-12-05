@@ -34,7 +34,7 @@ The following sections describe in more detail which metadata is being collected
 
 .. _ps-which-metadata-is-being-collected:
 
-Which metadata is  collected?
+Which metadata is collected?
 -----------------------------
 
 Anonymous metadata collection (default)
@@ -56,7 +56,7 @@ If Metrics are enabled and  a proper Confluent customer ID is set in the broker 
 Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information.
 
 
-Which (meta)data is not being collected?
+Which metadata and data is not being collected?
 ----------------------------------------
 
 We understand that Confluent Platform users often publish private or proprietary data to Kafka clusters, and often run Kafka in sensitive environments.  We have done our best to avoid collecting any proprietary information about customers.  In particular:
