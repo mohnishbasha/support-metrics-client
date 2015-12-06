@@ -41,6 +41,21 @@
     <maven-assembly.version>2.6</maven-assembly.version>
   </properties>
 
+  <scm>
+    <connection>scm:git:git://github.com/confluentinc/support-metrics-client.git</connection>
+    <developerConnection>scm:git:git@github.com:confluentinc/support-metrics-client.git</developerConnection>
+    <url>https://github.com/confluentinc/support-metrics-client</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <repositories>
+    <repository>
+      <id>confluent</id>
+      <name>Confluent</name>
+      <url>http://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
+
   <build>
     <pluginManagement>
       <plugins>
