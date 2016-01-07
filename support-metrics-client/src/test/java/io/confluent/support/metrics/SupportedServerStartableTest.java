@@ -98,5 +98,5 @@ public class SupportedServerStartableTest {
     assertThat(supportedServerStartable.getMetricsReporter().sendToConfluentEnabled()).isTrue();
     assertThat(supportedServerStartable.getMetricsReporter().sendToKafkaEnabled()).isFalse();
   }
-
 }
+
