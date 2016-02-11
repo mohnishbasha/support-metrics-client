@@ -84,16 +84,6 @@ The following libraries are included in packaged versions of this project:
  * NOTICE: licenses/NOTICE.log4j.txt
  * HOMEPAGE: http://logging.apache.org/log4j/1.2/
 
-* Confluent Support Common
- * COPYRIGHT: Confluent Inc.
- * LICENSE: licenses/LICENSE.apache2.txt
- * HOMEPAGE: https://github.com/confluentinc/support-metrics-common
-
-* Confluent Support Full Collector
- * COPYRIGHT: Confluent Inc.
- * LICENSE: licenses/LICENSE.apache2.txt
- * HOMEPAGE: https://github.com/confluentinc/support-metrics-fullcollector
-
 * Jackson annotations
  * LICENSE: licenses/LICENSE.jackson-annotations.txt (Apache 2)
  * HOMEPAGE: http://github.com/FasterXML/jackson
