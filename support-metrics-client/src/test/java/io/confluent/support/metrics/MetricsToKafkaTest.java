@@ -4,6 +4,7 @@ import org.apache.kafka.common.utils.AppInfoParser;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -55,7 +56,8 @@ public class MetricsToKafkaTest {
 
     // Cleanup
     kafkaMetricsToFile.shutdown();
-    CoreUtils.rm(outputFile);
+    List<String> outputFiles = Arrays.asList(outputFile);
+    CoreUtils.delete(scala.collection.JavaConversions.asScalaBuffer(outputFiles).seq());
     cluster.stopCluster();
   }
 
