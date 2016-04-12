@@ -15,6 +15,9 @@
  */
 package io.confluent.support.metrics;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Properties;
 
 import kafka.Kafka;
@@ -29,6 +32,7 @@ import kafka.Kafka;
  */
 public class SupportedKafka {
 
+  private static final Logger log = LoggerFactory.getLogger(SupportedKafka.class);
   public static void main(String[] args) throws Exception {
     try {
       Properties serverProps = Kafka.getPropsFromArgs(args);
@@ -45,6 +49,7 @@ public class SupportedKafka {
       supportedServerStartable.startup();
       supportedServerStartable.awaitShutdown();
     } catch (Exception e) {
+      log.error("Fatal error during SupportedServerStartable startup. Prepare to shutdown", e);
       System.exit(ExitCodes.ERROR);
     }
     System.exit(ExitCodes.SUCCESS);
