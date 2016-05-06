@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.confluent.support.metrics.collectors.BasicCollector;
-import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.common.kafka.KafkaUtilities;
@@ -79,8 +77,9 @@ public class MetricsReporter implements Runnable {
 
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
-                         Runtime serverRuntime) {
-    this(server, serverConfiguration, serverRuntime, new KafkaUtilities());
+                         Runtime serverRuntime,
+                         Collector metricsCollector) {
+    this(server, serverConfiguration, serverRuntime, new KafkaUtilities(), metricsCollector);
   }
 
   /**
@@ -96,21 +95,18 @@ public class MetricsReporter implements Runnable {
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
                          Runtime serverRuntime,
-                         KafkaUtilities kafkaUtilities) {
+                         KafkaUtilities kafkaUtilities,
+                         Collector metricsCollector) {
     this.kafkaUtilities = kafkaUtilities;
 
-    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
+    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null
+        || metricsCollector == null) {
       throw new IllegalArgumentException("some arguments are null");
     }
 
     customerId = SupportConfig.getCustomerId(serverConfiguration);
-    TimeUtils time = new TimeUtils();
-    if (SupportConfig.isAnonymousUser(customerId)) {
-      metricsCollector = new BasicCollector(time);
-    } else {
-      metricsCollector = new FullCollector(server, serverConfiguration, serverRuntime, time);
-    }
-    metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
+    this.metricsCollector = metricsCollector;
+
 
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
 

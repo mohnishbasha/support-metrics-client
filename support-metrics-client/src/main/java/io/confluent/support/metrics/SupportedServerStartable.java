@@ -19,6 +19,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
+import io.confluent.support.metrics.collectors.BasicCollectorFactory;
+import io.confluent.support.metrics.collectors.FullCollectorFactory;
+import io.confluent.support.metrics.common.Collector;
+import io.confluent.support.metrics.common.time.TimeUtils;
 import kafka.metrics.KafkaMetricsReporter$;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
@@ -52,10 +56,34 @@ public class SupportedServerStartable {
     if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
+
+        // see if the fullcollector class is there. If it is not, then revert to collecting
+        // basic metrics only
+        try {
+          Class.forName("io.confluent.support.metrics.collectors.FullCollector");
+        } catch( ClassNotFoundException e ) {
+          SupportConfig.setCustomerAnonymous(brokerConfiguration);
+          log.warn("Only basic metric collection is enabled. Download the full Confluent platform for full support");
+        }
+
         Properties brokerConfigurationPlusMissingPSSettings =
             SupportConfig.mergeAndValidateWithDefaultProperties(brokerConfiguration);
+
+        String customerId = SupportConfig.getCustomerId(brokerConfigurationPlusMissingPSSettings);
+        Collector metricsCollector;
+
+        TimeUtils time = new TimeUtils();
+        if (SupportConfig.isAnonymousUser(customerId)) {
+          BasicCollectorFactory factory = new BasicCollectorFactory();
+          metricsCollector = factory.getBasicCollector(time);
+        } else {
+          FullCollectorFactory factory = new FullCollectorFactory();
+          metricsCollector = factory.getFullCollector(server, brokerConfigurationPlusMissingPSSettings, serverRuntime, time);
+        }
+        metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
+
         metricsReporter =
-            new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
+            new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime, metricsCollector);
         metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);
         long reportIntervalMs = SupportConfig.getReportIntervalMs(brokerConfigurationPlusMissingPSSettings);
         long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);

@@ -13,16 +13,13 @@
  */
 package io.confluent.support.metrics;
 
-import org.apache.avro.SchemaBuilder;
+
 import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.util.regex.Pattern;
-
-import kafka.server.KafkaServer;
-
 
 
 /**
@@ -221,6 +218,15 @@ public class SupportConfig {
       id = fallbackId;
     }
     return id;
+  }
+
+  /**
+   * Sets the customer ID to anonymous
+   * @param serverConfiguration
+   */
+  public static void setCustomerAnonymous(Properties serverConfiguration) {
+      serverConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
+          SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
   }
 
   public static long getReportIntervalMs(Properties serverConfiguration) {

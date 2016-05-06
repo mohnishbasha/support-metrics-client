@@ -18,6 +18,9 @@ import org.junit.Test;
 
 import java.util.Properties;
 
+import io.confluent.support.metrics.collectors.BasicCollectorFactory;
+import io.confluent.support.metrics.common.Collector;
+import io.confluent.support.metrics.common.time.TimeUtils;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.ZkUtils;
@@ -30,6 +33,8 @@ import static org.mockito.Mockito.when;
 public class MetricsReporterTest {
 
   private static KafkaServer mockServer;
+  private static Collector anyCollector;
+  private static BasicCollectorFactory factory;
 
   @BeforeClass
   public static void startCluster() {
@@ -40,6 +45,8 @@ public class MetricsReporterTest {
     mockServer = mock(KafkaServer.class);
     when(mockServer.zkUtils()).thenReturn(mockZkUtils);
     when(mockServer.config()).thenReturn(mockConfig);
+    factory = new BasicCollectorFactory();
+    anyCollector = factory.getBasicCollector(new TimeUtils());
   }
 
   @Test
@@ -50,7 +57,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(null, emptyProperties, serverRuntime);
+      new MetricsReporter(null, emptyProperties, serverRuntime, anyCollector);
       fail("IllegalArgumentException expected because server is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -64,7 +71,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, null, serverRuntime);
+      new MetricsReporter(mockServer, null, serverRuntime, anyCollector);
       fail("IllegalArgumentException expected because props is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -78,7 +85,22 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, emptyProperties, null);
+      new MetricsReporter(mockServer, emptyProperties, null, anyCollector);
+      fail("IllegalArgumentException expected because serverRuntime is null");
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessage("some arguments are null");
+    }
+  }
+
+  @Test
+  public void testInvalidArgumentsForConstructorNullCollector() {
+    // Given
+    Properties emptyProperties = new Properties();
+    Runtime serverRuntime = Runtime.getRuntime();
+
+    // When/Then
+    try {
+      new MetricsReporter(mockServer, emptyProperties, serverRuntime, null);
       fail("IllegalArgumentException expected because serverRuntime is null");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage("some arguments are null");
@@ -93,7 +115,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime, anyCollector);
 
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
@@ -109,7 +131,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime, anyCollector);
 
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
@@ -125,7 +147,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
 
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(mockServer, serverProperties, serverRuntime, anyCollector);
 
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
@@ -142,7 +164,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, serverProperties, serverRuntime);
+      new MetricsReporter(mockServer, serverProperties, serverRuntime, anyCollector);
       fail("IllegalArgumentException expected because secure endpoint was of wrong type");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTPS endpoint");
@@ -158,7 +180,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, serverProperties, serverRuntime);
+      new MetricsReporter(mockServer, serverProperties, serverRuntime, anyCollector);
       fail("IllegalArgumentException expected because insecure endpoint was of wrong type");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageStartingWith("invalid HTTP endpoint");
