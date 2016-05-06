@@ -42,7 +42,7 @@ import scala.Option;
 public class SupportedServerStartable {
 
   private static final Logger log = LoggerFactory.getLogger(SupportedServerStartable.class);
-
+  private static final String PROPRIETARY_PACKAGE_NAME = "io.confluent.support.metrics.collectors.FullCollector";
   private final KafkaServer server;
   private MetricsReporter metricsReporter = null;
   private Thread metricsThread = null;
@@ -57,11 +57,11 @@ public class SupportedServerStartable {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
 
-        // see if the fullcollector class is there. If it is not, then revert to collecting
+        // see if the PROPRIETARY_PACKAGE_NAME class is there. If it is not, then revert to collecting
         // basic metrics only
         try {
-          Class.forName("io.confluent.support.metrics.collectors.FullCollector");
-        } catch( ClassNotFoundException e ) {
+          Class.forName(PROPRIETARY_PACKAGE_NAME);
+        } catch(ClassNotFoundException e) {
           SupportConfig.setCustomerAnonymous(brokerConfiguration);
           log.warn("Only basic metric collection is enabled. Download the full Confluent platform for full support");
         }
