@@ -23,8 +23,6 @@ import io.confluent.support.metrics.serde.test.User;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AvroSerializerTest {
-
-  // TODO: Verify whether this test is actually meaningful.
   @Test
   public void testSerializedDataIncludesAvroSchema() throws IOException {
     // Given
