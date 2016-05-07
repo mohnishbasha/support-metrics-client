@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 import io.confluent.support.metrics.common.Collector;
+import io.confluent.support.metrics.collectors.BasicCollectorFactory;
+import io.confluent.support.metrics.collectors.FullCollectorFactory;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
@@ -77,9 +79,8 @@ public class MetricsReporter implements Runnable {
 
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
-                         Runtime serverRuntime,
-                         Collector metricsCollector) {
-    this(server, serverConfiguration, serverRuntime, new KafkaUtilities(), metricsCollector);
+                         Runtime serverRuntime) {
+    this(server, serverConfiguration, serverRuntime, new KafkaUtilities());
   }
 
   /**
@@ -95,21 +96,26 @@ public class MetricsReporter implements Runnable {
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
                          Runtime serverRuntime,
-                         KafkaUtilities kafkaUtilities,
-                         Collector metricsCollector) {
+                         KafkaUtilities kafkaUtilities) {
     this.kafkaUtilities = kafkaUtilities;
 
-    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null
-        || metricsCollector == null) {
+    if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
       throw new IllegalArgumentException("some arguments are null");
     }
 
     customerId = SupportConfig.getCustomerId(serverConfiguration);
-    this.metricsCollector = metricsCollector;
+    TimeUtils time = new TimeUtils();
 
+    if (SupportConfig.isAnonymousUser(customerId)) {
+      BasicCollectorFactory factory = new BasicCollectorFactory();
+      metricsCollector = factory.getBasicCollector(time);
+    } else {
+      FullCollectorFactory factory = new FullCollectorFactory();
+      metricsCollector = factory.getFullCollector(server, serverConfiguration, serverRuntime, time);
+    }
+    metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
-
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
 
     if (!supportTopic.isEmpty()) {

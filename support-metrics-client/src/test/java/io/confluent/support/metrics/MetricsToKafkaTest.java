@@ -60,9 +60,7 @@ public class MetricsToKafkaTest {
 
     // Sent metrics to the topic
     int numMetricSubmissions = 10;
-    BasicCollectorFactory factory = new BasicCollectorFactory();
-    Collector basicCollector = factory.getBasicCollector(new TimeUtils());
-    MetricsReporter reporter = new MetricsReporter(broker, brokerConfiguration, serverRuntime, basicCollector);
+    MetricsReporter reporter = new MetricsReporter(broker, brokerConfiguration, serverRuntime);
     for (int i = 0; i < numMetricSubmissions; i++) {
       reporter.submitMetrics();
     }
@@ -100,9 +98,7 @@ public class MetricsToKafkaTest {
     brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
     brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
 
-    BasicCollectorFactory factory = new BasicCollectorFactory();
-    Collector basicCollector = factory.getBasicCollector(new TimeUtils());
-    MetricsReporter reporter = new MetricsReporter(firstBroker, brokerConfiguration, serverRuntime, basicCollector);
+    MetricsReporter reporter = new MetricsReporter(firstBroker, brokerConfiguration, serverRuntime);
     String topic = brokerConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
 
     // When
