@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MetricsToKafkaTest {
 
   @Test
-  public void savesAsManyMetricsToFileAsHaveBeenSubmittedBySingleNodeCluster() throws Exception {
+  public void savesAsManyMetricsToFileAsHaveBeenSubmittedBySingleNodeCluster() throws IOException {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
@@ -84,7 +84,7 @@ public class MetricsToKafkaTest {
   }
 
   @Test
-  public void retrievesBasicMetricsSubmittedByMultiNodeCluster() throws Exception {
+  public void retrievesBasicMetricsSubmittedByMultiNodeCluster() throws IOException {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();

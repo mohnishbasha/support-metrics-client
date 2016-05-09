@@ -26,10 +26,10 @@ public class CollectorFactoryTest {
 
 
     @Test
-    public void testBasicType() throws Exception {
+    public void testBasicType() {
         // Given
         TimeUtils time = new TimeUtils();
-        CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time);
+        CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time, null, null, null);
 
         // when
         CollectorType type = factory.getType();
@@ -39,10 +39,10 @@ public class CollectorFactoryTest {
     }
 
     @Test
-    public void testFullType() throws Exception {
+    public void testFullType() {
         // Given
         TimeUtils time = new TimeUtils();
-        CollectorFactory factory = new CollectorFactory(CollectorType.FULL, null, null, null, time);
+        CollectorFactory factory = new CollectorFactory(CollectorType.FULL, time, null, null, null);
 
         // when
         CollectorType type = factory.getType();

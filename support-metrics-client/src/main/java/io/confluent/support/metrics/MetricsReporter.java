@@ -79,7 +79,7 @@ public class MetricsReporter implements Runnable {
 
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
-                         Runtime serverRuntime) throws Exception {
+                         Runtime serverRuntime) {
     this(server, serverConfiguration, serverRuntime, new KafkaUtilities());
   }
 
@@ -96,7 +96,7 @@ public class MetricsReporter implements Runnable {
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
                          Runtime serverRuntime,
-                         KafkaUtilities kafkaUtilities) throws Exception {
+                         KafkaUtilities kafkaUtilities) {
     this.kafkaUtilities = kafkaUtilities;
 
     if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
@@ -106,10 +106,10 @@ public class MetricsReporter implements Runnable {
     customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
-      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time, null, null, null);
       metricsCollector = factory.getCollector();
     } else {
-      CollectorFactory factory = new CollectorFactory(CollectorType.FULL, server, serverConfiguration, serverRuntime, time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.FULL, time, server, serverConfiguration, serverRuntime);
       metricsCollector = factory.getCollector();
     }
     metricsCollector.setRuntimeState(Collector.RuntimeState.Running);

@@ -58,7 +58,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorNullProperties() throws Exception {
+  public void testInvalidArgumentsForConstructorNullProperties() {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
 
@@ -72,7 +72,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorNullRuntime() throws Exception {
+  public void testInvalidArgumentsForConstructorNullRuntime() {
     // Given
     Properties emptyProperties = new Properties();
 
@@ -87,7 +87,7 @@ public class MetricsReporterTest {
 
 
   @Test
-  public void testValidConstructorTopicOnly() throws Exception {
+  public void testValidConstructorTopicOnly() {
     // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "anyTopic");
@@ -103,7 +103,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testValidConstructorHTTPOnly() throws Exception {
+  public void testValidConstructorHTTPOnly() {
     // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "http://example.com/");
@@ -119,7 +119,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testValidConstructorHTTPSOnly() throws Exception {
+  public void testValidConstructorHTTPSOnly() {
     // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "https://example.com/");
@@ -135,7 +135,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidConstructorInvalidHTTPSOnly() throws Exception {
+  public void testInvalidConstructorInvalidHTTPSOnly() {
     // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, "http://example.com/");
@@ -151,7 +151,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidConstructorInvalidHTTPOnly() throws Exception {
+  public void testInvalidConstructorInvalidHTTPOnly() {
     // Given
     Properties serverProperties = new Properties();
     serverProperties.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CONFIG, "https://example.com/");

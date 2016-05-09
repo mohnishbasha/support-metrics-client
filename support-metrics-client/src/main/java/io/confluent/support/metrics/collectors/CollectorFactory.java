@@ -71,24 +71,28 @@ public class CollectorFactory {
         }
     }
 
-
-    public CollectorFactory(CollectorType type, TimeUtils utils) throws Exception {
-        this.type = type;
-        if (type != CollectorType.BASIC)
-            throw new IllegalArgumentException("Unknown collector type");
-        collector = (Collector) basicCollectorSupplier.get().newInstance(utils);
-    }
-
     public CollectorFactory(CollectorType type,
+                            TimeUtils time,
                             KafkaServer server,
                             Properties serverConfiguration,
-                            Runtime serverRuntime,
-                            TimeUtils time) throws Exception {
+                            Runtime serverRuntime) {
         this.type = type;
-        if (type != CollectorType.FULL)
-            throw new IllegalArgumentException("Unknown collector type");
-        collector = (Collector) fullCollectorSupplier.get().newInstance(server, serverConfiguration, serverRuntime, time);
+        try {
+            switch (type) {
+                case BASIC:
+                    collector = (Collector) basicCollectorSupplier.get().newInstance(time);
+                    break;
+                case FULL:
+                    collector = (Collector) fullCollectorSupplier.get().newInstance(server, serverConfiguration, serverRuntime, time);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown collector type");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Collector factory failed to create instance.", e);
+        }
     }
+
 
     public Collector getCollector() {
         return collector;
