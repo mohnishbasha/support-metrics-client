@@ -43,7 +43,7 @@ public class MetricsReporterTest {
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorNullServer() {
+  public void testInvalidArgumentsForConstructorNullServer() throws Exception {
     // Given
     Properties emptyProperties = new Properties();
     Runtime serverRuntime = Runtime.getRuntime();
@@ -84,6 +84,7 @@ public class MetricsReporterTest {
       assertThat(e).hasMessage("some arguments are null");
     }
   }
+
 
   @Test
   public void testValidConstructorTopicOnly() {

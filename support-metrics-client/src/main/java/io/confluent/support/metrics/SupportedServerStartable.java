@@ -38,7 +38,6 @@ import scala.Option;
 public class SupportedServerStartable {
 
   private static final Logger log = LoggerFactory.getLogger(SupportedServerStartable.class);
-
   private final KafkaServer server;
   private MetricsReporter metricsReporter = null;
   private Thread metricsThread = null;
@@ -52,8 +51,10 @@ public class SupportedServerStartable {
     if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
+
         Properties brokerConfigurationPlusMissingPSSettings =
             SupportConfig.mergeAndValidateWithDefaultProperties(brokerConfiguration);
+
         metricsReporter =
             new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
         metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);

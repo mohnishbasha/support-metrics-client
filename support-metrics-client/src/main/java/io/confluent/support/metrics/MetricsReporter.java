@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.confluent.support.metrics.collectors.BasicCollector;
-import io.confluent.support.metrics.collectors.FullCollector;
 import io.confluent.support.metrics.common.Collector;
+import io.confluent.support.metrics.collectors.CollectorFactory;
+import io.confluent.support.metrics.common.CollectorType;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
@@ -106,14 +106,15 @@ public class MetricsReporter implements Runnable {
     customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
-      metricsCollector = new BasicCollector(time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time, null, null, null);
+      metricsCollector = factory.getCollector();
     } else {
-      metricsCollector = new FullCollector(server, serverConfiguration, serverRuntime, time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.FULL, time, server, serverConfiguration, serverRuntime);
+      metricsCollector = factory.getCollector();
     }
     metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 
     reportIntervalMs = SupportConfig.getReportIntervalMs(serverConfiguration);
-
     supportTopic = SupportConfig.getKafkaTopic(serverConfiguration);
 
     if (!supportTopic.isEmpty()) {
