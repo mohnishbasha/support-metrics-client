@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * then make sure to also update the patch file accordingly.
  */
 public class SupportConfig {
-
+  private static final String PROPRIETARY_PACKAGE_NAME = "io.confluent.support.metrics.collectors.FullCollector";
   private static final Logger log = LoggerFactory.getLogger(SupportConfig.class);
 
   /**
@@ -108,6 +108,13 @@ public class SupportConfig {
     return props;
   }
 
+  private static String warningIfFullCollectorPackageMissing() {
+    return "The package " +  PROPRIETARY_PACKAGE_NAME + "for collecting the full set of support metrics " +
+        "could not be loaded, so we are reverting to anonymous, basic metric collection. " +
+        "If you are a Confluent customer, please refer to the Confluent Platform documentation, " +
+        "section Proactive Support, on how to activate full metrics collection.";
+  }
+
   /**
    * Takes default properties from getDefaultProps() and a set of override properties and
    * returns a merged properties object, where the defaults are overridden.
@@ -125,6 +132,14 @@ public class SupportConfig {
       props = new Properties();
       props.putAll(defaults);
       props.putAll(overrides);
+    }
+
+    try {
+      Class.forName(PROPRIETARY_PACKAGE_NAME);
+    } catch(ClassNotFoundException e) {
+      props.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
+          SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
+      log.warn(warningIfFullCollectorPackageMissing());
     }
 
     // make sure users are not setting internal properties in the config file
@@ -218,15 +233,6 @@ public class SupportConfig {
       id = fallbackId;
     }
     return id;
-  }
-
-  /**
-   * Sets the customer ID to anonymous
-   * @param serverConfiguration
-   */
-  public static void setCustomerAnonymous(Properties serverConfiguration) {
-      serverConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
-          SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
   }
 
   public static long getReportIntervalMs(Properties serverConfiguration) {

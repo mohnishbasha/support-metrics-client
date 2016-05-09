@@ -21,12 +21,10 @@ import kafka.server.KafkaServer;
 
 public class FullCollectorFactory {
 
-    public FullCollectorFactory(){};
-
-    public Collector getFullCollector(KafkaServer server,
-                                      Properties serverConfiguration,
-                                      Runtime serverRuntime,
-                                      TimeUtils time) {
+    public Collector getCollector(KafkaServer server,
+                                  Properties serverConfiguration,
+                                  Runtime serverRuntime,
+                                  TimeUtils time) {
         return new FullCollector(server, serverConfiguration, serverRuntime, time);
     }
 

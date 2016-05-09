@@ -19,9 +19,7 @@ import io.confluent.support.metrics.common.time.TimeUtils;
 
 public class BasicCollectorFactory {
 
-    public BasicCollectorFactory(){};
-
-    public Collector getBasicCollector(TimeUtils time) {
+    public Collector getCollector(TimeUtils time) {
         return new BasicCollector(time);
     }
 

@@ -41,7 +41,6 @@ public class SupportedServerStartable {
   private final KafkaServer server;
   private MetricsReporter metricsReporter = null;
   private Thread metricsThread = null;
-  private static final String PROPRIETARY_PACKAGE_NAME = "io.confluent.support.metrics.collectors.FullCollector";
 
   public SupportedServerStartable(Properties brokerConfiguration) {
     KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
@@ -52,15 +51,6 @@ public class SupportedServerStartable {
     if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
-
-        // see if the PROPRIETARY_PACKAGE_NAME class is there. If it is not, then revert to collecting
-        // basic metrics only
-        try {
-          Class.forName(PROPRIETARY_PACKAGE_NAME);
-        } catch(ClassNotFoundException e) {
-          SupportConfig.setCustomerAnonymous(brokerConfiguration);
-          log.warn("Only basic metric collection is enabled. Download the full Confluent platform for full support");
-        }
 
         Properties brokerConfigurationPlusMissingPSSettings =
             SupportConfig.mergeAndValidateWithDefaultProperties(brokerConfiguration);
