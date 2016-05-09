@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 import io.confluent.support.metrics.common.Collector;
-import io.confluent.support.metrics.collectors.BasicCollectorFactory;
-import io.confluent.support.metrics.collectors.FullCollectorFactory;
+import io.confluent.support.metrics.collectors.CollectorFactory;
+import io.confluent.support.metrics.common.CollectorType;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.common.kafka.KafkaUtilities;
 import io.confluent.support.metrics.serde.AvroSerializer;
@@ -79,7 +79,7 @@ public class MetricsReporter implements Runnable {
 
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
-                         Runtime serverRuntime) {
+                         Runtime serverRuntime) throws Exception {
     this(server, serverConfiguration, serverRuntime, new KafkaUtilities());
   }
 
@@ -96,7 +96,7 @@ public class MetricsReporter implements Runnable {
   public MetricsReporter(KafkaServer server,
                          Properties serverConfiguration,
                          Runtime serverRuntime,
-                         KafkaUtilities kafkaUtilities) {
+                         KafkaUtilities kafkaUtilities) throws Exception {
     this.kafkaUtilities = kafkaUtilities;
 
     if (server == null || serverConfiguration == null || serverRuntime == null || kafkaUtilities == null) {
@@ -106,11 +106,11 @@ public class MetricsReporter implements Runnable {
     customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
-      BasicCollectorFactory factory = new BasicCollectorFactory();
-      metricsCollector = factory.getCollector(time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time);
+      metricsCollector = factory.getCollector();
     } else {
-      FullCollectorFactory factory = new FullCollectorFactory();
-      metricsCollector = factory.getCollector(server, serverConfiguration, serverRuntime, time);
+      CollectorFactory factory = new CollectorFactory(CollectorType.FULL, server, serverConfiguration, serverRuntime, time);
+      metricsCollector = factory.getCollector();
     }
     metricsCollector.setRuntimeState(Collector.RuntimeState.Running);
 

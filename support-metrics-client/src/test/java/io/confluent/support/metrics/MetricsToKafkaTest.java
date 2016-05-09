@@ -21,8 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import io.confluent.support.metrics.collectors.BasicCollectorFactory;
-import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.Version;
 import io.confluent.support.metrics.common.kafka.EmbeddedKafkaCluster;
 import io.confluent.support.metrics.common.time.TimeUtils;
@@ -44,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MetricsToKafkaTest {
 
   @Test
-  public void savesAsManyMetricsToFileAsHaveBeenSubmittedBySingleNodeCluster() throws IOException {
+  public void savesAsManyMetricsToFileAsHaveBeenSubmittedBySingleNodeCluster() throws Exception {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
@@ -86,7 +84,7 @@ public class MetricsToKafkaTest {
   }
 
   @Test
-  public void retrievesBasicMetricsSubmittedByMultiNodeCluster() throws IOException {
+  public void retrievesBasicMetricsSubmittedByMultiNodeCluster() throws Exception {
     // Given
     Runtime serverRuntime = Runtime.getRuntime();
     EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
