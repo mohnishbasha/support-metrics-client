@@ -109,7 +109,7 @@ public class SupportConfig {
   }
 
   private static String warningIfFullCollectorPackageMissing() {
-    return "The package " +  PROPRIETARY_PACKAGE_NAME + "for collecting the full set of support metrics " +
+    return "The package " +  PROPRIETARY_PACKAGE_NAME + " for collecting the full set of support metrics " +
         "could not be loaded, so we are reverting to anonymous, basic metric collection. " +
         "If you are a Confluent customer, please refer to the Confluent Platform documentation, " +
         "section Proactive Support, on how to activate full metrics collection.";
