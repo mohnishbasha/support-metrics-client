@@ -37,12 +37,12 @@ The following sections describe in more detail which metadata is being collected
 Which metadata is collected?
 -----------------------------
 
-Proactive Support has two versions, one for open-source users (called Version Checker) and another for licenced Confluent Customers (called Confluent Support Metrics). The latter needs to be installed as a separate package.
+Proactive Support has two versions, one for open-source users (called Version Collector) and another for licenced Confluent Customers (called Confluent Support Metrics). The latter needs to be installed as a separate package.
 
-Version Checker (default)
+Version Collector (default)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Version Checker package collects the Kafka and Confluent Platform versions and 
+The Version Collector package collects the Kafka and Confluent Platform versions and 
 reports the following pieces of information to Confluent:
 
 * **Confluent Platform version** - The Confluent Platform version that the broker is running.
@@ -56,7 +56,7 @@ Confluent Support Metrics (add-on package)
 
 The Confluent Support Metrics add-on package collects and reports additional metadata that helps Confluent to proactively identify issues in the field. This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
 
-Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information. You will need a proper Confluent customer ID to set in the broker configuration (``confluent.support.customer.id`` setting) as well as the Confluent Support Metrics package.
+Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information. You will need a Confluent customer ID to set in the broker configuration (``confluent.support.customer.id`` setting) as well as the Confluent Support Metrics package.
 
 
 Which metadata and data is not being collected?
