@@ -9,7 +9,7 @@ Confluent Proactive Support
 What is Proactive Support?
 --------------------------
 
-Proactive Support is a component of the Confluent Platform.  It collects and reports support metrics ("Metrics") to Confluent. Proactive Support is enabled by default in the Confluent Platform.  We do this to provide proactive support to our customers, to help us build better products, to help customers comply with support contracts, and to help guide our marketing efforts.  With Metrics enabled, a Kafka broker is configured to collect and report certain broker and cluster metadata ("Metadata") every 24 hours about your use of the Confluent Platform 2.0 (including without limitation, your remote internet protocol address) to Confluent, Inc. (“Confluent”) or its parent, subsidiaries, affiliates or service providers.  This Metadata may be transferred to any country in which Confluent maintains facilities.
+Proactive Support is a component of the Confluent Platform.  It collects and reports support metrics ("Metrics") to Confluent. Proactive Support is enabled by default in the Confluent Platform.  We do this to provide proactive support to our customers, to help us build better products, to help customers comply with support contracts, and to help guide our marketing efforts.  With Metrics enabled, a Kafka broker is configured to collect and report certain broker and cluster metadata ("Metadata") every 24 hours about your use of the Confluent Platform 3.0 (including without limitation, your remote internet protocol address) to Confluent, Inc. (“Confluent”) or its parent, subsidiaries, affiliates or service providers.  This Metadata may be transferred to any country in which Confluent maintains facilities.
 
 By proceeding with Metrics enabled, you agree to all such collection, transfer, storage and use of Metadata by Confluent.  You can turn Metrics off at any time by following the instructions described below.
 
@@ -37,10 +37,13 @@ The following sections describe in more detail which metadata is being collected
 Which metadata is collected?
 -----------------------------
 
-Anonymous metadata collection (default)
+Proactive Support has two versions, one for open-source users (called Version Collector) and another for licenced Confluent Customers (called Confluent Support Metrics). The latter needs to be installed as a separate package.
+
+Version Collector (default)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With Metrics enabled, the default Kafka broker configuration that ships with the Confluent Platform anonymously collects and reports the following pieces of information:
+The Version Collector package collects the Kafka and Confluent Platform versions and 
+reports the following pieces of information to Confluent:
 
 * **Confluent Platform version** - The Confluent Platform version that the broker is running.
 * **Kafka version** - The Kafka version that the broker is running.
@@ -48,12 +51,12 @@ With Metrics enabled, the default Kafka broker configuration that ships with the
 * **Timestamp** - Time when the metadata was collected on the broker.
 
 
-Metadata collection for licensed Confluent Customers
+Confluent Support Metrics (add-on package)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If Metrics are enabled and  a proper Confluent customer ID is set in the broker configuration, then additional metadata are  collected and reported to Confluent that help to proactively identify issues in the field. (This only occurs if a user changes the setting ``confluent.support.customer.id``.)  This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
+The Confluent Support Metrics add-on package collects and reports additional metadata that helps Confluent to proactively identify issues in the field. This additional metadata includes but is not limited to information about the Java runtime environment of the Kafka broker and metrics relevant to help to comply with Confluent support contracts.
 
-Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information.
+Please reach out to our customer support or refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for more information. You will need a Confluent customer ID to set in the broker configuration (``confluent.support.customer.id`` setting) as well as the Confluent Support Metrics package.
 
 
 Which metadata and data is not being collected?
