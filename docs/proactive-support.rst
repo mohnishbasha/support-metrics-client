@@ -37,7 +37,7 @@ The following sections describe in more detail which metadata is being collected
 Which metadata is collected?
 -----------------------------
 
-Proactive Support has two versions, one for open-source users (called Version Collector) and another for licenced Confluent Customers (called Confluent Support Metrics). The latter needs to be installed as a separate package.
+Proactive Support has two versions, one for open-source users (called Version Collector) and another for licenced Confluent Customers (called Confluent Support Metrics). The former is included in Confluent Kafka package while the latter needs to be installed as a separate package called Confluent Support Metrics. If you installed Confluent Platform package (and not just Confluent Platform Open Source), the full Confluent Support Metrics collector is included.
 
 Version Collector (default)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,7 +60,7 @@ Please reach out to our customer support or refer to the `Confluent Privacy Poli
 
 
 Which metadata and data is not being collected?
-----------------------------------------
+------------------------------------------------
 
 We understand that Confluent Platform users often publish private or proprietary data to Kafka clusters, and often run Kafka in sensitive environments.  We have done our best to avoid collecting any proprietary information about customers.  In particular:
 
@@ -68,7 +68,48 @@ We understand that Confluent Platform users often publish private or proprietary
 * We do not collect any proprietary network information such as internal host names or IP addresses.
 * We do not collect information about the name of topics.
 
+Installing Support Metrics
+---------------------------
 
+In order to collect and report the additional support metadata, you need to have Support Metrics package installed.
+
+If you installed confluent-3.0.0-2.11.8 or confluent-3.0.0-2.10.6 installed (through ZIP, TAR, DEB or RPM), then Support Metrics is already installed and the next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
+
+If you installed confluent-oss-3.0.0-2.11.8 or confluent-oss-3.0.0-2.10.6, or if you chose to install individual packages, you will need to install confluent-support-metrics_3.0.0 packages first.
+
+DEB Packages via apt
+~~~~~~~~~~~~~~~~~~~~~
+
+We'll assume you already followed instructions here :ref:`installation_apt` to install Confluent's public key and add the repository.
+
+Run apt-get update and install Support Metrics package:
+
+.. sourcecode:: bash
+
+      $ sudo apt-get update && sudo apt-get install confluent-support-metrics_3.0.0
+
+The next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
+
+RPM Packages via yum
+~~~~~~~~~~~~~~~~~~~~~
+
+We'll assume you already followed instructions here :ref:`installation_yum` to install Confluent's public key and add the repository.
+
+It is recommended to `clear the yum caches <https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/sec-Working_with_Yum_Cache.html>`_ before proceeding:
+
+.. sourcecode:: bash
+
+    $ sudo yum clean all
+
+The repository is now ready for use.
+
+You can install Support Metrics with:
+
+.. sourcecode:: bash
+
+    $ sudo yum install confluent-platform-2.11.8
+
+The next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
 
 Enabling or disabling the Metrics feature
 -----------------------------------------
@@ -91,6 +132,7 @@ The relevant setting for the broker configuration (typically at ``/etc/kafka/ser
     # will also not be started.
     confluent.support.metrics.enable=true
 
+.. _ps-customer-id-configuration:
 
 Recommended Proactive Support configuration settings for licensed Confluent customers
 -------------------------------------------------------------------------------------
