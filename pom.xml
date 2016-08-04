@@ -7,7 +7,7 @@
 
   <groupId>io.confluent.support</groupId>
   <artifactId>support-metrics-client-parent</artifactId>
-  <version>3.0.1-SNAPSHOT</version>
+  <version>3.0.1</version>
   <packaging>pom</packaging>
   <name>support-metrics-client-parent</name>
 
@@ -29,7 +29,7 @@
   <properties>
     <java.version>1.7</java.version>
     <avro.version>1.7.7</avro.version>
-    <kafka.version>0.10.0.1-SNAPSHOT</kafka.version>
+    <kafka.version>0.10.0.1-cp1</kafka.version>
     <!-- For the moment we must use the "first" Kafka Scala version that we built
          during packaging (cf. `kafka-packaging`), otherwise the build of this
          project will fail during packaging due to missing Kafka libraries. -->
