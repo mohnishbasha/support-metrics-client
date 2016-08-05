@@ -76,7 +76,7 @@ public class SupportedServerStartable {
   private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
     return "Please note that the support metrics collection feature (\"Metrics\") of Proactive Support is enabled.  " +
         "With Metrics enabled, this broker is configured to collect and report certain broker and " +
-        "cluster metadata (\"Metadata\") about your use of the Confluent Platform 2.0 (including " +
+        "cluster metadata (\"Metadata\") about your use of the Confluent Platform (including " +
         "without limitation, your remote internet protocol address) to Confluent, Inc. " +
         "(\"Confluent\") or its parent, subsidiaries, affiliates or service providers every " +
         reportIntervalHours +
