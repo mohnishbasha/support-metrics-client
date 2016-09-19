@@ -13,10 +13,12 @@
  */
 package io.confluent.support.metrics;
 
+import kafka.metrics.KafkaMetricsReporter;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Properties;
 
 import kafka.metrics.KafkaMetricsReporter$;
@@ -46,7 +48,8 @@ public class SupportedServerStartable {
     KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
     KafkaConfig serverConfig = KafkaConfig.fromProps(brokerConfiguration);
     Option<String> noThreadNamePrefix = Option.empty();
-    server = new KafkaServer(serverConfig, SystemTime$.MODULE$, noThreadNamePrefix);
+    server = new KafkaServer(serverConfig, SystemTime$.MODULE$, noThreadNamePrefix,
+            scala.collection.JavaConversions.asScalaBuffer(Collections.<KafkaMetricsReporter>emptyList()));
 
     if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
       try {
