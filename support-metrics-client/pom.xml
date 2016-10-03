@@ -77,12 +77,6 @@
       <version>18.0</version>
       <scope>test</scope>
     </dependency>
-     <dependency>
-      <groupId>io.confluent.support</groupId>
-      <artifactId>support-metrics-fullcollector</artifactId>
-      <version>${confluent.support.metrics.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>io.confluent.support</groupId>
       <artifactId>support-metrics-common</artifactId>

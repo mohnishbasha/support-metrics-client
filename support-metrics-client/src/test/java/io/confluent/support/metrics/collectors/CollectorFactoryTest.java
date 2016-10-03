@@ -37,18 +37,4 @@ public class CollectorFactoryTest {
         // Then
         assertThat(type).isEqualTo(CollectorType.BASIC);
     }
-
-    @Test
-    public void testFullType() {
-        // Given
-        TimeUtils time = new TimeUtils();
-        CollectorFactory factory = new CollectorFactory(CollectorType.FULL, time, null, null, null);
-
-        // when
-        CollectorType type = factory.getType();
-
-        // Then
-        assertThat(type).isEqualTo(CollectorType.FULL);
-    }
-
 }

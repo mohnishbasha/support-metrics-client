@@ -175,35 +175,6 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/anon");
   }
 
-
-  @Test
-  public void testMergeAndValidatePropsCustomerEndpointMismatch() {
-    // Given
-    Properties overrideProps = new Properties();
-    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C1");
-
-    // When
-    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
-
-    // Then
-    assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/submit");
-    assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/submit");
-  }
-
-  @Test
-  public void testMergeAndValidatePropsConfluentTestEndpointMismatch() {
-    // Given
-    Properties overrideProps = new Properties();
-    overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG, "C0");
-
-    // When
-    Properties props = SupportConfig.mergeAndValidateWithDefaultProperties(overrideProps);
-
-    // Then
-    assertThat(SupportConfig.getEndpointHTTP(props)).isEqualTo("http://support-metrics.confluent.io/test");
-    assertThat(SupportConfig.getEndpointHTTPS(props)).isEqualTo("https://support-metrics.confluent.io/test");
-  }
-
   @Test
   public void testMergeAndValidatePropsDisableEndpoints() {
     // Given
