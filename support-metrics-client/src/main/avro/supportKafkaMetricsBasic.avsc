@@ -31,6 +31,12 @@
       "name": "brokerProcessUUID",
       "type": "string",
       "doc": "A unique identifier that is valid for the runtime of a broker.  The identifier is generated at broker startup and lost at shutdown/crash."
+    },
+    {
+      "name": "clusterId",
+      "type": "string",
+      "doc": "A unique identifier for the Kafka cluster.",
+      "default": "NA"
     }
   ]
 }
