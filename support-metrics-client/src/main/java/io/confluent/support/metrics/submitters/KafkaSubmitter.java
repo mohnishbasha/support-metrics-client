@@ -41,7 +41,7 @@ public class KafkaSubmitter implements Submitter {
   private KafkaServer server;
 
   /**
-   * Ideal number of boostrap servers for the kafka producer.
+   * Ideal number of bootstrap servers for the kafka producer.
    */
   private static final int BOOTSTRAP_SERVERS = 3;
 
