@@ -15,10 +15,6 @@
   <name>support-metrics-client</name>
   <url>http://confluent.io</url>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>io.confluent.support</groupId>
@@ -45,7 +41,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
-      <version>4.5.1</version>
+      <version>4.5.2</version>
     </dependency>
     <dependency>
       <groupId>commons-validator</groupId>
