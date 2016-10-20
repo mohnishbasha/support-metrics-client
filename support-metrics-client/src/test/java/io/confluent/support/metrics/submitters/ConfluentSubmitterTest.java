@@ -176,4 +176,20 @@ public class ConfluentSubmitterTest {
       }
     }
   }
+
+  @Test
+  public void testInvalidArgumentsForConstructorWithProxy() {
+    // Given
+    String httpEndpoint = "http://example.com";
+    String httpsEndpoint = "https://example.com";
+    String proxyURI = null;
+
+    // When/Then
+    ConfluentSubmitter submitter = new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint, proxyURI);
+    assertThat(submitter.getProxy() == null);
+
+    proxyURI = "https://proxy.example.com";
+    submitter = new ConfluentSubmitter(customerId, httpEndpoint, httpsEndpoint, proxyURI);
+    assertThat(submitter.getProxy().equals(proxyURI));
+  }
 }

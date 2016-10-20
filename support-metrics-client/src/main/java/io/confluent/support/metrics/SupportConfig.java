@@ -78,6 +78,13 @@ public class SupportConfig {
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DEFAULT = "true";
 
   /**
+   * <code>confluent.support.proxy</code>
+   */
+  public static final String CONFLUENT_SUPPORT_PROXY_CONFIG = "confluent.support.proxy";
+  public static final String CONFLUENT_SUPPORT_PROXY_DOC = "HTTP forward proxy used to support metrics to Confluent";
+  public static final String CONFLUENT_SUPPORT_PROXY_DEFAULT = "";
+
+  /**
    * Confluent endpoints. These are internal properties that cannot be set from a config file
    * but that are added to the original config file at startup time
    */
@@ -104,7 +111,7 @@ public class SupportConfig {
     props.setProperty(CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, CONFLUENT_SUPPORT_METRICS_TOPIC_DEFAULT);
     props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_DEFAULT);
     props.setProperty(CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_DEFAULT);
-
+    props.setProperty(CONFLUENT_SUPPORT_PROXY_CONFIG, CONFLUENT_SUPPORT_PROXY_DEFAULT);
     return props;
   }
 
@@ -290,5 +297,9 @@ public class SupportConfig {
 
   public static void setEndpointHTTPS(String endpointHTTPS, Properties serverConfiguration) {
     serverConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CONFIG, endpointHTTPS);
+  }
+
+  public static String getProxy(Properties serverConfiguration) {
+    return serverConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_PROXY_CONFIG, SupportConfig.CONFLUENT_SUPPORT_PROXY_DEFAULT);
   }
 }

@@ -36,7 +36,7 @@
     <kafka.scala.version>2.11</kafka.scala.version>
     <junit.version>4.12</junit.version>
     <assertj.version>2.2.0</assertj.version>
-    <mockito.version>2.1.0</mockito.version>
+    <mockito.version>2.0.31-beta</mockito.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven-assembly.version>2.6</maven-assembly.version>
     <confluent.support.metrics.version>3.2.0-SNAPSHOT</confluent.support.metrics.version>
@@ -94,7 +94,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.19</version>
+        <version>2.19.1</version>
         <configuration>
           <argLine>-Djava.awt.headless=true</argLine>
         </configuration>

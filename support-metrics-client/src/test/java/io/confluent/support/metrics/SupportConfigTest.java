@@ -124,6 +124,7 @@ public class SupportConfigTest {
     assertThat(SupportConfig.getEndpointHTTPEnabled(props)).isEqualTo(true);
     assertThat(SupportConfig.getEndpointHTTPSEnabled(props)).isEqualTo(true);
     assertThat(SupportConfig.isProactiveSupportEnabled(props)).isTrue();
+    assertThat(SupportConfig.getProxy(props).equals(""));
   }
 
 
@@ -206,7 +207,7 @@ public class SupportConfigTest {
   }
 
   @Test
-  public void testOverrideTopc() {
+  public void testOverrideTopic() {
     // Given
     Properties overrideProps = new Properties();
     overrideProps.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG, "__another_example_topic");
