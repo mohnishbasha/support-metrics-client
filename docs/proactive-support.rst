@@ -73,9 +73,9 @@ Installing Support Metrics
 
 In order to collect and report the additional support metadata, you need to have the Support Metrics package installed.
 
-If you installed confluent-3.0.0-2.11.8 or confluent-3.0.0-2.10.6 (through ZIP, TAR, DEB or RPM), then Support Metrics is already installed and the next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
+If you installed confluent-3.1.1-2.11.8 or confluent-3.1.1-2.10.6 (through ZIP, TAR, DEB or RPM), then Support Metrics is already installed and the next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
 
-If you installed confluent-oss-3.0.0-2.11.8 or confluent-oss-3.0.0-2.10.6, or if you chose to install individual packages, you will need to install confluent-support-metrics_3.0.0 packages first.
+If you installed confluent-oss-3.1.1-2.11.8 or confluent-oss-3.1.1-2.10.6, or if you chose to install individual packages, you will need to install confluent-support-metrics_3.1.1 packages first.
 
 DEB Packages via apt
 ~~~~~~~~~~~~~~~~~~~~~
@@ -86,7 +86,7 @@ Run apt-get update and install Support Metrics package:
 
 .. sourcecode:: bash
 
-      $ sudo apt-get update && sudo apt-get install confluent-support-metrics_3.0.0
+      $ sudo apt-get update && sudo apt-get install confluent-support-metrics_3.1.1
 
 The next step is to obtain your Confluent customer ID from our customer support and to update it in Kafka configuration (see :ref:`ps-customer-id-configuration`).
 
