@@ -47,8 +47,6 @@ import static org.mockserver.verify.VerificationTimes.exactly;
 
 /**
  * WebClient tests with proxy enabled
- * Note: this test is disabled for now since it will affect other tests if running the 'mvn test' command.
- * Running this test by itself would still work though.  Just comment out the ignore annotation below.
  * @see WebClientTest
  */
 public class WebClientProxyTest {
