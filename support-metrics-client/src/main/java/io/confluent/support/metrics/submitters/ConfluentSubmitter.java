@@ -13,7 +13,9 @@
  */
 package io.confluent.support.metrics.submitters;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import io.confluent.support.metrics.utils.WebClient;
 import io.confluent.support.metrics.SupportConfig;
@@ -22,6 +24,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+
 public class ConfluentSubmitter implements Submitter {
 
   private static final Logger log = LoggerFactory.getLogger(ConfluentSubmitter.class);
@@ -29,6 +33,15 @@ public class ConfluentSubmitter implements Submitter {
   private final String customerId;
   private final String endpointHTTP;
   private final String endpointHTTPS;
+  private HttpHost proxy;
+
+  public String getProxy() {
+    return proxy == null ? null : proxy.toString();
+  }
+
+  public void setProxy(String name, int port, String scheme) {
+    this.proxy = new HttpHost(name, port, scheme);
+  }
 
   /**
    * Class that decides how to send data to Confluent.
@@ -37,6 +50,10 @@ public class ConfluentSubmitter implements Submitter {
    * @param endpointHTTPS: HTTPS endpoint for the Confluent support service. Can be null.
    */
   public ConfluentSubmitter(String customerId, String endpointHTTP, String endpointHTTPS) {
+    this(customerId, endpointHTTP, endpointHTTPS, null);
+  }
+
+  public ConfluentSubmitter(String customerId, String endpointHTTP, String endpointHTTPS, String proxyURIString) {
 
     if ((endpointHTTP == null || endpointHTTP.isEmpty()) && (endpointHTTPS == null || endpointHTTPS.isEmpty())) {
       throw new IllegalArgumentException("must specify endpoints");
@@ -57,6 +74,11 @@ public class ConfluentSubmitter implements Submitter {
     this.endpointHTTP = endpointHTTP;
     this.endpointHTTPS = endpointHTTPS;
     this.customerId = customerId;
+
+    if (StringUtils.isNotEmpty(proxyURIString)) {
+      URI proxyURI = URI.create(proxyURIString);
+      this.setProxy(proxyURI.getHost(), proxyURI.getPort(), proxyURI.getScheme());
+    }
   }
 
   private boolean testEndpointValid(String[] schemes, String endpoint) {
@@ -129,6 +151,6 @@ public class ConfluentSubmitter implements Submitter {
   }
 
   private int send(byte[] encodedMetricsRecord, String endpoint) {
-    return WebClient.send(customerId, encodedMetricsRecord, new HttpPost(endpoint));
+    return WebClient.send(customerId, encodedMetricsRecord, new HttpPost(endpoint), proxy);
   }
 }

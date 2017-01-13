@@ -125,8 +125,10 @@ public class MetricsReporter implements Runnable {
 
     String endpointHTTP = SupportConfig.getEndpointHTTP(serverConfiguration);
     String endpointHTTPS = SupportConfig.getEndpointHTTPS(serverConfiguration);
+    String proxyURI = SupportConfig.getProxy(serverConfiguration);
+
     if (!endpointHTTP.isEmpty() || !endpointHTTPS.isEmpty()) {
-      confluentSubmitter = new ConfluentSubmitter(customerId, endpointHTTP, endpointHTTPS);
+      confluentSubmitter = new ConfluentSubmitter(customerId, endpointHTTP, endpointHTTPS, proxyURI);
     } else {
       confluentSubmitter = null;
     }

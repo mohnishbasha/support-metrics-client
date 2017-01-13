@@ -13,23 +13,17 @@
  */
 package io.confluent.support.metrics.utils;
 
-
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
-
-
 import org.junit.Test;
-
-import io.confluent.support.metrics.SupportConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class WebClientTest {
-  private String customerId = SupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG;
-  private static String secureLiveTestEndpoint = "https://support-metrics.confluent.io/test";
-
+  private String customerId = CustomerIdExamples.validCustomerIds[0];
+  private static final String secureLiveTestEndpoint = "https://support-metrics.confluent.io/test";
 
   @Test
   public void testSubmitIgnoresNullInput() {
@@ -108,4 +102,5 @@ public class WebClientTest {
       assertThat(status == HttpStatus.SC_OK || status == HttpStatus.SC_BAD_GATEWAY).isTrue();
     }
   }
+
 }

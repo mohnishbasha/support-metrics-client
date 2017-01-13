@@ -14,6 +14,7 @@
 package io.confluent.support.metrics.utils;
 
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -23,6 +24,7 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,12 +37,16 @@ public class WebClient {
 
   /**
    * Sends a POST request to a web server
+   * This method requires a pre-configured http client instance
    * @param customerId: customer Id on behalf of which the request is sent
    * @param bytes: request payload
    * @param httpPost: A POST request structure
+   * @param proxy: a http (passive) proxy
+   * @param httpClient : apache http client instance configured by caller
    * @return an HTTP Status code
+   * @see #send(String, byte[], HttpPost)
    */
-  public static int send(String customerId, byte[] bytes, HttpPost httpPost) {
+  protected static int send(String customerId, byte[] bytes, HttpPost httpPost, HttpHost proxy, CloseableHttpClient httpClient) {
     int statusCode = DEFAULT_STATUS_CODE;
     if (bytes != null && bytes.length > 0 && httpPost != null && customerId != null) {
 
@@ -52,23 +58,77 @@ public class WebClient {
       httpPost.setEntity(builder.build());
 
       // set the HTTP config
-      final RequestConfig config = RequestConfig.custom().
+      RequestConfig config = RequestConfig.custom().
           setConnectTimeout(requestTimeoutMs).
           setConnectionRequestTimeout(requestTimeoutMs).
           setSocketTimeout(requestTimeoutMs).
           build();
 
-      // send request
-      try (CloseableHttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-           CloseableHttpResponse response = httpclient.execute(httpPost)) {
+      CloseableHttpResponse response = null;
+
+      try {
+        if (proxy != null) {
+          log.debug("setting proxy to {}", proxy);
+          config = RequestConfig.copy(config).setProxy(proxy).build();
+          httpPost.setConfig(config);
+          DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+          if (httpClient == null)
+            httpClient = HttpClientBuilder.create().setRoutePlanner(routePlanner).setDefaultRequestConfig(config).build();
+        }
+        else {
+          if (httpClient == null)
+            httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+        }
+
+        response = httpClient.execute(httpPost);
+
+        // send request
         log.debug("POST request returned {}", response.getStatusLine().toString());
         statusCode = response.getStatusLine().getStatusCode();
       } catch (IOException e) {
-        log.debug("Could not submit metrics to Confluent: {}", e.getMessage());
+        log.error("Could not submit metrics to Confluent: {}", e.getMessage());
+      }
+      finally {
+        try {
+          httpClient.close();
+        } catch (IOException e) {
+          log.warn("could not close http client", e);
+        }
+        if (response != null) {
+          try {
+            response.close();
+          } catch (IOException e) {
+            log.warn("could not close http response", e);
+          }
+        }
       }
     } else {
       statusCode = HttpStatus.SC_BAD_REQUEST;
     }
     return statusCode;
   }
+
+  /**
+   * Sends a POST request to a web server via a HTTP proxy
+   * @param customerId: customer Id on behalf of which the request is sent
+   * @param bytes: request payload
+   * @param httpPost: A POST request structure
+   * @param proxy: a http (passive) proxy
+   * @return an HTTP Status code
+   */
+  public static int send(String customerId, byte[] bytes, HttpPost httpPost, HttpHost proxy) {
+    return send(customerId, bytes, httpPost, proxy, null);
+  }
+
+  /**
+   * Sends a POST request to a web server
+   * @param customerId: customer Id on behalf of which the request is sent
+   * @param bytes: request payload
+   * @param httpPost: A POST request structure
+   * @return an HTTP Status code
+   */
+  public static int send(String customerId, byte[] bytes, HttpPost httpPost) {
+    return send(customerId, bytes, httpPost, null);
+  }
+
 }
