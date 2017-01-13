@@ -27,7 +27,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
@@ -40,7 +39,6 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndProxy.startClientAndProxy;
@@ -53,7 +51,6 @@ import static org.mockserver.verify.VerificationTimes.exactly;
  * Running this test by itself would still work though.  Just comment out the ignore annotation below.
  * @see WebClientTest
  */
-@Ignore
 public class WebClientProxyTest {
   private static final String secureLiveTestEndpoint = "https://support-metrics.confluent.io/test";
 
@@ -72,6 +69,7 @@ public class WebClientProxyTest {
     int port = PortFactory.findFreePort();
     clientAndProxy = startClientAndProxy(port);
     proxy = new HttpHost("localhost", port);
+    // load truststore with MockServer CA
     sslContext = SSLContexts.custom().loadTrustMaterial(new File("src/test/resources/truststore.jks"), "changeit".toCharArray()).build();
     httpClientBuilder = HttpClients.custom().setSSLContext(sslContext);
     httpclient = httpClientBuilder.build();
