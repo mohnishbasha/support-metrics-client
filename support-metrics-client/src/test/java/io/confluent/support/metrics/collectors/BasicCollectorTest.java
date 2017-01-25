@@ -14,8 +14,12 @@
 
 package io.confluent.support.metrics.collectors;
 
+import kafka.server.KafkaConfig;
+import kafka.server.KafkaServer;
+import kafka.utils.ZkUtils;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.kafka.common.utils.AppInfoParser;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.confluent.support.metrics.SupportKafkaMetricsBasic;
@@ -25,8 +29,18 @@ import io.confluent.support.metrics.common.Version;
 import io.confluent.support.metrics.common.time.TimeUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BasicCollectorTest {
+
+  private static KafkaServer mockServer;
+
+  @BeforeClass
+  public static void startCluster() {
+    mockServer = mock(KafkaServer.class);
+    when(mockServer.clusterId()).thenReturn("dummy");
+  }
 
   @Test
   public void testCollectMetrics() {
@@ -34,7 +48,7 @@ public class BasicCollectorTest {
     TimeUtils time = new TimeUtils();
     Uuid uuid = new Uuid();
     long unixTimeAtTestStart = time.nowInUnixTime();
-    Collector metricsCollector = new BasicCollector(time, uuid);
+    Collector metricsCollector = new BasicCollector(mockServer, time, uuid);
 
     // When
     GenericContainer metricsRecord = metricsCollector.collectMetrics();

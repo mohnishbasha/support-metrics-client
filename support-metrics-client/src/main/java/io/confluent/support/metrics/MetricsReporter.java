@@ -106,7 +106,7 @@ public class MetricsReporter implements Runnable {
     customerId = SupportConfig.getCustomerId(serverConfiguration);
     TimeUtils time = new TimeUtils();
     if (SupportConfig.isAnonymousUser(customerId)) {
-      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time, null, null, null);
+      CollectorFactory factory = new CollectorFactory(CollectorType.BASIC, time, server, serverConfiguration, serverRuntime);
       metricsCollector = factory.getCollector();
     } else {
       CollectorFactory factory = new CollectorFactory(CollectorType.FULL, time, server, serverConfiguration, serverRuntime);

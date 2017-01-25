@@ -30,7 +30,7 @@ public class CollectorFactory {
         @Override
         public Constructor get() throws ClassNotFoundException, NoSuchMethodException {
             return Class.forName("io.confluent.support.metrics.collectors.BasicCollector")
-                .getConstructor(TimeUtils.class);
+                .getConstructor(KafkaServer.class, TimeUtils.class);
         }
     });
 
@@ -80,7 +80,7 @@ public class CollectorFactory {
         try {
             switch (type) {
                 case BASIC:
-                    collector = (Collector) basicCollectorSupplier.get().newInstance(time);
+                    collector = (Collector) basicCollectorSupplier.get().newInstance(server, time);
                     break;
                 case FULL:
                     collector = (Collector) fullCollectorSupplier.get().newInstance(server, serverConfiguration, serverRuntime, time);
