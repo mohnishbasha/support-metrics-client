@@ -14,7 +14,6 @@
 package io.confluent.support.metrics;
 
 import org.apache.kafka.common.utils.Time;
-import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,7 @@ public class SupportedServerStartable {
 
         metricsReporter =
             new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
-        metricsThread = Utils.daemonThread("ConfluentProactiveSupportMetricsAgent", metricsReporter);
+        metricsThread = newThread("ConfluentProactiveSupportMetricsAgent", metricsReporter, true);
         long reportIntervalMs = SupportConfig.getReportIntervalMs(brokerConfigurationPlusMissingPSSettings);
         long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);
         // We log at WARN level to increase the visibility of this information.
@@ -73,6 +72,17 @@ public class SupportedServerStartable {
       // We log at WARN level to increase the visibility of this information.
       log.warn(legalDisclaimerProactiveSupportDisabled());
     }
+  }
+
+  private static Thread newThread(String name, Runnable runnable, boolean daemon) {
+    Thread thread = new Thread(runnable, name);
+    thread.setDaemon(daemon);
+    thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+      public void uncaughtException(Thread t, Throwable e) {
+        log.error("Uncaught exception in thread '{}':", t.getName(), e);
+      }
+    });
+    return thread;
   }
 
   private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
