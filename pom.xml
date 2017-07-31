@@ -7,7 +7,7 @@
 
   <groupId>io.confluent.support</groupId>
   <artifactId>support-metrics-client-parent</artifactId>
-  <version>3.2.2-SNAPSHOT</version>
+  <version>3.2.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>support-metrics-client-parent</name>
 
