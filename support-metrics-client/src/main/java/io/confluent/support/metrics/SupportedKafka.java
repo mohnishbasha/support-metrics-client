@@ -18,7 +18,11 @@ package io.confluent.support.metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import kafka.Kafka;
 
@@ -33,12 +37,16 @@ import kafka.Kafka;
 public class SupportedKafka {
 
   private static final Logger log = LoggerFactory.getLogger(SupportedKafka.class);
+
   public static void main(String[] args) throws Exception {
     try {
       Properties serverProps = Kafka.getPropsFromArgs(args);
       final SupportedServerStartable supportedServerStartable = new SupportedServerStartable(serverProps);
 
-      // attach shutdown handler to catch control-c
+      // register signal handler to log termination due to SIGTERM, SIGHUP and SIGINT (control-c)
+      registerLoggingSignalHandler();
+
+      // attach shutdown handler to catch terminating signals as well as normal termination
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
@@ -55,4 +63,23 @@ public class SupportedKafka {
     System.exit(ExitCodes.SUCCESS);
   }
 
+  private static void registerSignalHandler(String signalName, final Map<String, SignalHandler> jvmSignalHandlers) {
+    SignalHandler oldHandler = Signal.handle(new Signal(signalName), new SignalHandler() {
+      @Override
+      public void handle(Signal signal) {
+        log.info("Terminating process due to signal {}", signal);
+        SignalHandler oldHandler = jvmSignalHandlers.get(signal.getName());
+        if (oldHandler != null)
+          oldHandler.handle(signal);
+      }
+    });
+    jvmSignalHandlers.put(signalName, oldHandler);
+  }
+
+  private static void registerLoggingSignalHandler(){
+    final Map<String, SignalHandler> jvmSignalHandlers = new HashMap<>();
+    registerSignalHandler("TERM", jvmSignalHandlers);
+    registerSignalHandler("INT", jvmSignalHandlers);
+    registerSignalHandler("HUP", jvmSignalHandlers);
+  }
 }
