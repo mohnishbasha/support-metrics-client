@@ -18,7 +18,7 @@ package io.confluent.support.metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Properties;
 import sun.misc.Signal;
@@ -76,10 +76,16 @@ public class SupportedKafka {
     jvmSignalHandlers.put(signalName, oldHandler);
   }
 
-  private static void registerLoggingSignalHandler(){
-    final Map<String, SignalHandler> jvmSignalHandlers = new HashMap<>();
-    registerSignalHandler("TERM", jvmSignalHandlers);
-    registerSignalHandler("INT", jvmSignalHandlers);
-    registerSignalHandler("HUP", jvmSignalHandlers);
+  private static boolean isWindows() {
+    return System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows");
+  }
+
+  private static void registerLoggingSignalHandler() {
+    if (!isWindows()) {
+      final Map<String, SignalHandler> jvmSignalHandlers = new ConcurrentHashhMap<>();
+      registerSignalHandler("TERM", jvmSignalHandlers);
+      registerSignalHandler("INT", jvmSignalHandlers);
+      registerSignalHandler("HUP", jvmSignalHandlers);
+    }
   }
 }
