@@ -16,6 +16,8 @@ package io.confluent.support.metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 import io.confluent.support.metrics.collectors.CollectorFactory;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.CollectorType;
@@ -68,14 +70,14 @@ public class MetricsReporter extends BaseMetricsReporter {
       Runtime serverRuntime,
       KafkaUtilities kafkaUtilities
   ) {
-    super(kafkaSupportConfig, kafkaUtilities);
+    super(kafkaSupportConfig, kafkaUtilities, null);
     this.server = server;
     this.serverRuntime = serverRuntime;
     this.kafkaSupportConfig = kafkaSupportConfig;
     this.zkUtilsProvider = new KafkaServerZkUtilsProvider(server);
-    if (server == null || kafkaSupportConfig == null || serverRuntime == null || kafkaUtilities == null) {
-      throw new IllegalArgumentException("some arguments are null");
-    }
+    Objects.requireNonNull(server, "Kafka Server can't be null");
+    Objects.requireNonNull(serverRuntime, "serverRuntime can't be null");
+
   }
 
   @Override
@@ -102,12 +104,12 @@ public class MetricsReporter extends BaseMetricsReporter {
 
   @Override
   protected boolean isReadyForMetricsCollection() {
-    return this.kafkaUtilities.isReadyForMetricsCollection(server);
+    return kafkaUtilities.isReadyForMetricsCollection(server);
   }
 
   @Override
   protected boolean isShuttingDown() {
-    return this.kafkaUtilities.isShuttingDown(server);
+    return kafkaUtilities.isShuttingDown(server);
   }
 
 }

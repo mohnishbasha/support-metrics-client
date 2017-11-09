@@ -32,10 +32,51 @@ public class KafkaSupportConfig extends BaseSupportConfig {
   private static final String PROPRIETARY_PACKAGE_NAME = "io.confluent.support.metrics.collectors.FullCollector";
   private static final Logger log = LoggerFactory.getLogger(KafkaSupportConfig.class);
 
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT =
+      "http://support-metrics.confluent.io/anon";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT =
+      "http://support-metrics.confluent.io/submit";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_TEST_DEFAULT =
+      "http://support-metrics.confluent.io/test";
+
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT =
+      "https://support-metrics.confluent.io/anon";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT =
+      "https://support-metrics.confluent.io/submit";
+  public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT =
+      "https://support-metrics.confluent.io/test";
+  
   public KafkaSupportConfig(Properties originals) {
 
     super(setupProperties(originals));
 
+  }
+
+  @Override
+  protected String getAnonymousEndpoint(boolean secure) {
+    if (secure){
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT;
+    } else {
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT;
+    }
+  }
+
+  @Override
+  protected String getTestEndpoint(boolean secure) {
+    if (secure){
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT;
+    } else {
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_TEST_DEFAULT;
+    }
+  }
+
+  @Override
+  protected String getCustomerEndpoint(boolean secure) {
+    if (secure){
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT;
+    } else {
+      return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT;
+    }
   }
 
   private static Properties setupProperties(Properties originals){
@@ -47,7 +88,7 @@ public class KafkaSupportConfig extends BaseSupportConfig {
           KafkaSupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
       log.warn(warningIfFullCollectorPackageMissing());
     }
-    originals.setProperty(BaseSupportConfig.CONFLUENT_SUPPORT_COMPONENT_CONFIG,"kafka");
+
     return originals;
   }
 

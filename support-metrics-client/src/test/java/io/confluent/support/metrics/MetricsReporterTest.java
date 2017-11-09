@@ -51,9 +51,9 @@ public class MetricsReporterTest {
     // When/Then
     try {
       new MetricsReporter(null, kafkaSupportConfig, serverRuntime);
-      fail("IllegalArgumentException expected because server is null");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("some arguments are null");
+      fail("NullPointerException expected because server is null");
+    } catch (NullPointerException e) {
+      assertThat(e).hasMessage("Kafka Server can't be null");
     }
   }
 
@@ -65,9 +65,9 @@ public class MetricsReporterTest {
     // When/Then
     try {
       new MetricsReporter(mockServer, null, serverRuntime);
-      fail("IllegalArgumentException expected because props is null");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("some arguments are null");
+      fail("NullPointerException expected because props is null");
+    } catch (NullPointerException e) {
+      assertThat(e).hasMessage("supportConfig can't be null");
     }
   }
 
@@ -80,9 +80,9 @@ public class MetricsReporterTest {
     // When/Then
     try {
       new MetricsReporter(mockServer, kafkaSupportConfig, null);
-      fail("IllegalArgumentException expected because serverRuntime is null");
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("some arguments are null");
+      fail("NullPointerException expected because serverRuntime is null");
+    } catch (NullPointerException e) {
+      assertThat(e).hasMessage("serverRuntime can't be null");
     }
   }
 
