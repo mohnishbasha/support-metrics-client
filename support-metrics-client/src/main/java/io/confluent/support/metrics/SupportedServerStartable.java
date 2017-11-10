@@ -49,17 +49,16 @@ public class SupportedServerStartable {
     Option<String> noThreadNamePrefix = Option.empty();
     server = new KafkaServer(serverConfig, Time.SYSTEM, noThreadNamePrefix, reporters);
 
-    if (SupportConfig.isProactiveSupportEnabled(brokerConfiguration)) {
+    KafkaSupportConfig  kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
+    if (kafkaSupportConfig.isProactiveSupportEnabled()) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
 
-        Properties brokerConfigurationPlusMissingPSSettings =
-            SupportConfig.mergeAndValidateWithDefaultProperties(brokerConfiguration);
-
         metricsReporter =
-            new MetricsReporter(server, brokerConfigurationPlusMissingPSSettings, serverRuntime);
+            new MetricsReporter(server, kafkaSupportConfig, serverRuntime);
+        metricsReporter.init();
         metricsThread = newThread("ConfluentProactiveSupportMetricsAgent", metricsReporter, true);
-        long reportIntervalMs = SupportConfig.getReportIntervalMs(brokerConfigurationPlusMissingPSSettings);
+        long reportIntervalMs = kafkaSupportConfig.getReportIntervalMs();
         long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);
         // We log at WARN level to increase the visibility of this information.
         log.warn(legalDisclaimerProactiveSupportEnabled(reportIntervalHours));
@@ -87,20 +86,20 @@ public class SupportedServerStartable {
 
   private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
     return "Please note that the support metrics collection feature (\"Metrics\") of Proactive Support is enabled.  " +
-        "With Metrics enabled, this broker is configured to collect and report certain broker and " +
-        "cluster metadata (\"Metadata\") about your use of the Confluent Platform (including " +
-        "without limitation, your remote internet protocol address) to Confluent, Inc. " +
-        "(\"Confluent\") or its parent, subsidiaries, affiliates or service providers every " +
-        reportIntervalHours +
-        "hours.  This Metadata may be transferred to any country in which Confluent maintains " +
-        "facilities.  For a more in depth discussion of how Confluent processes such information, " +
-        "please read our Privacy Policy located at http://www.confluent.io/privacy. " +
-        "By proceeding with `" + SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=true`, " +
-        "you agree to all such collection, transfer, storage and use of Metadata by Confluent.  " +
-        "You can turn the Metrics feature off by setting `" +
-        SupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=false` in the broker " +
-        "configuration and restarting the broker.  See the Confluent Platform documentation for " +
-        "further information.";
+           "With Metrics enabled, this broker is configured to collect and report certain broker and " +
+           "cluster metadata (\"Metadata\") about your use of the Confluent Platform (including " +
+           "without limitation, your remote internet protocol address) to Confluent, Inc. " +
+           "(\"Confluent\") or its parent, subsidiaries, affiliates or service providers every " +
+           reportIntervalHours +
+           "hours.  This Metadata may be transferred to any country in which Confluent maintains " +
+           "facilities.  For a more in depth discussion of how Confluent processes such information, " +
+           "please read our Privacy Policy located at http://www.confluent.io/privacy. " +
+           "By proceeding with `" + KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=true`, " +
+           "you agree to all such collection, transfer, storage and use of Metadata by Confluent.  " +
+           "You can turn the Metrics feature off by setting `" +
+           KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=false` in the broker " +
+           "configuration and restarting the broker.  See the Confluent Platform documentation for " +
+           "further information.";
   }
 
   private String legalDisclaimerProactiveSupportDisabled() {
