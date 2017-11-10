@@ -11,25 +11,27 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.confluent.support.metrics;
 
+package io.confluent.support.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-
 /**
  * Configuration for the Confluent Support options.
  *
- * Note: These Confluent-specific settings are added to {@code config/server.properties} by
+ * <p>Note: These Confluent-specific settings are added to {@code config/server.properties} by
  * Confluent's <a href="https://github.com/confluentinc/kafka-packaging">kafka-packaging</a> via a
  * patch file.  If you need to make any changes (e.g. renaming settings, adding/removing settings),
  * then make sure to also update the patch file accordingly.
  */
 public class KafkaSupportConfig extends BaseSupportConfig {
-  private static final String PROPRIETARY_PACKAGE_NAME = "io.confluent.support.metrics.collectors.FullCollector";
+
+  private static final String
+      PROPRIETARY_PACKAGE_NAME =
+      "io.confluent.support.metrics.collectors.FullCollector";
   private static final Logger log = LoggerFactory.getLogger(KafkaSupportConfig.class);
 
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT =
@@ -45,16 +47,14 @@ public class KafkaSupportConfig extends BaseSupportConfig {
       "https://support-metrics.confluent.io/submit";
   public static final String CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT =
       "https://support-metrics.confluent.io/test";
-  
+
   public KafkaSupportConfig(Properties originals) {
-
     super(setupProperties(originals));
-
   }
 
   @Override
   protected String getAnonymousEndpoint(boolean secure) {
-    if (secure){
+    if (secure) {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_DEFAULT;
     } else {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_DEFAULT;
@@ -63,7 +63,7 @@ public class KafkaSupportConfig extends BaseSupportConfig {
 
   @Override
   protected String getTestEndpoint(boolean secure) {
-    if (secure){
+    if (secure) {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_TEST_DEFAULT;
     } else {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_TEST_DEFAULT;
@@ -72,20 +72,21 @@ public class KafkaSupportConfig extends BaseSupportConfig {
 
   @Override
   protected String getCustomerEndpoint(boolean secure) {
-    if (secure){
+    if (secure) {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_CUSTOMER_DEFAULT;
     } else {
       return CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_CUSTOMER_DEFAULT;
     }
   }
 
-  private static Properties setupProperties(Properties originals){
+  private static Properties setupProperties(Properties originals) {
     try {
       Class.forName(PROPRIETARY_PACKAGE_NAME);
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       originals.setProperty(
           KafkaSupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_CONFIG,
-          KafkaSupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT);
+          KafkaSupportConfig.CONFLUENT_SUPPORT_CUSTOMER_ID_DEFAULT
+      );
       log.warn(warningIfFullCollectorPackageMissing());
     }
 
@@ -93,10 +94,11 @@ public class KafkaSupportConfig extends BaseSupportConfig {
   }
 
   private static String warningIfFullCollectorPackageMissing() {
-    return "The package " +  PROPRIETARY_PACKAGE_NAME + " for collecting the full set of support metrics " +
-        "could not be loaded, so we are reverting to anonymous, basic metric collection. " +
-        "If you are a Confluent customer, please refer to the Confluent Platform documentation, " +
-        "section Proactive Support, on how to activate full metrics collection.";
+    return "The package "
+           + PROPRIETARY_PACKAGE_NAME
+           + " for collecting the full set of support metrics could not be loaded, so we are "
+           + "reverting to anonymous, basic metric collection. If you are a Confluent customer, "
+           + "please refer to the Confluent Platform documentation, section Proactive Support, "
+           + "on how to activate full metrics collection.";
   }
-
 }
