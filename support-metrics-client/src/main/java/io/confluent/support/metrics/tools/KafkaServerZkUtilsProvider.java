@@ -1,5 +1,5 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-package io.confluent.support.metrics;
+package io.confluent.support.metrics.tools;
 
-public interface ExitCodes {
+import io.confluent.support.metrics.common.kafka.ZkUtilsProvider;
+import kafka.server.KafkaServer;
+import kafka.utils.ZkUtils;
 
-  int SUCCESS = 0;
-  int ERROR = 1;
+public class KafkaServerZkUtilsProvider implements ZkUtilsProvider {
 
+  public KafkaServerZkUtilsProvider(KafkaServer kafkaServer) {
+    this.kafkaServer = kafkaServer;
+  }
+
+  private KafkaServer kafkaServer;
+
+  @Override
+  public ZkUtils zkUtils() {
+    return kafkaServer != null ? kafkaServer.zkUtils() : null;
+  }
 }

@@ -49,16 +49,20 @@ public class MetricsToKafkaTest {
     int numBrokers = 1;
     cluster.startCluster(numBrokers);
     KafkaServer broker = cluster.getBroker(0);
-    Properties brokerConfiguration = SupportConfig.mergeAndValidateWithDefaultProperties(defaultBrokerConfiguration(broker, cluster.zookeeperConnectString()));
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
-    String topic = brokerConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    Properties brokerConfiguration = defaultBrokerConfiguration(broker, cluster.zookeeperConnectString());
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG,
+        "test_metrics");
+    String topic = brokerConfiguration.getProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     int timeoutMs = 10 * 1000;
     KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(cluster.zookeeperConnectString(), timeoutMs);
 
     // Sent metrics to the topic
     int numMetricSubmissions = 10;
-    MetricsReporter reporter = new MetricsReporter(broker, brokerConfiguration, serverRuntime);
+    KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
+    MetricsReporter reporter = new MetricsReporter(broker, kafkaSupportConfig, serverRuntime);
+    reporter.init();
     for (int i = 0; i < numMetricSubmissions; i++) {
       reporter.submitMetrics();
     }
@@ -92,13 +96,15 @@ public class MetricsToKafkaTest {
     cluster.startCluster(numBrokers);
     KafkaServer firstBroker = cluster.getBroker(0);
 
-    Properties brokerConfiguration = SupportConfig.mergeAndValidateWithDefaultProperties(defaultBrokerConfiguration(firstBroker, cluster.zookeeperConnectString()));
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
-    brokerConfiguration.setProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
-
-    MetricsReporter reporter = new MetricsReporter(firstBroker, brokerConfiguration, serverRuntime);
-    String topic = brokerConfiguration.getProperty(SupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
-
+    Properties brokerConfiguration = defaultBrokerConfiguration(firstBroker, cluster.zookeeperConnectString());
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_INSECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENDPOINT_SECURE_ENABLE_CONFIG, "false");
+    brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG,
+        "test_metrics");
+    KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
+    MetricsReporter reporter = new MetricsReporter(firstBroker, kafkaSupportConfig, serverRuntime);
+    String topic = brokerConfiguration.getProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
+    reporter.init();
     // When
     int expNumMetricSubmissions = 10;
     for (int i = 0; i < expNumMetricSubmissions; i++) {
