@@ -72,7 +72,7 @@ public class MetricsReporter extends BaseMetricsReporter {
       Runtime serverRuntime,
       KafkaUtilities kafkaUtilities
   ) {
-    super(kafkaSupportConfig, kafkaUtilities, null);
+    super(kafkaSupportConfig, kafkaUtilities, null, true);
     this.server = server;
     this.serverRuntime = serverRuntime;
     this.kafkaSupportConfig = kafkaSupportConfig;
