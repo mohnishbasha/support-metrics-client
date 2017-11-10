@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.confluent.support.metrics;
 
 import org.slf4j.Logger;
@@ -26,15 +27,14 @@ import io.confluent.support.metrics.common.kafka.ZkUtilsProvider;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.tools.KafkaServerZkUtilsProvider;
 import kafka.server.KafkaServer;
-import kafka.utils.ZkUtils;
 
 /**
  * Periodically reports metrics collected from a Kafka broker.
  *
- * Metrics are being reported to a Kafka topic within the same cluster and/or to Confluent via the
- * Internet.
+ * <p>Metrics are being reported to a Kafka topic within the same cluster and/or to Confluent via
+ * the Internet.
  *
- * This class is not thread-safe.
+ * <p>This class is not thread-safe.
  */
 public class MetricsReporter extends BaseMetricsReporter {
 
@@ -46,23 +46,25 @@ public class MetricsReporter extends BaseMetricsReporter {
   private final KafkaSupportConfig kafkaSupportConfig;
   private final KafkaServerZkUtilsProvider zkUtilsProvider;
 
-  public MetricsReporter(KafkaServer server,
-                         KafkaSupportConfig kafkaSupportConfig,
-                         Runtime serverRuntime) {
+  public MetricsReporter(
+      KafkaServer server,
+      KafkaSupportConfig kafkaSupportConfig,
+      Runtime serverRuntime
+  ) {
 
     this(server, kafkaSupportConfig, serverRuntime, new KafkaUtilities());
   }
 
   /**
-   * @param server              The Kafka server.
-   * @param kafkaSupportConfig  The properties this server was created from, plus extra Proactive
-   *                            Support (PS) ones
-   *                            Note that Kafka does not understand PS properties,
-   *                            hence server->KafkaConfig() does not contain any of them, necessitating
-   *                            passing this extra argument to the API.
-   * @param serverRuntime       The Java runtime of the server that is being monitored.
-   * @param kafkaUtilities      An instance of {@link KafkaUtilities} that will be used to perform
-   *                            e.g. Kafka topic management if needed.
+   * @param server The Kafka server.
+   * @param kafkaSupportConfig The properties this server was created from, plus extra Proactive
+   *     Support (PS) ones
+   *     Note that Kafka does not understand PS properties,
+   *     hence server->KafkaConfig() does not contain any of them, necessitating
+   *     passing this extra argument to the API.
+   * @param serverRuntime The Java runtime of the server that is being monitored.
+   * @param kafkaUtilities An instance of {@link KafkaUtilities} that will be used to perform
+   *     e.g. Kafka topic management if needed.
    */
   public MetricsReporter(
       KafkaServer server,
@@ -95,8 +97,8 @@ public class MetricsReporter extends BaseMetricsReporter {
       collectorType = CollectorType.FULL;
     }
     CollectorFactory factory = new CollectorFactory(collectorType, time, server,
-        kafkaSupportConfig.getProperties(),
-        serverRuntime
+                                                    kafkaSupportConfig.getProperties(),
+                                                    serverRuntime
     );
     Collector metricsCollector = factory.getCollector();
     return metricsCollector;

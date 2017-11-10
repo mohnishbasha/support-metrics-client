@@ -1,28 +1,42 @@
-package io.confluent.support.metrics.tools;
+/**
+ * Copyright 2015 Confluent Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
-import io.confluent.support.metrics.common.time.TimeUtils;
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.consumer.ConsumerTimeoutException;
-import kafka.javaapi.consumer.ConsumerConnector;
+package io.confluent.support.metrics.tools;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.io.File;
-import java.util.Random;
 import java.util.Properties;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.FileNotFoundException;
+import java.util.Random;
+
+import io.confluent.support.metrics.common.time.TimeUtils;
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.ConsumerTimeoutException;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
 
 public class KafkaMetricsToFile {
 
@@ -30,6 +44,7 @@ public class KafkaMetricsToFile {
 
   /**
    * Default constructor
+   *
    * @param zookeeper Zookeeper connector string e.g., localhost:2181
    * @param runTimeMs Time this script should run for in milliseconds
    */
@@ -54,7 +69,8 @@ public class KafkaMetricsToFile {
   public List<KafkaStream<byte[], byte[]>> getStreams(String topic) {
     Map<String, Integer> topicCount = new HashMap<>();
     topicCount.put(topic, 1);
-    Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
+    Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(
+        topicCount);
     return consumerStreams.get(topic);
   }
 
@@ -62,7 +78,7 @@ public class KafkaMetricsToFile {
    * Retrieves the metrics from the provided topic and stores them in a compressed local file.
    *
    * @param topic Kafka topic to read from.  Must not be null or empty.
-   * @param outputPath  Path to the output file.  Must not be null or empty.
+   * @param outputPath Path to the output file.  Must not be null or empty.
    * @return the number of retrieved metrics submissions.
    */
   public int saveMetricsToFile(String topic, String outputPath) {
@@ -84,7 +100,9 @@ public class KafkaMetricsToFile {
          ZipArchiveOutputStream zOut = new ZipArchiveOutputStream(bOut)) {
 
       topicCount.put(topic, 1);
-      Map<String, List<KafkaStream<byte[], byte[]>>> consumerStreams = consumer.createMessageStreams(topicCount);
+      Map<String, List<KafkaStream<byte[], byte[]>>>
+          consumerStreams =
+          consumer.createMessageStreams(topicCount);
       List<KafkaStream<byte[], byte[]>> streams = consumerStreams.get(topic);
       for (final KafkaStream stream : streams) {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();

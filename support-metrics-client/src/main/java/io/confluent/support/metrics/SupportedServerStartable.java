@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.confluent.support.metrics;
 
 import org.apache.kafka.common.utils.Time;
@@ -30,8 +31,8 @@ import scala.collection.Seq;
 /**
  * Starts a Kafka broker plus an associated "support metrics" collection thread for this broker.
  *
- * This class is similar to Apache Kafka's {@code KafkaServerStartable.scala} but, in addition, it
- * periodically collects metrics from the running broker that are relevant to providing customer
+ * <p>This class is similar to Apache Kafka's {@code KafkaServerStartable.scala} but, in addition,
+ * it periodically collects metrics from the running broker that are relevant to providing customer
  * support.
  *
  * @see <a href="https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/server/KafkaServerStartable.scala">KafkaServerStartable.scala</a>
@@ -44,12 +45,14 @@ public class SupportedServerStartable {
   private Thread metricsThread = null;
 
   public SupportedServerStartable(Properties brokerConfiguration) {
-    Seq<KafkaMetricsReporter> reporters = KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
+    Seq<KafkaMetricsReporter>
+        reporters =
+        KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
     KafkaConfig serverConfig = KafkaConfig.fromProps(brokerConfiguration);
     Option<String> noThreadNamePrefix = Option.empty();
     server = new KafkaServer(serverConfig, Time.SYSTEM, noThreadNamePrefix, reporters);
 
-    KafkaSupportConfig  kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
+    KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
     if (kafkaSupportConfig.isProactiveSupportEnabled()) {
       try {
         Runtime serverRuntime = Runtime.getRuntime();
@@ -85,21 +88,24 @@ public class SupportedServerStartable {
   }
 
   private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
-    return "Please note that the support metrics collection feature (\"Metrics\") of Proactive Support is enabled.  " +
-           "With Metrics enabled, this broker is configured to collect and report certain broker and " +
-           "cluster metadata (\"Metadata\") about your use of the Confluent Platform (including " +
-           "without limitation, your remote internet protocol address) to Confluent, Inc. " +
-           "(\"Confluent\") or its parent, subsidiaries, affiliates or service providers every " +
-           reportIntervalHours +
-           "hours.  This Metadata may be transferred to any country in which Confluent maintains " +
-           "facilities.  For a more in depth discussion of how Confluent processes such information, " +
-           "please read our Privacy Policy located at http://www.confluent.io/privacy. " +
-           "By proceeding with `" + KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=true`, " +
-           "you agree to all such collection, transfer, storage and use of Metadata by Confluent.  " +
-           "You can turn the Metrics feature off by setting `" +
-           KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG + "=false` in the broker " +
-           "configuration and restarting the broker.  See the Confluent Platform documentation for " +
-           "further information.";
+    return
+        "Please note that the support metrics collection feature (\"Metrics\") of Proactive "
+        + "Support is enabled.  With Metrics enabled, this broker is configured to collect and "
+        + "report certain broker and cluster metadata (\"Metadata\") about your use of the "
+        + "Confluent Platform (including without limitation, your remote internet protocol address)"
+        + " to Confluent, Inc. (\"Confluent\") or its parent, subsidiaries, affiliates or service"
+        + " providers every "
+        + reportIntervalHours
+        + "hours.  This Metadata may be transferred to any country in which Confluent maintains "
+        + "facilities.  For a more in depth discussion of how Confluent processes such information,"
+        + " please read our Privacy Policy located at http://www.confluent.io/privacy. "
+        + "By proceeding with `"
+        + KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG
+        + "=true`, you agree to all such collection, transfer, storage and use of Metadata by "
+        + "Confluent.  You can turn the Metrics feature off by setting `"
+        + KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_ENABLE_CONFIG
+        + "=false` in the broker configuration and restarting the broker.  See the Confluent "
+        + "Platform documentation for further information.";
   }
 
   private String legalDisclaimerProactiveSupportDisabled() {
