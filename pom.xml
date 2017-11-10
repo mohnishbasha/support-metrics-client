@@ -5,12 +5,7 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>io.confluent.support</groupId>
-    <artifactId>support-metrics-common-parent</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
-  </parent>
-
+  <groupId>io.confluent.support</groupId>
   <artifactId>support-metrics-client-parent</artifactId>
   <version>4.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -33,6 +28,13 @@
 
   <properties>
     <java.version>1.7</java.version>
+    <avro.version>1.8.2</avro.version>
+    <kafka.version>1.0.0-SNAPSHOT</kafka.version>
+    <!-- For the moment we must use the "first" Kafka Scala version that we built
+         during packaging (cf. `kafka-packaging`), otherwise the build of this
+         project will fail during packaging due to missing Kafka libraries. -->
+    <kafka.scala.version>2.11</kafka.scala.version>
+    <junit.version>4.12</junit.version>
     <assertj.version>2.2.0</assertj.version>
     <mockito.version>2.0.31-beta</mockito.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
