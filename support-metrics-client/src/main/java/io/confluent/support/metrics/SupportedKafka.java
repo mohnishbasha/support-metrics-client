@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.confluent.support.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import kafka.Kafka;
 
 /**
  * Starts a "supported" Kafka broker and any associated threads.
  *
- * <p>This class is similar to Apache Kafka's {@code Kafka.scala}.  It differs mainly in that it
- * starts a
- * {@link SupportedServerStartable} instead of a Apache Kafka's {@code KafkaServerStartable}.
+ * This class is similar to Apache Kafka's {@code Kafka.scala}.  It differs mainly in that it starts
+ * a {@link SupportedServerStartable} instead of a Apache Kafka's {@code KafkaServerStartable}.
  *
  * @see <a href="https://github.com/apache/kafka/blob/trunk/core/src/main/scala/kafka/Kafka.scala">Kafka.scala</a>
  */
@@ -45,8 +42,7 @@ public class SupportedKafka {
   public static void main(String[] args) throws Exception {
     try {
       Properties serverProps = Kafka.getPropsFromArgs(args);
-      final SupportedServerStartable supportedServerStartable =
-          new SupportedServerStartable(serverProps);
+      final SupportedServerStartable supportedServerStartable = new SupportedServerStartable(serverProps);
 
       // register signal handler to log termination due to SIGTERM, SIGHUP and SIGINT (control-c)
       registerLoggingSignalHandler();
@@ -68,18 +64,14 @@ public class SupportedKafka {
     System.exit(ExitCodes.SUCCESS);
   }
 
-  private static void registerSignalHandler(
-      String signalName,
-      final Map<String, SignalHandler> jvmSignalHandlers
-  ) {
+  private static void registerSignalHandler(String signalName, final Map<String, SignalHandler> jvmSignalHandlers) {
     SignalHandler oldHandler = Signal.handle(new Signal(signalName), new SignalHandler() {
       @Override
       public void handle(Signal signal) {
         log.info("Terminating process due to signal {}", signal);
         SignalHandler oldHandler = jvmSignalHandlers.get(signal.getName());
-        if (oldHandler != null) {
+        if (oldHandler != null)
           oldHandler.handle(signal);
-        }
       }
     });
     jvmSignalHandlers.put(signalName, oldHandler);

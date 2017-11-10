@@ -20,7 +20,7 @@ import io.confluent.support.metrics.common.kafka.ZkUtilsProvider;
 import kafka.server.KafkaServer;
 import kafka.utils.ZkUtils;
 
-public class KafkaServerZkUtilsProvider implements ZkUtilsProvider {
+public class KafkaServerZkUtilsProvider implements ZkUtilsProvider{
 
   public KafkaServerZkUtilsProvider(KafkaServer kafkaServer) {
     this.kafkaServer = kafkaServer;
