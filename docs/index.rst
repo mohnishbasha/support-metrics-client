@@ -3,9 +3,6 @@
 Confluent Proactive Support
 ===========================
 
-.. contents::
-    :depth: 2
-
 .. _ps_intro:
 
 What is Proactive Support?
