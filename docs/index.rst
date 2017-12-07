@@ -8,9 +8,6 @@ Confluent Proactive Support
 
 .. _ps_intro:
 
-About Proactive Support
-=======================
-
 What is Proactive Support?
 --------------------------
 
@@ -280,7 +277,7 @@ Should you have any questions about the usage of this tool, then please contact 
 .. _ps_privacy:
 
 Privacy Policy
-==============
+--------------
 
 Please refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_.
 
