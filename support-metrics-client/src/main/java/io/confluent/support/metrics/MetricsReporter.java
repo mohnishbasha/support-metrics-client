@@ -23,9 +23,9 @@ import io.confluent.support.metrics.collectors.CollectorFactory;
 import io.confluent.support.metrics.common.Collector;
 import io.confluent.support.metrics.common.CollectorType;
 import io.confluent.support.metrics.common.kafka.KafkaUtilities;
-import io.confluent.support.metrics.common.kafka.ZkUtilsProvider;
+import io.confluent.support.metrics.common.kafka.ZkClientProvider;
 import io.confluent.support.metrics.common.time.TimeUtils;
-import io.confluent.support.metrics.tools.KafkaServerZkUtilsProvider;
+import io.confluent.support.metrics.tools.KafkaServerZkClientProvider;
 import kafka.server.KafkaServer;
 
 /**
@@ -44,7 +44,7 @@ public class MetricsReporter extends BaseMetricsReporter {
   private final KafkaServer server;
   private final Runtime serverRuntime;
   private final KafkaSupportConfig kafkaSupportConfig;
-  private final KafkaServerZkUtilsProvider zkUtilsProvider;
+  private final KafkaServerZkClientProvider zkClientProvider;
 
   public MetricsReporter(
       KafkaServer server,
@@ -76,15 +76,15 @@ public class MetricsReporter extends BaseMetricsReporter {
     this.server = server;
     this.serverRuntime = serverRuntime;
     this.kafkaSupportConfig = kafkaSupportConfig;
-    this.zkUtilsProvider = new KafkaServerZkUtilsProvider(server);
+    this.zkClientProvider = new KafkaServerZkClientProvider(server);
     Objects.requireNonNull(server, "Kafka Server can't be null");
     Objects.requireNonNull(serverRuntime, "serverRuntime can't be null");
 
   }
 
   @Override
-  protected ZkUtilsProvider zkUtilsProvider() {
-    return zkUtilsProvider;
+  protected ZkClientProvider zkClientProvider() {
+    return zkClientProvider;
   }
 
   @Override

@@ -16,20 +16,20 @@
 
 package io.confluent.support.metrics.tools;
 
-import io.confluent.support.metrics.common.kafka.ZkUtilsProvider;
+import io.confluent.support.metrics.common.kafka.ZkClientProvider;
 import kafka.server.KafkaServer;
-import kafka.utils.ZkUtils;
+import kafka.zk.KafkaZkClient;
 
-public class KafkaServerZkUtilsProvider implements ZkUtilsProvider {
+public class KafkaServerZkClientProvider implements ZkClientProvider {
 
-  public KafkaServerZkUtilsProvider(KafkaServer kafkaServer) {
+  public KafkaServerZkClientProvider(KafkaServer kafkaServer) {
     this.kafkaServer = kafkaServer;
   }
 
   private KafkaServer kafkaServer;
 
   @Override
-  public ZkUtils zkUtils() {
-    return kafkaServer != null ? kafkaServer.zkUtils() : null;
+  public KafkaZkClient zkClient() {
+    return kafkaServer != null ? kafkaServer.zkClient() : null;
   }
 }

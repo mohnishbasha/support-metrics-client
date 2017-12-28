@@ -13,6 +13,7 @@
  */
 package io.confluent.support.metrics;
 
+import kafka.zk.KafkaZkClient;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -20,7 +21,6 @@ import java.util.Properties;
 
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
-import kafka.utils.ZkUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -33,17 +33,17 @@ public class MetricsReporterTest {
 
   @BeforeClass
   public static void startCluster() {
-    ZkUtils mockZkUtils = mock(ZkUtils.class);
+    KafkaZkClient mockZkClient = mock(KafkaZkClient.class);
     KafkaConfig mockConfig = mock(KafkaConfig.class);
     when(mockConfig.advertisedHostName()).thenReturn("anyHostname");
     when(mockConfig.advertisedPort()).thenReturn(12345);
     mockServer = mock(KafkaServer.class);
-    when(mockServer.zkUtils()).thenReturn(mockZkUtils);
+    when(mockServer.zkClient()).thenReturn(mockZkClient);
     when(mockServer.config()).thenReturn(mockConfig);
   }
 
   @Test
-  public void testInvalidArgumentsForConstructorNullServer() throws Exception {
+  public void testInvalidArgumentsForConstructorNullServer() {
     // Given
     Properties emptyProperties = new Properties();
     Runtime serverRuntime = Runtime.getRuntime();
