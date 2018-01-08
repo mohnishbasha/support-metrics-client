@@ -38,7 +38,7 @@ public class KafkaMetricsToFile {
     Properties props = new Properties();
     props.put("zookeeper.connect", zookeeper);
     props.put("group.id", "KafkaSupportGroup-" + unixTime + "-" + new Random().nextInt(100000));
-    props.put("zookeeper.session.timeout.ms", "1000");
+    props.put("zookeeper.session.timeout.ms", "60000");
     props.put("zookeeper.sync.time.ms", "250");
     props.put("auto.commit.interval.ms", "1000");
     props.put("consumer.timeout.ms", new Integer(runTimeMs).toString());
