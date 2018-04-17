@@ -37,7 +37,7 @@
     <mockito.version>2.0.31-beta</mockito.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven-assembly.version>2.6</maven-assembly.version>
-    <confluent.support.metrics.version>4.1.0-SNAPSHOT</confluent.support.metrics.version>
+    <confluent.support.metrics.version>4.1.1-SNAPSHOT</confluent.support.metrics.version>
     <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
   </properties>
 
