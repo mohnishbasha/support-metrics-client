@@ -16,18 +16,15 @@
 
 package io.confluent.support.metrics;
 
+import org.apache.kafka.common.utils.LoggingSignalHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import java.util.Locale;
-import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 import kafka.Kafka;
+
 
 /**
  * Starts a "supported" Kafka broker and any associated threads.
@@ -48,8 +45,15 @@ public class SupportedKafka {
       final SupportedServerStartable supportedServerStartable =
           new SupportedServerStartable(serverProps);
 
-      // register signal handler to log termination due to SIGTERM, SIGHUP and SIGINT (control-c)
-      registerLoggingSignalHandler();
+      if (!isWindows() && !isIbmJdk()) {
+        try {
+          new LoggingSignalHandler().register();
+        } catch (ReflectiveOperationException e) {
+          log.warn("Failed to register optional signal handler that logs a message when "
+                  + "the process is terminated via a signal. Reason for registration "
+                  + "failure is: " + e);
+        }
+      }
 
       // attach shutdown handler to catch terminating signals as well as normal termination
       Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -68,33 +72,12 @@ public class SupportedKafka {
     System.exit(ExitCodes.SUCCESS);
   }
 
-  private static void registerSignalHandler(
-      String signalName,
-      final Map<String, SignalHandler> jvmSignalHandlers
-  ) {
-    SignalHandler oldHandler = Signal.handle(new Signal(signalName), new SignalHandler() {
-      @Override
-      public void handle(Signal signal) {
-        log.info("Terminating process due to signal {}", signal);
-        SignalHandler oldHandler = jvmSignalHandlers.get(signal.getName());
-        if (oldHandler != null) {
-          oldHandler.handle(signal);
-        }
-      }
-    });
-    jvmSignalHandlers.put(signalName, oldHandler);
-  }
-
   private static boolean isWindows() {
     return System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows");
   }
 
-  private static void registerLoggingSignalHandler() {
-    if (!isWindows()) {
-      final Map<String, SignalHandler> jvmSignalHandlers = new ConcurrentHashMap<>();
-      registerSignalHandler("TERM", jvmSignalHandlers);
-      registerSignalHandler("INT", jvmSignalHandlers);
-      registerSignalHandler("HUP", jvmSignalHandlers);
-    }
+  private static boolean isIbmJdk() {
+    return System.getProperty("java.vendor").contains("IBM");
   }
+
 }
