@@ -13,12 +13,18 @@
  */
 package io.confluent.support.metrics;
 
+import io.confluent.common.utils.Utils;
+import io.confluent.support.metrics.common.kafka.KafkaUtilities;
+import kafka.utils.TestUtils;
+import kafka.zk.KafkaZkClient;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Properties;
 
 import io.confluent.support.metrics.common.Version;
@@ -26,18 +32,16 @@ import io.confluent.support.metrics.common.kafka.EmbeddedKafkaCluster;
 import io.confluent.support.metrics.common.time.TimeUtils;
 import io.confluent.support.metrics.serde.AvroDeserializer;
 import io.confluent.support.metrics.tools.KafkaMetricsToFile;
-import kafka.consumer.ConsumerTimeoutException;
-import kafka.consumer.KafkaStream;
-import kafka.message.MessageAndMetadata;
 import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
-import kafka.utils.CoreUtils;
+import scala.collection.JavaConverters;
 
+import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
 /**
- * Integration test.  Verifies that collected metrics are successfully submitted to a Kafka topic.
+ * Integration test. Verifies that collected metrics are successfully submitted to a Kafka topic.
  */
 public class MetricsToKafkaTest {
 
@@ -56,7 +60,7 @@ public class MetricsToKafkaTest {
         "test_metrics");
     String topic = brokerConfiguration.getProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     int timeoutMs = 10 * 1000;
-    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(cluster.zookeeperConnectString(), timeoutMs);
+    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(bootstrapServer(broker.zkClient()));
 
     // Sent metrics to the topic
     int numMetricSubmissions = 10;
@@ -69,12 +73,9 @@ public class MetricsToKafkaTest {
 
     // When/Then
     String outputFile = "testFile.zip";
-    assertThat(kafkaMetricsToFile.saveMetricsToFile(topic, outputFile)).isEqualTo(numMetricSubmissions);
+    assertThat(kafkaMetricsToFile.saveMetricsToFile(topic, outputFile, timeoutMs)).isEqualTo(numMetricSubmissions);
 
-    // Cleanup
-    kafkaMetricsToFile.shutdown();
-    List<String> outputFiles = Arrays.asList(outputFile);
-    CoreUtils.delete(scala.collection.JavaConversions.asScalaBuffer(outputFiles).seq());
+    Utils.delete(new File(outputFile));
     cluster.stopCluster();
   }
 
@@ -90,7 +91,6 @@ public class MetricsToKafkaTest {
   @Test
   public void retrievesBasicMetricsSubmittedByMultiNodeCluster() throws IOException {
     // Given
-    Runtime serverRuntime = Runtime.getRuntime();
     EmbeddedKafkaCluster cluster = new EmbeddedKafkaCluster();
     int numBrokers = 3;
     cluster.startCluster(numBrokers);
@@ -102,7 +102,7 @@ public class MetricsToKafkaTest {
     brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG,
         "test_metrics");
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
-    MetricsReporter reporter = new MetricsReporter(firstBroker, kafkaSupportConfig, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter(firstBroker, kafkaSupportConfig, Runtime.getRuntime());
     String topic = brokerConfiguration.getProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     reporter.init();
     // When
@@ -112,7 +112,7 @@ public class MetricsToKafkaTest {
     }
 
     // Then
-    verifyMetricsSubmittedToTopic(cluster.zookeeperConnectString(), topic, expNumMetricSubmissions);
+    verifyMetricsSubmittedToTopic(bootstrapServer(firstBroker.zkClient()), topic, expNumMetricSubmissions);
 
     // Cleanup
     cluster.stopCluster();
@@ -122,33 +122,23 @@ public class MetricsToKafkaTest {
    * Helper function that consumes messages from a topic with a timeout.
    */
   private static void verifyMetricsSubmittedToTopic(
-      String zkConnect,
+      String bootstrapServer,
       String topic,
       int expNumMetricSubmissions) throws IOException {
     int timeoutMs = 10 * 1000;
-    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(zkConnect, timeoutMs);
-    List<KafkaStream<byte[], byte[]>> streams = kafkaMetricsToFile.getStreams(topic);
+    KafkaMetricsToFile kafkaMetricsToFile = new KafkaMetricsToFile(bootstrapServer);
+    KafkaConsumer<byte[], byte[]> consumer = kafkaMetricsToFile.createConsumer();
+    consumer.subscribe(singleton(topic));
 
-    int numRecords = 0;
+    Collection<ConsumerRecord<byte[], byte[]>> records = JavaConverters.asJavaCollectionConverter(
+            TestUtils.consumeRecords(consumer, expNumMetricSubmissions, timeoutMs)).asJavaCollection();
     AvroDeserializer decoder = new AvroDeserializer();
-    try {
-      for (final KafkaStream<byte[], byte[]> stream : streams) {
-        for (MessageAndMetadata<byte[], byte[]> messageAndMetadata : stream) {
-          SupportKafkaMetricsBasic[] container = decoder.deserialize(SupportKafkaMetricsBasic.class,
-              messageAndMetadata.message());
-          assertThat(container.length).isEqualTo(1);
-          verifyBasicMetrics(container[0]);
-          numRecords++;
-        }
-      }
-    } catch (ConsumerTimeoutException e) {
-      // do nothing, this is expected success case since we consume with a timeout
+    for (final ConsumerRecord<byte[], byte[]> record : records) {
+      SupportKafkaMetricsBasic[] container = decoder.deserialize(SupportKafkaMetricsBasic.class,
+              record.value());
+      assertThat(container.length).isEqualTo(1);
+      verifyBasicMetrics(container[0]);
     }
-
-    assertThat(numRecords).isEqualTo(expNumMetricSubmissions);
-
-    // Cleanup
-    kafkaMetricsToFile.shutdown();
   }
 
   private static void verifyBasicMetrics(SupportKafkaMetricsBasic basicRecord) {
@@ -157,6 +147,10 @@ public class MetricsToKafkaTest {
     assertThat(basicRecord.getKafkaVersion()).isEqualTo(AppInfoParser.getVersion());
     assertThat(basicRecord.getConfluentPlatformVersion()).isEqualTo(Version.getVersion());
     assertThat(basicRecord.getBrokerProcessUUID()).isNotEmpty();
+  }
+
+  private String bootstrapServer(KafkaZkClient zkClient) {
+    return new KafkaUtilities().getBootstrapServers(zkClient, 1).get(0);
   }
 
 }
