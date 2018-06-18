@@ -14,9 +14,6 @@
 
 package io.confluent.support.metrics;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Objects;
 
 import io.confluent.support.metrics.collectors.CollectorFactory;
@@ -37,9 +34,6 @@ import kafka.server.KafkaServer;
  * <p>This class is not thread-safe.
  */
 public class MetricsReporter extends BaseMetricsReporter {
-
-  private static final Logger log = LoggerFactory.getLogger(MetricsReporter.class);
-
 
   private final KafkaServer server;
   private final Runtime serverRuntime;
