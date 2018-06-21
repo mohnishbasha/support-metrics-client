@@ -1,4 +1,4 @@
-.. Confluent Proactive Support documentation master file
+.. _cp-proactive-support:
 
 Confluent Proactive Support
 ===========================
