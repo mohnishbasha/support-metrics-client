@@ -132,8 +132,10 @@ public class SupportedServerStartable {
 
   public void shutdown() {
     try {
+      log.info("Shutting down SupportedServerStartable");
       if (metricsThread != null) {
         metricsThread.interrupt();
+        log.info("Waiting for metrics thread to exit");
         metricsThread.join();
       }
     } catch (Exception e) {
@@ -143,9 +145,11 @@ public class SupportedServerStartable {
     }
 
     try {
+      log.info("Shutting down KafkaServer");
       server.shutdown();
     } catch (Exception e) {
       // Calling exit() can lead to deadlock as exit() can be called multiple times. Force exit.
+      log.error("Caught exception when trying to shut down KafkaServer. Exiting forcefully.", e);
       Runtime.getRuntime().halt(ExitCodes.ERROR);
     }
   }
