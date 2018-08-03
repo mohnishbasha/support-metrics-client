@@ -14,6 +14,14 @@ By proceeding with Metrics enabled, you agree to all such collection, transfer, 
 
 Please refer to the `Confluent Privacy Policy <http://www.confluent.io/privacy>`_ for an in-depth description of how Confluent processes such information.
 
+Proactive Support is composed of these sub-modules.
+
+- `Confluent Proactive Support: Common Library <https://github.com/confluentinc/support-metrics-common>`_ - Open source
+  component that contains common utilities for metrics collection of proactive support.
+- `Confluent Proactive Support: Client <https://github.com/confluentinc/support-metrics-client>`_ - Open source component
+  that contains the client application for metrics collection of proactive support.
+- Support Metrics package - optional metrics collection component available as a proprietary component of |cp|.  You can
+  use |cp| with or without Support Metrics installed or enabled.
 
 .. _ps-how-it-works:
 
