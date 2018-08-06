@@ -46,11 +46,12 @@ public class MetricsReporter extends BaseMetricsReporter {
   private final KafkaSupportConfig kafkaSupportConfig;
   private final KafkaServerZkUtilsProvider zkUtilsProvider;
 
-  public MetricsReporter(KafkaServer server,
+  public MetricsReporter(String threadName,
+                         boolean isDaemon,
+                         KafkaServer server,
                          KafkaSupportConfig kafkaSupportConfig,
                          Runtime serverRuntime) {
-
-    this(server, kafkaSupportConfig, serverRuntime, new KafkaUtilities());
+    this(threadName, isDaemon, server, kafkaSupportConfig, serverRuntime, new KafkaUtilities());
   }
 
   /**
@@ -64,20 +65,19 @@ public class MetricsReporter extends BaseMetricsReporter {
    * @param kafkaUtilities      An instance of {@link KafkaUtilities} that will be used to perform
    *                            e.g. Kafka topic management if needed.
    */
-  public MetricsReporter(
-      KafkaServer server,
-      KafkaSupportConfig kafkaSupportConfig,
-      Runtime serverRuntime,
-      KafkaUtilities kafkaUtilities
-  ) {
-    super(kafkaSupportConfig, kafkaUtilities, null, true);
+  public MetricsReporter(String threadName,
+                         boolean isDaemon,
+                         KafkaServer server,
+                         KafkaSupportConfig kafkaSupportConfig,
+                         Runtime serverRuntime,
+                         KafkaUtilities kafkaUtilities) {
+    super(threadName, isDaemon, kafkaSupportConfig, kafkaUtilities, null, true);
     this.server = server;
     this.serverRuntime = serverRuntime;
     this.kafkaSupportConfig = kafkaSupportConfig;
     this.zkUtilsProvider = new KafkaServerZkUtilsProvider(server);
     Objects.requireNonNull(server, "Kafka Server can't be null");
     Objects.requireNonNull(serverRuntime, "serverRuntime can't be null");
-
   }
 
   @Override
