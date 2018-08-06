@@ -39,9 +39,10 @@ import scala.collection.Seq;
 public class SupportedServerStartable {
 
   private static final Logger log = LoggerFactory.getLogger(SupportedServerStartable.class);
+  private static String metricsReporterThreadName = "ConfluentProactiveSupportMetricsAgent";
+
   private final KafkaServer server;
   private MetricsReporter metricsReporter = null;
-  private Thread metricsThread = null;
 
   public SupportedServerStartable(Properties brokerConfiguration) {
     Seq<KafkaMetricsReporter> reporters = KafkaMetricsReporter$.MODULE$.startReporters(new VerifiableProperties(brokerConfiguration));
@@ -52,12 +53,7 @@ public class SupportedServerStartable {
     KafkaSupportConfig  kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
     if (kafkaSupportConfig.isProactiveSupportEnabled()) {
       try {
-        Runtime serverRuntime = Runtime.getRuntime();
-
-        metricsReporter =
-            new MetricsReporter(server, kafkaSupportConfig, serverRuntime);
-        metricsReporter.init();
-        metricsThread = newThread("ConfluentProactiveSupportMetricsAgent", metricsReporter, true);
+        createAndInitializeMetricsReporter(kafkaSupportConfig);
         long reportIntervalMs = kafkaSupportConfig.getReportIntervalMs();
         long reportIntervalHours = reportIntervalMs / (60 * 60 * 1000);
         // We log at WARN level to increase the visibility of this information.
@@ -73,15 +69,16 @@ public class SupportedServerStartable {
     }
   }
 
-  private static Thread newThread(String name, Runnable runnable, boolean daemon) {
-    Thread thread = new Thread(runnable, name);
-    thread.setDaemon(daemon);
-    thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+  private void createAndInitializeMetricsReporter(KafkaSupportConfig kafkaSupportConfig) {
+    metricsReporter = new MetricsReporter(metricsReporterThreadName, true, server,
+            kafkaSupportConfig, Runtime.getRuntime());
+    metricsReporter.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+      @Override
       public void uncaughtException(Thread t, Throwable e) {
         log.error("Uncaught exception in thread '{}':", t.getName(), e);
       }
     });
-    return thread;
+    metricsReporter.init();
   }
 
   private String legalDisclaimerProactiveSupportEnabled(long reportIntervalHours) {
@@ -114,8 +111,8 @@ public class SupportedServerStartable {
     }
 
     try {
-      if (metricsThread != null) {
-        metricsThread.start();
+      if (metricsReporter != null) {
+        metricsReporter.start();
       }
     } catch (Exception e) {
       // We catch any exceptions to prevent collateral damage to the more important broker
@@ -126,9 +123,12 @@ public class SupportedServerStartable {
 
   public void shutdown() {
     try {
-      if (metricsThread != null) {
-        metricsThread.interrupt();
-        metricsThread.join();
+      log.info("Shutting down SupportedServerStartable");
+      if (metricsReporter != null) {
+        metricsReporter.close();
+        log.info("Waiting for metrics thread to exit");
+        metricsReporter.join();
+        metricsReporter = null;
       }
     } catch (Exception e) {
       // We catch any exceptions to prevent collateral damage to the more important broker
