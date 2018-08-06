@@ -65,7 +65,7 @@ public class MetricsToKafkaTest {
     // Sent metrics to the topic
     int numMetricSubmissions = 10;
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
-    MetricsReporter reporter = new MetricsReporter(broker, kafkaSupportConfig, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter("testThread", false, broker, kafkaSupportConfig, serverRuntime);
     reporter.init();
     for (int i = 0; i < numMetricSubmissions; i++) {
       reporter.submitMetrics();
@@ -102,7 +102,7 @@ public class MetricsToKafkaTest {
     brokerConfiguration.setProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG,
         "test_metrics");
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(brokerConfiguration);
-    MetricsReporter reporter = new MetricsReporter(firstBroker, kafkaSupportConfig, Runtime.getRuntime());
+    MetricsReporter reporter = new MetricsReporter("testThread", false, firstBroker, kafkaSupportConfig, Runtime.getRuntime());
     String topic = brokerConfiguration.getProperty(KafkaSupportConfig.CONFLUENT_SUPPORT_METRICS_TOPIC_CONFIG);
     reporter.init();
     // When
