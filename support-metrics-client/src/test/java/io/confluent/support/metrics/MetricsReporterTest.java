@@ -50,7 +50,7 @@ public class MetricsReporterTest {
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(emptyProperties);
     // When/Then
     try {
-      new MetricsReporter(null, kafkaSupportConfig, serverRuntime);
+      new MetricsReporter("testThread", false, null, kafkaSupportConfig, serverRuntime);
       fail("NullPointerException expected because server is null");
     } catch (NullPointerException e) {
       assertThat(e).hasMessage("Kafka Server can't be null");
@@ -64,7 +64,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, null, serverRuntime);
+      new MetricsReporter("testThread", false, mockServer, null, serverRuntime);
       fail("NullPointerException expected because props is null");
     } catch (NullPointerException e) {
       assertThat(e).hasMessage("supportConfig can't be null");
@@ -79,7 +79,7 @@ public class MetricsReporterTest {
 
     // When/Then
     try {
-      new MetricsReporter(mockServer, kafkaSupportConfig, null);
+      new MetricsReporter("testThread", false, mockServer, kafkaSupportConfig, null);
       fail("NullPointerException expected because serverRuntime is null");
     } catch (NullPointerException e) {
       assertThat(e).hasMessage("serverRuntime can't be null");
@@ -95,7 +95,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(serverProperties);
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, kafkaSupportConfig, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter("testThread", false, mockServer, kafkaSupportConfig, serverRuntime);
     reporter.init();
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
@@ -111,7 +111,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(serverProperties);
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, kafkaSupportConfig, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter("testThread", false, mockServer, kafkaSupportConfig, serverRuntime);
     reporter.init();
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
@@ -127,7 +127,7 @@ public class MetricsReporterTest {
     Runtime serverRuntime = Runtime.getRuntime();
     KafkaSupportConfig kafkaSupportConfig = new KafkaSupportConfig(serverProperties);
     // When
-    MetricsReporter reporter = new MetricsReporter(mockServer, kafkaSupportConfig, serverRuntime);
+    MetricsReporter reporter = new MetricsReporter("testThread", false, mockServer, kafkaSupportConfig, serverRuntime);
     reporter.init();
     // Then
     assertThat(reporter.reportingEnabled()).isTrue();
